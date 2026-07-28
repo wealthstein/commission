@@ -3,9 +3,10 @@
 import { Box, Container, Typography, Button, Stack, Chip } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { tokens } from "@/lib/theme";
-import CommissionSplitDiagram from "./CommissionSplitDiagram";
+import BusinessSettlementVisual from "./BusinessSettlementVisual";
+import AffiliateEarningsVisual from "./AffiliateEarningsVisual";
 
-export default function Hero({ content, onPrimaryCta }) {
+export default function Hero({ content, audience, onPrimaryCta }) {
   return (
     <Box component="section" sx={{ py: { xs: 8, md: 12 } }}>
       <Container maxWidth="lg">
@@ -37,7 +38,7 @@ export default function Hero({ content, onPrimaryCta }) {
             </Stack>
           </Box>
           <Box sx={{ flex: 1, display: "flex", justifyContent: { xs: "flex-start", md: "flex-end" }, width: "100%" }}>
-            <CommissionSplitDiagram />
+            {audience === "business" ? <BusinessSettlementVisual /> : <AffiliateEarningsVisual />}
           </Box>
         </Stack>
       </Container>

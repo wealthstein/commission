@@ -129,7 +129,7 @@ export default function DashboardLayout({ children }) {
           </Toolbar>
         </AppBar>
 
-        <Box component="main" sx={{ p: { xs: 2.5, md: 4 }, maxWidth: 1080, mx: "auto" }}>
+        <Box component="main" sx={{ p: { xs: 3, sm: 4, md: 6 }, maxWidth: 1080, mx: "auto" }}>
           {children}
         </Box>
       </Box>

@@ -18,8 +18,8 @@ import {
 import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
+import { CATEGORIES } from "@/lib/categories";
 
-const CATEGORIES = ["HMO", "HR Software", "SaaS", "Insurance", "Internet Service Provider", "Other"];
 const BILLING = [
   { value: "one_time", label: "One-time" },
   { value: "monthly", label: "Monthly" },
@@ -113,6 +113,13 @@ export default function NewProductPage() {
       if (programError) throw programError;
 
       setStatus({ loading: false, error: null, success: true });
+
+      // In production, move this insert into a server Route Handler instead
+      // of doing it client-side, and have that route call revalidatePath()
+      // directly (see app/api/revalidate/route.js) right after the insert.
+      // That avoids ever needing to expose REVALIDATE_SECRET to the browser
+      // and means the new product's page + category hub go live immediately
+      // instead of waiting for the next ISR window.
     } catch (err) {
       setStatus({ loading: false, error: err.message, success: false });
     }
@@ -137,8 +144,8 @@ export default function NewProductPage() {
             <Grid item xs={12} sm={4}>
               <TextField select label="Category" fullWidth required value={form.category} onChange={(e) => update("category", e.target.value)}>
                 {CATEGORIES.map((c) => (
-                  <MenuItem key={c} value={c}>
-                    {c}
+                  <MenuItem key={c.slug} value={c.label}>
+                    {c.label}
                   </MenuItem>
                 ))}
               </TextField>

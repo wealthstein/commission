@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { verifyPaystackSignature, verifyTransaction } from "@/lib/paystack";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { calculateCommission, commissionIdempotencyKey } from "@/lib/commissionEngine";
+import { sendCommissionEarnedEmail, sendPayoutPaidEmail } from "@/lib/email";
+import { feePercentForPlan } from "@/lib/pricingPlans";
 
 /**
  * POST /api/paystack/webhook
@@ -124,6 +126,13 @@ async function handleChargeSuccess(data, supabase) {
   // No affiliate involved (direct/organic sale) — nothing further to calculate.
   if (!enrollment || !program) return;
 
+  // The platform fee is determined by the BUSINESS'S PLAN at charge time —
+  // Free keeps 20% for Commission, Pro 15%, Plus 10% — never by whatever
+  // static value might be sitting on the affiliate_programs row.
+  const { data: business } = await supabase.from("businesses").select("plan").eq("id", product.business_id).single();
+  const effectiveFeePercent = feePercentForPlan(business?.plan);
+  const programWithPlanFee = { ...program, platform_fee_percent: effectiveFeePercent };
+
   // 5-7. Commission engine: calculate tier 1/2/3 + platform fee.
   const lookupEnrollment = async (id) => {
     const { data } = await supabase.from("affiliate_enrollments").select("*").eq("id", id).maybeSingle();
@@ -133,7 +142,7 @@ async function handleChargeSuccess(data, supabase) {
   const lineageIds = await resolveLineage(enrollment, lookupEnrollment);
   const result = calculateCommission({
     amountNaira,
-    program,
+    program: programWithPlanFee,
     sellingEnrollment: enrollment,
     lookupEnrollment: (id) => lineageIds.find((e) => e.id === id) ?? null,
   });
@@ -156,6 +165,26 @@ async function handleChargeSuccess(data, supabase) {
       { onConflict: "transaction_id,tier" }
     );
     void idempotencyKey; // reserved for a dedicated idempotency-keys table if needed at scale
+
+    // lineageIds rows were fetched with select("*"), so affiliate_id is already on hand.
+    const lineEnrollment = lineageIds.find((e) => e.id === line.enrollmentId);
+    if (lineEnrollment?.affiliate_id) {
+      const { data: affiliateUser } = await supabase
+        .from("users")
+        .select("email, full_name")
+        .eq("id", lineEnrollment.affiliate_id)
+        .maybeSingle();
+
+      if (affiliateUser?.email) {
+        await sendCommissionEarnedEmail({
+          to: affiliateUser.email,
+          name: affiliateUser.full_name,
+          amountNaira: line.affiliatePayoutNaira,
+          productName: product.name,
+          tier: line.tier,
+        });
+      }
+    }
   }
 
   // 9. Business proceeds settlement is handled by Paystack's split/subaccount
@@ -198,8 +227,27 @@ async function handleRefund(data, supabase) {
 
 async function handleTransferStatus(data, eventName, supabase) {
   const status = eventName === "transfer.success" ? "paid" : "failed";
-  await supabase
+  const { data: payout } = await supabase
     .from("payouts")
     .update({ status, paid_at: status === "paid" ? new Date().toISOString() : null })
-    .eq("paystack_transfer_code", data.transfer_code);
+    .eq("paystack_transfer_code", data.transfer_code)
+    .select()
+    .single();
+
+  if (status === "paid" && payout) {
+    await supabase
+      .from("commissions")
+      .update({ payout_status: "paid" })
+      .eq("paystack_transfer_code", data.transfer_code);
+
+    const { data: affiliate } = await supabase
+      .from("users")
+      .select("email, full_name")
+      .eq("id", payout.affiliate_id)
+      .maybeSingle();
+
+    if (affiliate?.email) {
+      await sendPayoutPaidEmail({ to: affiliate.email, name: affiliate.full_name, amountNaira: payout.amount_naira });
+    }
+  }
 }

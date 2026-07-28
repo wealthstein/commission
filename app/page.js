@@ -7,6 +7,7 @@ import CardGridSection from "@/components/marketing/CardGridSection";
 import HowItWorks from "@/components/marketing/HowItWorks";
 import Comparison from "@/components/marketing/Comparison";
 import EarningsExample from "@/components/marketing/EarningsExample";
+import Pricing from "@/components/marketing/Pricing";
 import FAQ from "@/components/marketing/FAQ";
 import { CTASection, Footer } from "@/components/marketing/CTAAndFooter";
 import SignInModal from "@/components/marketing/SignInModal";
@@ -23,7 +24,7 @@ export default function Home() {
     <>
       <Navbar audience={audience} onAudienceChange={setAudience} onSignIn={() => setSignInOpen(true)} />
 
-      <Hero content={content} onPrimaryCta={() => setSignInOpen(true)} />
+      <Hero content={content} audience={audience} onPrimaryCta={() => setSignInOpen(true)} />
 
       <CardGridSection id="benefits" title="Why Commission" items={content.benefits} columns={4} />
 
@@ -32,7 +33,10 @@ export default function Home() {
       <HowItWorks steps={content.howItWorks} />
 
       {audience === "business" ? (
-        <Comparison data={content.comparison} />
+        <>
+          <Comparison data={content.comparison} />
+          <Pricing onSelectPlan={() => setSignInOpen(true)} />
+        </>
       ) : (
         <EarningsExample data={content.earningsExample} />
       )}

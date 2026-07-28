@@ -25,6 +25,11 @@ create table if not exists users (
   phone           text,
   -- Referral: who brought THIS user onto the platform (drives user-referral payouts, sec. "pay users for referring other users")
   referred_by     uuid references users(id),
+  -- Payout destination for affiliate commissions (Paystack transfer recipient)
+  bank_code               text,
+  bank_account_number     text,
+  bank_account_name       text,
+  paystack_recipient_code text,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
 );
@@ -87,7 +92,7 @@ create table if not exists affiliate_programs (
   tier1_percent         numeric(5,2) not null check (tier1_percent >= 0),
   tier2_percent         numeric(5,2) not null default 0 check (tier2_percent >= 0),
   tier3_percent         numeric(5,2) not null default 0 check (tier3_percent >= 0),
-  platform_fee_percent  numeric(5,2) not null default 15,   -- % of the AFFILIATE COMMISSION Commission retains
+  platform_fee_percent  numeric(5,2) not null default 15,   -- fallback only; the BUSINESS'S PLAN (free=20%/pro=15%/plus=10%) is authoritative at charge time — see lib/pricingPlans.js
   attribution_days      integer not null default 30,        -- referral cookie/attribution window
   min_payout_naira      numeric(14,2) default 0,
   requires_approval     boolean not null default false,
