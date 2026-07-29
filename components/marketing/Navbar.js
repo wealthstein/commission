@@ -21,7 +21,7 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
     >
       <Toolbar sx={{ maxWidth: 1160, mx: "auto", width: "100%", py: 1.25, px: { xs: 3, sm: 5, md: 8 }, gap: 3 }}>
         <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
-            <Image src="/logos/apple-icon.png" alt="Commission" width={28} height={28} />
+            <Image src="/apple-icon.png" alt="Commission" width={28} height={28} />
 
         </Stack>
 
