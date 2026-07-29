@@ -51,7 +51,7 @@ export default function NetworkPage() {
                 </Box>
                 <Box sx={{ textAlign: "right" }}>
                   <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
-                    You've earned from them
+                    You&#39;ve earned from them
                   </Typography>
                   <Typography variant="body2" fontWeight={700}>
                     ₦{n.earningsFromThemNaira.toLocaleString()}

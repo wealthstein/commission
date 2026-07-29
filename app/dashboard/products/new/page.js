@@ -203,7 +203,7 @@ export default function NewProductPage() {
             Affiliate program
           </Typography>
           <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-            Up to 3 tiers. Commission's platform fee is taken from this commission, never from your sale price.
+            Up to 3 tiers. Commission&#39;s platform fee is taken from this commission, never from your sale price.
           </Typography>
 
           <ToggleButtonGroup

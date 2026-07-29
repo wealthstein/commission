@@ -135,7 +135,7 @@ export default function AccountPage() {
           Business profile
         </Typography>
         <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-          Only needed if you're listing products. Every Commission account can act as a business, an affiliate, or both.
+          Only needed if you&#39;re listing products. Every Commission account can act as a business, an affiliate, or both.
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
