@@ -104,9 +104,34 @@ settings, then set your real domain (commission.ng) as a custom domain.
 
 ---
 
+## Physical vs Digital products
+
+Every product now declares a **Product Type** at creation time, and it drives everything downstream — payment flow, fee model, and which form fields even show up.
+
+|  | Physical | Digital |
+|---|---|---|
+| Examples | Electronics, furniture, cars, real estate, fashion, beauty, home appliances | SaaS, HR software, HMO, insurance, ISPs, online courses, memberships, software licenses |
+| Payment flow | Customer pays the **business directly** — Commission never touches the money | Customer pays **Commission via Paystack**, which auto-splits funds |
+| How a sale is recorded | Business **manually reports** it (`POST /api/sales/report`), then **confirms** it (`POST /api/sales/[id]/verify`) — matching "Business confirms sale" in the flow | Automatic, via the Paystack webhook (`app/api/paystack/webhook`) |
+| Commission's revenue | **Subscription only** — platform fee is always 0% | Subscription **+** the plan-based platform fee (Free 20% / Pro 15% / Plus 10%) |
+| Who pays the affiliate | The business (`business_pays_directly`), or Commission if the business opts into `commission_facilitates` (`businesses.physical_payout_mode`) | Commission, automatically, via the payout batching cron |
+| Recurring commission | Not applicable — always one-time | Supported |
+
+**Where this lives in code:**
+- `lib/categories.js` — the category taxonomy is now tagged `productType: 'physical' | 'digital'`, feeding `categoriesForType()` so the product form only shows relevant categories
+- `lib/pricingPlans.js` — `feePercentForPlan(plan, productType)` now takes product type as a second argument and **always returns 0 for physical**, regardless of plan
+- `app/dashboard/products/new/page.js` — Product Type is the first choice on the form; the rest of the fields (billing frequency, recurring-commission toggle, purchase URL vs. offline payment instructions) adapt based on it
+- `app/dashboard/products/page.js` — Physical/Digital filter tabs with type badges
+- `app/api/sales/report/route.js` + `app/api/sales/[transactionId]/verify/route.js` — the manual sale-reporting flow physical products use instead of a webhook
+- `app/api/paystack/webhook/route.js` — now guards against ever charging a platform fee on a physical product (and logs loudly if a physical product's charge somehow reaches it — that should never happen, since physical checkout links point at the business's own site/WhatsApp/store, never a Commission-hosted Paystack checkout)
+- `supabase/schema.sql` — `products.product_type` (`physical`/`digital`), `businesses.physical_payout_mode`, and new manual-sale-reporting columns on `transactions` (`source`, `verification_status`, `proof_url`, `reported_by`); `commissions.payout_status` gained a `business_handles` value for the case where the business pays the affiliate directly and Commission's ledger just reflects that it happened
+
+
+
 ## Recent changes
 
-1. **Plan-based platform fee.** Commission's cut of the affiliate commission
+1. **Physical vs Digital product types.** See the section above.
+2. **Plan-based platform fee.** Commission's cut of the affiliate commission
    now depends on the business's plan — Free 20%, Pro 15%, Plus 10% — see
    `lib/pricingPlans.js` (`feePercentForPlan`). The Paystack webhook looks up
    the business's `plan` at charge time and overrides whatever's stored on
@@ -179,7 +204,35 @@ should move to a server Route Handler in production so it can call
 `revalidatePath()` in-process, rather than needing to expose the
 revalidate secret to the browser.
 
+## Company & industry keyword-target pages
+
+The two instances from the original ask — `/gtbank-affiliate-program` (company) and
+`/fintech-affiliate-programs` (industry) — both route through a single catch-all:
+
+- `app/[slug]/page.js` — parses the slug suffix (`-affiliate-program` = company,
+  `-affiliate-programs` = industry) via `parseSeoRouteSlug()` in `lib/seo.js`,
+  then looks up a matching row in `seo_keyword_targets`
+- **Deliberately does not auto-generate a page for an arbitrary slug.** Only
+  slugs seeded in `seo_keyword_targets` render — everything else 404s. This
+  is on purpose: generating a page per arbitrary string is the "doorway page"
+  pattern search engines penalize, and for a real company name it would mean
+  asserting something ("X has an affiliate program") Commission can't verify
+- Company pages ask the question honestly — "Does GTBank have an affiliate
+  program?" — rather than claiming one exists, with a "notify me" email
+  capture (`components/marketing/NotifyMeForm.js` → `app/api/seo-targets/notify`)
+  and links to real live programs in a related category
+- Once a real business matching that identity actually joins Commission, set
+  `seo_keyword_targets.claimed_business_slug` and the page permanently
+  301-redirects to the real `/businesses/[slug]` page instead
+- Seed starter data: `supabase/seed_seo_targets.sql` — a handful of
+  illustrative rows. Expand this deliberately, company by company, industry
+  by industry — don't bulk-import a scraped list without reviewing each one
+- These URLs are included in the sitemap (`app/sitemap.js`'s static chunk)
+  automatically, and drop out of it once claimed (no point indexing a
+  placeholder for a page that now redirects)
+
 ## Tech stack
+
 
 - **Frontend:** Next.js 14 (App Router), React 18, MUI 6
 - **Backend:** Next.js Route Handlers, Supabase (Postgres + Auth)

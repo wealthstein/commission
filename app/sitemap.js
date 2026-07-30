@@ -41,9 +41,13 @@ export default async function sitemap({ id }) {
   const productPages = Math.max(1, Math.ceil(productCount / PAGE_SIZE));
   const staticPageId = productPages;
 
-  // The final chunk: marketing pages, every business, and every category hub.
+  // The final chunk: marketing pages, every business, every category hub,
+  // and every curated company/industry keyword-target page.
   if (id === staticPageId) {
     const { data: businesses } = await supabase.from("businesses").select("slug, updated_at");
+    const { data: seoTargets } = await supabase
+      .from("seo_keyword_targets")
+      .select("route_slug, created_at, claimed_business_slug");
 
     const entries = [
       { url: SITE_URL, changeFrequency: "daily", priority: 1 },
@@ -58,6 +62,16 @@ export default async function sitemap({ id }) {
         changeFrequency: "weekly",
         priority: 0.6,
       })),
+      // Once claimed, the /[slug] route 301-redirects to the real business
+      // page — no point listing the placeholder URL in the sitemap too.
+      ...(seoTargets || [])
+        .filter((t) => !t.claimed_business_slug)
+        .map((t) => ({
+          url: `${SITE_URL}/${t.route_slug}`,
+          lastModified: t.created_at,
+          changeFrequency: "monthly",
+          priority: 0.5,
+        })),
     ];
     return entries;
   }

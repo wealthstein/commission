@@ -48,7 +48,7 @@ export default function Home() {
           headline: audience === "business" ? "List your first product free" : "Join your first program today",
           subhead:
             audience === "business"
-              ? "Start on the Free plan. Upgrade to Pro or Plus as your affiliate program grows."
+              ? "Start on Small. Upgrade to Medium or Large as your affiliate program grows."
               : "Discover products, share your link, and start earning — no separate application needed.",
           primaryCta: content.primaryCta,
         }}

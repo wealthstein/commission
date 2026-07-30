@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Box, Container, Typography, Grid, Paper, Chip } from "@mui/material";
+import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
+import LaptopMacRoundedIcon from "@mui/icons-material/LaptopMacRounded";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { buildBusinessMetadata } from "@/lib/seo";
 import { tokens } from "@/lib/theme";

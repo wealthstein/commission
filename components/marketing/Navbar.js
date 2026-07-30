@@ -2,7 +2,6 @@
 
 import { AppBar, Toolbar, Box, Typography, Button, ToggleButtonGroup, ToggleButton, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
-import Image from "next/image";
 
 const NAV_LINKS = [
   { href: "#benefits", label: "Benefits" },
@@ -21,8 +20,21 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
     >
       <Toolbar sx={{ maxWidth: 1160, mx: "auto", width: "100%", py: 1.25, px: { xs: 3, sm: 5, md: 8 }, gap: 3 }}>
         <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
-            <Image src="/apple-icon.png" alt="Commission" width={28} height={28} />
-
+          <Box
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: "8px",
+              bgcolor: tokens.brand,
+              display: "grid",
+              placeItems: "center",
+            }}
+          >
+            <Typography sx={{ color: tokens.brandInk, fontWeight: 800, fontSize: 15, lineHeight: 1 }}>C</Typography>
+          </Box>
+          <Typography variant="h6" sx={{ color: tokens.ink, fontWeight: 700, fontSize: 18 }}>
+            Commission
+          </Typography>
         </Stack>
 
         <Stack

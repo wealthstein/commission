@@ -50,7 +50,15 @@ create table if not exists businesses (
   industry        text,                                -- e.g. HMO, HR Software, SaaS, Insurance, ISP
   plan            text not null default 'free' check (plan in ('free','pro','plus')),
   plan_renews_at  timestamptz,
-  paystack_subaccount_code text,                        -- for settlement split
+  paystack_subaccount_code text,                        -- for settlement split (DIGITAL products only)
+  -- PHYSICAL products only: since Commission never holds the sale proceeds,
+  -- someone still has to actually pay the affiliate their commission once a
+  -- sale is verified. 'business_pays_directly' = the business pays affiliates
+  -- themselves (Commission just shows them what's owed). 'commission_facilitates'
+  -- = the business remits affiliate payouts to Commission's balance for
+  -- Commission to disburse via the normal Paystack transfer flow.
+  physical_payout_mode text not null default 'business_pays_directly'
+                          check (physical_payout_mode in ('business_pays_directly','commission_facilitates')),
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
 );
@@ -66,13 +74,23 @@ create table if not exists products (
   name              text not null,
   slug              text not null,
   description       text,
-  category          text,                                -- HMO, HR Software, SaaS, Insurance, ISP, Other
-  product_type      text not null default 'service' check (product_type in ('product','service')),
+  category          text,                                -- see lib/categories.js for the physical/digital taxonomy
+  -- PHYSICAL: customer pays the business directly (off-platform or their own
+  --   checkout); Commission never touches the money. Revenue to Commission
+  --   is subscription-only — no platform fee is ever taken (see lib/pricingPlans.js).
+  -- DIGITAL: customer pays via Paystack THROUGH Commission; Commission auto-splits
+  --   funds, retains its plan-based platform fee, and pays affiliates automatically.
+  product_type      text not null default 'digital' check (product_type in ('physical','digital')),
   price_naira       numeric(14,2) not null check (price_naira >= 0),
   billing_frequency text not null default 'one_time'
                       check (billing_frequency in ('one_time','monthly','quarterly','annual')),
   image_url         text,
-  product_url       text not null,                        -- where the customer completes purchase
+  product_url       text not null,                        -- where the customer completes purchase (Commission-hosted checkout for digital; the business's own site/WhatsApp/store for physical)
+  -- PHYSICAL ONLY: how a customer pays the business directly, and/or how a
+  -- sale gets verified (e.g. bank details, invoice requirement, POS reference).
+  -- Shown on the product's public page and used by the business to confirm
+  -- manually-reported sales (see transactions.source below).
+  offline_payment_instructions text,
   status            text not null default 'draft' check (status in ('draft','active','paused','archived')),
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now(),
@@ -203,11 +221,22 @@ create table if not exists transactions (
   product_id            uuid not null references products(id),
   customer_id           uuid not null references customers(id),
   enrollment_id         uuid references affiliate_enrollments(id),  -- referring (tier-1) affiliate for this sale
-  paystack_reference     text unique not null,
+  paystack_reference     text unique,                        -- null for manually-reported PHYSICAL sales (no Paystack charge exists)
   amount_naira          numeric(14,2) not null check (amount_naira >= 0),
   status                text not null default 'pending'
                           check (status in ('pending','success','failed','refunded')),
   is_recurring_cycle    boolean not null default false,
+  -- DIGITAL sales arrive automatically via the Paystack webhook ('paystack').
+  -- PHYSICAL sales have no webhook at all — the business logs the sale
+  -- themselves after being paid directly by the customer ('manual').
+  source                text not null default 'paystack' check (source in ('paystack','manual')),
+  -- Manual (physical) sales start 'pending' until the business confirms the
+  -- sale actually happened ("Business confirms sale" in the physical-product
+  -- flow) — only then does the commission engine run. Paystack-sourced sales
+  -- don't use this column (verification is the webhook's signature check).
+  verification_status   text check (verification_status in ('pending','verified','rejected')),
+  proof_url             text,                                -- receipt/invoice/screenshot for a manually-reported sale
+  reported_by           uuid references users(id),           -- which business user logged this manual sale
   occurred_at           timestamptz not null default now(),
   created_at            timestamptz not null default now()
 );
@@ -230,7 +259,7 @@ create table if not exists commissions (
   platform_fee_naira    numeric(14,2) not null,
   affiliate_payout_naira numeric(14,2) not null,   -- commission_amount - platform_fee
   payout_status         text not null default 'pending'
-                          check (payout_status in ('pending','initiated','paid','failed','reversed')),
+                          check (payout_status in ('pending','initiated','paid','failed','reversed','business_handles')),
   paystack_transfer_code text,
   created_at            timestamptz not null default now(),
   unique (transaction_id, tier)
@@ -303,6 +332,48 @@ create trigger trg_touch_programs before update on affiliate_programs
   for each row execute function fn_touch_updated_at();
 
 -- ============================================================================
+-- SEO KEYWORD TARGETS  (the /[x]-affiliate-program and /[y]-affiliate-programs
+-- pages). Deliberately a SEEDED, curated table rather than accepting any
+-- arbitrary slug — auto-generating a page for every string anyone types is
+-- exactly the "doorway page" / scaled-content-abuse pattern search engines
+-- penalize, and for a real company name it would mean asserting something
+-- ("X has an affiliate program") Commission can't actually verify.
+-- ============================================================================
+create table if not exists seo_keyword_targets (
+  id                  uuid primary key default gen_random_uuid(),
+  route_slug          text unique not null,   -- e.g. 'gtbank-affiliate-program' or 'fintech-affiliate-programs'
+  type                text not null check (type in ('company','industry')),
+  keyword_slug        text not null,          -- bare keyword: 'gtbank' or 'fintech'
+  display_name        text not null,          -- 'GTBank' or 'Fintech'
+  -- For a COMPANY entry: which lib/categories.js-style industry bucket it
+  -- plausibly belongs to, so the placeholder page can cross-link to real
+  -- live products in that space. For an INDUSTRY entry, this can just repeat
+  -- display_name — it's used to query products.category for "real programs
+  -- in this space" regardless of entry type.
+  industry_category   text,
+  -- Once a real business matching this identity actually joins Commission,
+  -- set this and the page 301-redirects to /businesses/[slug] instead of
+  -- showing the placeholder — this is the ONE mechanism that turns a
+  -- speculative keyword page into a real, accurate one.
+  claimed_business_slug text references businesses(slug),
+  meta_description    text,
+  created_at          timestamptz not null default now()
+);
+
+create index if not exists idx_seo_targets_type on seo_keyword_targets(type);
+create index if not exists idx_seo_targets_claimed on seo_keyword_targets(claimed_business_slug);
+
+-- "Notify me" capture on placeholder pages — the conversion mechanism for
+-- visitors who land on a company/industry page that isn't live yet.
+create table if not exists notify_requests (
+  id              uuid primary key default gen_random_uuid(),
+  seo_target_id   uuid not null references seo_keyword_targets(id) on delete cascade,
+  email           text not null,
+  created_at      timestamptz not null default now(),
+  unique (seo_target_id, email)
+);
+
+-- ============================================================================
 -- ROW LEVEL SECURITY (starter policies — refine per launch)
 -- ============================================================================
 alter table users enable row level security;
@@ -347,3 +418,11 @@ create policy payouts_self_select on payouts for select
 
 -- NOTE: All writes to transactions/commissions/payouts happen server-side via
 -- the service-role key (Paystack webhook handler), bypassing RLS by design.
+
+alter table seo_keyword_targets enable row level security;
+create policy seo_targets_public_read on seo_keyword_targets for select using (true);
+
+alter table notify_requests enable row level security;
+create policy notify_requests_public_insert on notify_requests for insert with check (true);
+-- Deliberately no select policy — this is a write-only capture; reads happen
+-- server-side via the service-role key.

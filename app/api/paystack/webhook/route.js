@@ -126,11 +126,26 @@ async function handleChargeSuccess(data, supabase) {
   // No affiliate involved (direct/organic sale) — nothing further to calculate.
   if (!enrollment || !program) return;
 
+  // Physical products are paid for directly to the business — they should
+  // never generate a Paystack charge that Commission itself processes. If
+  // one somehow does (e.g. a product was switched from digital to physical
+  // after checkout links were already shared), log it loudly rather than
+  // silently charging Commission's plan-based fee on money Commission never
+  // actually touched.
+  if (product.product_type === "physical") {
+    console.error(
+      `Paystack webhook received a charge for a PHYSICAL product (product_id=${productId}, reference=${data.reference}). ` +
+        `Physical-product sales should be reported via /api/sales/report instead. Skipping commission calculation.`
+    );
+    return;
+  }
+
   // The platform fee is determined by the BUSINESS'S PLAN at charge time —
   // Free keeps 20% for Commission, Pro 15%, Plus 10% — never by whatever
-  // static value might be sitting on the affiliate_programs row.
+  // static value might be sitting on the affiliate_programs row. (Physical
+  // products always resolve to 0% here, but this webhook path is digital-only.)
   const { data: business } = await supabase.from("businesses").select("plan").eq("id", product.business_id).single();
-  const effectiveFeePercent = feePercentForPlan(business?.plan);
+  const effectiveFeePercent = feePercentForPlan(business?.plan, product.product_type);
   const programWithPlanFee = { ...program, platform_fee_percent: effectiveFeePercent };
 
   // 5-7. Commission engine: calculate tier 1/2/3 + platform fee.

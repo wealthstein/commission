@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Box, Container, Typography, Grid, Paper, Stack, Button } from "@mui/material";
+import { Box, Container, Typography, Grid, Paper, Stack, Button, Chip } from "@mui/material";
+import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
+import LaptopMacRoundedIcon from "@mui/icons-material/LaptopMacRounded";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { categoryLabelFromSlug, CATEGORIES } from "@/lib/categories";
 import { buildCategoryMetadata } from "@/lib/seo";
@@ -65,9 +67,15 @@ export default async function CategoryPage({ params, searchParams }) {
                 <Typography fontWeight={700} sx={{ mb: 0.5 }}>
                   {p.name}
                 </Typography>
-                <Typography variant="body2" sx={{ color: tokens.muted }}>
+                <Typography variant="body2" sx={{ color: tokens.muted, mb: 1 }}>
                   {p.businesses.name} · ₦{Number(p.price_naira).toLocaleString()}
                 </Typography>
+                <Chip
+                  size="small"
+                  icon={p.product_type === "physical" ? <Inventory2RoundedIcon sx={{ fontSize: 14 }} /> : <LaptopMacRoundedIcon sx={{ fontSize: 14 }} />}
+                  label={p.product_type === "physical" ? "Physical" : "Digital"}
+                  sx={{ bgcolor: p.product_type === "physical" ? "#F1EFE7" : "#FFF3C4", fontWeight: 600, height: 22 }}
+                />
               </Paper>
             </Grid>
           ))}

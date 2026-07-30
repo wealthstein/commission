@@ -81,7 +81,13 @@ export default async function ProductPage({ params }) {
           </Typography>
         </Stack>
 
-        {product.category && <Chip label={product.category} size="small" sx={{ bgcolor: "#F1EFE7", fontWeight: 600, mb: 2 }} />}
+        {product.category && <Chip label={product.category} size="small" sx={{ bgcolor: "#F1EFE7", fontWeight: 600, mb: 2, mr: 1 }} />}
+        <Chip
+          label={product.product_type === "physical" ? "Physical Product" : "Digital Product"}
+          size="small"
+          variant="outlined"
+          sx={{ mb: 2 }}
+        />
 
         <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 2 }}>
           {product.name} Affiliate Program
@@ -130,6 +136,15 @@ export default async function ProductPage({ params }) {
           <Typography variant="body1" sx={{ color: tokens.muted, mb: 4 }}>
             {product.description}
           </Typography>
+        )}
+
+        {product.product_type === "physical" && product.offline_payment_instructions && (
+          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, borderColor: tokens.border, mb: 4, bgcolor: "#F1EFE7" }}>
+            <Typography variant="caption" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 0.5 }}>
+              HOW TO BUY
+            </Typography>
+            <Typography variant="body2">{product.offline_payment_instructions}</Typography>
+          </Paper>
         )}
 
         <Button variant="contained" size="large" component={Link} href={`/?join=${product.id}`}>
