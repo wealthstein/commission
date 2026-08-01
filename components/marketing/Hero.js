@@ -3,8 +3,7 @@
 import { Box, Container, Typography, Button, Stack, Chip } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { tokens } from "@/lib/theme";
-import BusinessSettlementVisual from "./BusinessSettlementVisual";
-import AffiliateEarningsVisual from "./AffiliateEarningsVisual";
+import SavingsCalculator from "./SavingsCalculator";
 
 export default function Hero({ content, audience, onPrimaryCta }) {
   return (
@@ -38,7 +37,7 @@ export default function Hero({ content, audience, onPrimaryCta }) {
             </Stack>
           </Box>
           <Box sx={{ flex: 1, display: "flex", justifyContent: { xs: "flex-start", md: "flex-end" }, width: "100%" }}>
-            {audience === "business" ? <BusinessSettlementVisual /> : <AffiliateEarningsVisual />}
+            {audience === "business" ? <SavingsCalculator audience="business" /> : <SavingsCalculator audience="affiliate" />}
           </Box>
         </Stack>
       </Container>

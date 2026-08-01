@@ -5,13 +5,13 @@ import { createServerSupabaseClient } from "@/lib/supabaseServer";
  * POST /api/sales/report
  * body: { productId, customerEmail, amountNaira, referralCode?, proofUrl? }
  *
- * PHYSICAL PRODUCTS ONLY. Since the customer pays the business directly
- * (Commission never processes the charge), there's no webhook to trigger
- * commission calculation automatically. Instead the business logs the sale
- * here — it lands as 'pending' verification. Nothing is owed to any
- * affiliate yet; that only happens once the business confirms the sale via
- * POST /api/sales/[transactionId]/verify (matching the "Business confirms
- * sale" step in the physical-product flow).
+ * For 'sale'-goal campaigns (see affiliate_programs.conversion_goal). Since
+ * the customer always pays the business directly — there is no Paystack
+ * webhook to trigger commission calculation automatically for ANY product,
+ * physical or digital. The business logs the sale here — it lands as
+ * 'pending' verification. Nothing is owed to any affiliate yet; that only
+ * happens once the business confirms it via POST /api/sales/[id]/verify,
+ * which is what actually charges the wallet.
  */
 export async function POST(req) {
   const { productId, customerEmail, amountNaira, referralCode, proofUrl } = await req.json();
@@ -34,14 +34,21 @@ export async function POST(req) {
   if (!product) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
-  if (product.product_type !== "physical") {
+
+  const { data: program } = await supabase
+    .from("affiliate_programs")
+    .select("conversion_goal")
+    .eq("product_id", productId)
+    .eq("status", "active")
+    .maybeSingle();
+  if (!program || program.conversion_goal !== "sale") {
     return NextResponse.json(
-      { error: "Only physical products use manual sale reporting — digital sales are captured automatically via Paystack." },
+      { error: "This product's campaign is not a sale-goal campaign — use the lead capture flow instead." },
       { status: 400 }
     );
   }
 
-  // Resolve the referring affiliate, if any, the same way the Paystack webhook does.
+  // Resolve the referring affiliate, if any, the same way the lead-capture flow does.
   let enrollment = null;
   if (referralCode) {
     const { data: enr } = await supabase
@@ -67,10 +74,8 @@ export async function POST(req) {
       product_id: productId,
       customer_id: customer.id,
       enrollment_id: enrollment?.id ?? null,
-      paystack_reference: null,
       amount_naira: amountNaira,
       status: "pending",
-      source: "manual",
       verification_status: "pending",
       proof_url: proofUrl ?? null,
       reported_by: reporterUser.id,

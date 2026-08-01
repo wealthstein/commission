@@ -16,7 +16,7 @@ export default function PromotionsPage() {
 
   return (
     <>
-      <PageHeader title="My Promotions" subtitle="Products you're promoting as an affiliate, and how each link is performing." />
+      <PageHeader title="My Promotions" subtitle="Products you are promoting as an affiliate, and how each link is performing." />
 
       <Paper variant="outlined" sx={{ borderColor: tokens.border, borderRadius: 3, overflow: "hidden" }}>
         {samplePromotions.map((p, i) => (

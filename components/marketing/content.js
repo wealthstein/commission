@@ -69,14 +69,14 @@ export const audienceContent = {
 export const faqByAudience = {
   business: [
     { q: "How does Commission make money?", a: "We take a percentage of the affiliate commission you set — never a cut of your product's sale price." },
-    { q: "Do I need to hold a wallet balance?", a: "No. Commission isn't a stored-value wallet. Paystack settles your sale proceeds directly to you." },
+    { q: "Do I need to hold a wallet balance?", a: "No. Commission is not a stored-value wallet. Paystack settles your sale proceeds directly to you." },
     { q: "Can I run more than 3 tiers?", a: "The platform supports up to 3 affiliate tiers per program, matching how most referral structures actually work." },
     { q: "What if a customer refunds?", a: "Any commission tied to a refunded transaction is automatically reversed before payout." },
   ],
   affiliate: [
-    { q: "Do I need a business account to become an affiliate?", a: "No — every Commission account can promote products, list its own, or both. There's just one account type." },
+    { q: "Do I need a business account to become an affiliate?", a: "No — every Commission account can promote products, list its own, or both. There is just one account type." },
     { q: "How do I get paid?", a: "Commissions are paid out to your bank account via Paystack once they clear the program's minimum payout threshold." },
-    { q: "What's a referral tier?", a: "If you refer another affiliate into a program, you earn a percentage of their sales too — up to 2 levels below you." },
+    { q: "What is a referral tier?", a: "If you refer another affiliate into a program, you earn a percentage of their sales too — up to 2 levels below you." },
     { q: "How long does my referral link stay credited to me?", a: "Each program sets its own attribution window (commonly 30 days) from when someone clicks your link." },
   ],
 };

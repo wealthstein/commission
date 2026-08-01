@@ -9,8 +9,8 @@ const PAGE_SIZE = 45000; // must match app/sitemap.js
  * GET /sitemap-index.xml
  *
  * next/sitemap's generateSitemaps() produces /sitemap/0.xml, /sitemap/1.xml,
- * etc, but doesn't publish an index of them. This route builds that index —
- * it's the one URL to hand to Google Search Console / Bing Webmaster Tools,
+ * etc, but does not publish an index of them. This route builds that index —
+ * it is the one URL to hand to Google Search Console / Bing Webmaster Tools,
  * and the one referenced from robots.js. Search engines then discover and
  * crawl every chunk (and therefore every product page) from here, which is
  * how a site can get hundreds of thousands of pages indexed quickly without

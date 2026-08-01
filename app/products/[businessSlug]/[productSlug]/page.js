@@ -4,6 +4,7 @@ import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { buildProductMetadata, buildProductJsonLd, buildBreadcrumbJsonLd, billingLabel, SITE_URL } from "@/lib/seo";
 import { tokens } from "@/lib/theme";
 import Link from "next/link";
+import LeadShortForm from "@/components/marketing/LeadShortForm";
 
 // ISR: pages regenerate in the background at most once an hour rather than
 // on every request, which is what makes hundreds of thousands of these
@@ -12,7 +13,7 @@ import Link from "next/link";
 export const revalidate = 3600;
 
 // Returning an empty array + leaving dynamicParams at its default (true)
-// means: don't try to pre-render all of them at build time (impossible at
+// means: do not try to pre-render all of them at build time (impossible at
 // this scale), but happily render+cache any slug pair on first request.
 // Swap in your highest-traffic products here if you want a handful
 // pre-built at deploy time.
@@ -138,7 +139,7 @@ export default async function ProductPage({ params }) {
           </Typography>
         )}
 
-        {product.product_type === "physical" && product.offline_payment_instructions && (
+        {product.offline_payment_instructions && (
           <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, borderColor: tokens.border, mb: 4, bgcolor: "#F1EFE7" }}>
             <Typography variant="caption" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 0.5 }}>
               HOW TO BUY
@@ -147,9 +148,13 @@ export default async function ProductPage({ params }) {
           </Paper>
         )}
 
-        <Button variant="contained" size="large" component={Link} href={`/?join=${product.id}`}>
-          Join this affiliate program
-        </Button>
+        {program?.conversion_goal === "lead" ? (
+          <LeadShortForm programId={program.id} productName={product.name} />
+        ) : (
+          <Button variant="contained" size="large" component={Link} href={`/?join=${product.id}`}>
+            Join this affiliate program
+          </Button>
+        )}
       </Container>
     </Box>
   );

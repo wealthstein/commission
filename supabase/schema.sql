@@ -1,4 +1,36 @@
 -- ============================================================================
+-- ⚠️  DANGER ZONE — DROPS EVERY TABLE AND ALL DATA IN IT ⚠️
+-- ------------------------------------------------------------------------
+-- This block exists so the whole file can be run repeatedly during active
+-- development without hitting "already exists" errors. It is DESTRUCTIVE —
+-- every row in every Commission table is gone the moment this runs.
+--
+-- DO NOT run this against a database with real user/business/transaction
+-- data. If you ever need to change the schema on a live database instead,
+-- delete this block and write a proper ALTER TABLE migration instead.
+-- ============================================================================
+drop table if exists payout_commissions cascade;
+drop table if exists payouts cascade;
+drop table if exists wallet_transactions cascade;
+drop table if exists commissions cascade;
+drop table if exists leads cascade;
+drop table if exists transactions cascade;
+drop table if exists customers cascade;
+drop table if exists referral_clicks cascade;
+drop table if exists affiliate_enrollments cascade;
+drop table if exists marketing_assets cascade;
+drop table if exists affiliate_programs cascade;
+drop table if exists products cascade;
+drop table if exists notify_requests cascade;
+drop table if exists waitlist_requests cascade;
+drop table if exists seo_keyword_targets cascade;
+drop table if exists user_referral_rewards cascade;
+drop table if exists businesses cascade;
+drop table if exists users cascade;
+drop function if exists fn_charge_wallet(uuid, numeric, text, uuid, uuid, text) cascade;
+drop function if exists fn_charge_wallet(uuid, numeric, text, uuid, uuid, text, numeric, numeric) cascade;
+
+-- ============================================================================
 -- Commission (commission.ng) — Core Schema
 -- Postgres / Supabase
 --
@@ -47,18 +79,38 @@ create table if not exists businesses (
   description     text,
   logo_url        text,
   website_url     text,
+  whatsapp_number text,                                 -- default WhatsApp number for lead follow-up; can be overridden per-campaign on affiliate_programs
   industry        text,                                -- e.g. HMO, HR Software, SaaS, Insurance, ISP
   plan            text not null default 'free' check (plan in ('free','pro','plus')),
   plan_renews_at  timestamptz,
-  paystack_subaccount_code text,                        -- for settlement split (DIGITAL products only)
-  -- PHYSICAL products only: since Commission never holds the sale proceeds,
-  -- someone still has to actually pay the affiliate their commission once a
-  -- sale is verified. 'business_pays_directly' = the business pays affiliates
-  -- themselves (Commission just shows them what's owed). 'commission_facilitates'
-  -- = the business remits affiliate payouts to Commission's balance for
-  -- Commission to disburse via the normal Paystack transfer flow.
-  physical_payout_mode text not null default 'business_pays_directly'
-                          check (physical_payout_mode in ('business_pays_directly','commission_facilitates')),
+  -- CAMPAIGN WALLET — used by LEAD-goal campaigns only. Customers never pay
+  -- Commission directly for a lead (there is no live payment event); instead
+  -- the business pre-funds this wallet via Paystack, and Commission deducts
+  -- from it the moment a lead is qualified — see fn_charge_wallet() below.
+  -- SALE-goal campaigns do NOT use this — see paystack_subaccount_code below
+  -- instead, where the customer's payment is split automatically at
+  -- checkout by Paystack itself.
+  wallet_balance_naira numeric(14,2) not null default 0 check (wallet_balance_naira >= 0),
+  -- SALE-goal campaigns only. The customer pays Commission directly at
+  -- checkout (see lib/checkout.js), and Paystack splits that single payment
+  -- automatically: the affiliate commission total stays with Commission's
+  -- main account (to later pay out affiliates + keep the platform fee),
+  -- and the rest is routed straight to this subaccount — the business's own
+  -- proceeds, same transaction, no manual transfer needed afterward. Set via
+  -- app/api/paystack/subaccount.
+  paystack_subaccount_code text,
+  -- Where a qualified lead's full details (name/phone/email/answers) get
+  -- forwarded to, since Commission never stores them (see the leads table).
+  -- If neither is set, forwarding falls back to the business owner's own
+  -- account email.
+  lead_notification_email text,
+  lead_webhook_url        text,
+  -- Landing-page branding for the two Commission-hosted campaign pages
+  -- (Short Form + Long Form). Which of these actually get applied is
+  -- gated by plan tier — see lib/branding.js. Small = Commission's own
+  -- look only, Medium = logo, Large = logo + brand color.
+  landing_logo_url      text,
+  landing_primary_color text,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
 );
@@ -74,22 +126,21 @@ create table if not exists products (
   name              text not null,
   slug              text not null,
   description       text,
-  category          text,                                -- see lib/categories.js for the physical/digital taxonomy
-  -- PHYSICAL: customer pays the business directly (off-platform or their own
-  --   checkout); Commission never touches the money. Revenue to Commission
-  --   is subscription-only — no platform fee is ever taken (see lib/pricingPlans.js).
-  -- DIGITAL: customer pays via Paystack THROUGH Commission; Commission auto-splits
-  --   funds, retains its plan-based platform fee, and pays affiliates automatically.
+  category          text,                                -- see lib/categories.js
+  -- Physical vs digital is now purely a CATEGORY distinction (electronics vs
+  -- SaaS) — it no longer determines payment flow. Every product's customer
+  -- pays the business directly (product_url), regardless of type. What
+  -- actually determines Commission's monetization mechanism is
+  -- affiliate_programs.conversion_goal (sale vs lead) — see below.
   product_type      text not null default 'digital' check (product_type in ('physical','digital')),
   price_naira       numeric(14,2) not null check (price_naira >= 0),
   billing_frequency text not null default 'one_time'
                       check (billing_frequency in ('one_time','monthly','quarterly','annual')),
   image_url         text,
-  product_url       text not null,                        -- where the customer completes purchase (Commission-hosted checkout for digital; the business's own site/WhatsApp/store for physical)
-  -- PHYSICAL ONLY: how a customer pays the business directly, and/or how a
-  -- sale gets verified (e.g. bank details, invoice requirement, POS reference).
-  -- Shown on the product's public page and used by the business to confirm
-  -- manually-reported sales (see transactions.source below).
+  product_url       text not null,                        -- where the customer completes purchase — ALWAYS the business's own site/WhatsApp/store; Commission is never the merchant of record
+  -- How a customer pays the business directly, and/or how a sale gets
+  -- verified for 'sale'-goal campaigns (e.g. bank details, invoice
+  -- requirement). Shown on the product's public Campaign Page.
   offline_payment_instructions text,
   status            text not null default 'draft' check (status in ('draft','active','paused','archived')),
   created_at        timestamptz not null default now(),
@@ -107,10 +158,39 @@ create table if not exists affiliate_programs (
   id                    uuid primary key default gen_random_uuid(),
   product_id            uuid not null references products(id) on delete cascade,
   commission_type       text not null check (commission_type in ('one_time','recurring')),
+  -- What Commission actually gets paid to track and charge for. The two
+  -- goals work completely differently:
+  --   'sale' -> the customer pays COMMISSION directly at a Commission-hosted
+  --     checkout (see lib/checkout.js, app/r/[code]). Paystack splits that
+  --     single payment automatically: the affiliate commission total stays
+  --     with Commission's main account (to pay out affiliates + keep the
+  --     platform fee), the rest is routed straight to the business's own
+  --     Paystack subaccount (businesses.paystack_subaccount_code) — no
+  --     wallet involved at all.
+  --   'lead' -> the customer never pays Commission anything; the business
+  --     pre-funds a WALLET instead (see fn_charge_wallet() below), and the
+  --     funnel (Campaign Page -> Short Form -> unique WhatsApp link -> Long
+  --     Form -> Qualified) is what charges it. See the `leads` table below.
+  conversion_goal       text not null default 'lead' check (conversion_goal in ('sale','lead')),
+  -- Required when conversion_goal = 'lead'. What the business is willing to
+  -- pay for ONE qualified lead — e.g. ₦5,000. The commission engine treats
+  -- this flat amount exactly like a sale amount (same tiers, same
+  -- plan-based platform fee math), and it's what gets deducted from the
+  -- wallet the moment a lead is marked qualified.
+  cost_per_qualified_lead_naira numeric(14,2),
+  -- Where the unique per-lead WhatsApp link points once someone submits the
+  -- Short Form. Falls back to businesses.whatsapp_number if not set here
+  -- (a business might route different campaigns to different sales teams).
+  whatsapp_number       text,
+  -- OPTIONAL advanced integration: a business with their own CRM can POST to
+  -- app/api/leads/[id]/qualify directly with this token instead of a human
+  -- filling out Commission's hosted Long Form page. Either path ends at the
+  -- same place — lead marked qualified, wallet charged.
+  postback_token        text default encode(gen_random_bytes(16), 'hex'),
   tier1_percent         numeric(5,2) not null check (tier1_percent >= 0),
   tier2_percent         numeric(5,2) not null default 0 check (tier2_percent >= 0),
   tier3_percent         numeric(5,2) not null default 0 check (tier3_percent >= 0),
-  platform_fee_percent  numeric(5,2) not null default 15,   -- fallback only; the BUSINESS'S PLAN (free=20%/pro=15%/plus=10%) is authoritative at charge time — see lib/pricingPlans.js
+  platform_fee_percent  numeric(5,2) not null default 15,   -- fallback only; the BUSINESS'S PLAN (small=20%/medium=15%/large=10%) is authoritative at charge time — see lib/pricingPlans.js
   attribution_days      integer not null default 30,        -- referral cookie/attribution window
   min_payout_naira      numeric(14,2) default 0,
   requires_approval     boolean not null default false,
@@ -118,8 +198,18 @@ create table if not exists affiliate_programs (
   status                text not null default 'active' check (status in ('draft','active','paused','ended')),
   created_at            timestamptz not null default now(),
   updated_at            timestamptz not null default now(),
-  -- Enforce max 3-tier structure and total <= 100%
-  constraint chk_total_commission check (tier1_percent + tier2_percent + tier3_percent <= 100)
+  -- Enforce max 3-tier structure. For a LEAD campaign these should sum to
+  -- exactly 100 (the whole lead fee is allocated across tiers, then the
+  -- platform fee is skimmed from each tier's share). For a SALE campaign
+  -- they represent each tier's cut of the sale, same as before.
+  constraint chk_total_commission check (tier1_percent + tier2_percent + tier3_percent <= 100),
+  constraint chk_lead_cost_required check (conversion_goal <> 'lead' or cost_per_qualified_lead_naira is not null),
+  -- Direct-sale campaigns must commit at least 10% of the sale to affiliates
+  -- in total across tiers — a floor so a business cannot list a sale
+  -- campaign with a token commission that is not worth an affiliate's time.
+  constraint chk_min_sale_commission check (
+    conversion_goal <> 'sale' or (tier1_percent + tier2_percent + tier3_percent) >= 10
+  )
 );
 
 create unique index if not exists idx_one_active_program_per_product
@@ -214,43 +304,89 @@ create table if not exists customers (
 );
 
 -- ----------------------------------------------------------------------------
--- TRANSACTIONS  (a Paystack charge — one-time sale or a recurring cycle)
+-- LEADS  (the trackable conversion event for a 'lead'-goal campaign)
+-- ----------------------------------------------------------------------------
+-- The funnel this table models:
+--   Visitor -> Campaign Page -> Short Form -> Lead (status='captured')
+--     -> unique WhatsApp link (whatsapp_ref embedded in the wa.me URL)
+--     -> business chats with them, sends the Long Form when ready to qualify
+--     -> Long Form submitted -> Lead (status='qualified')  <- BILLABLE MOMENT
+-- Qualifying a lead is what charges the business's wallet and runs the
+-- commission engine (see app/api/leads/[id]/qualify) — nothing is owed for
+-- a merely-captured lead, only a qualified one.
+-- ----------------------------------------------------------------------------
+create table if not exists leads (
+  id                uuid primary key default gen_random_uuid(),
+  program_id        uuid not null references affiliate_programs(id) on delete cascade,
+  click_id          uuid references referral_clicks(id),     -- which referral click this lead traces back to
+  enrollment_id     uuid not null references affiliate_enrollments(id),
+  -- Unique code embedded in the WhatsApp deep link (wa.me/...?text=...REF...)
+  -- so the business can tell which WhatsApp conversation belongs to which
+  -- lead, and so the public Long Form page (app/leads/[whatsappRef]/continue)
+  -- can find the right row without exposing the raw database id.
+  whatsapp_ref      text unique not null,
+  -- ------------------------------------------------------------------------
+  -- DELIBERATELY NO PII HERE. Commission owns the affiliates; each business
+  -- owns their leads. Name/phone/email/qualification answers are NEVER
+  -- written to this table — they are forwarded straight to the business
+  -- (their email or their own webhook/CRM, see lib/leadForwarding.js) and
+  -- then discarded from server memory. This row only tracks the ATTRIBUTION
+  -- and BILLING event, not the lead's identity.
+  -- ------------------------------------------------------------------------
+  forwarded_to      text check (forwarded_to in ('email','webhook','both','none')),
+  status            text not null default 'captured' check (status in ('captured','qualified','rejected')),
+  -- Snapshot of affiliate_programs.cost_per_qualified_lead_naira at the
+  -- moment of qualification — so a later change to the program's pricing
+  -- never retroactively changes what an already-qualified lead cost.
+  charge_amount_naira numeric(14,2),
+  qualified_at      timestamptz,
+  created_at        timestamptz not null default now()
+);
+
+create index if not exists idx_leads_program on leads(program_id);
+create index if not exists idx_leads_enrollment on leads(enrollment_id);
+create index if not exists idx_leads_click on leads(click_id);
+create index if not exists idx_leads_whatsapp_ref on leads(whatsapp_ref);
+
+-- ----------------------------------------------------------------------------
+-- TRANSACTIONS  (a self-reported SALE, for 'sale'-goal campaigns only)
+-- ----------------------------------------------------------------------------
+-- Customers always pay the business directly (see products.product_url) —
+-- there's no Paystack charge for Commission to hook into. The business logs
+-- the sale here, confirms it happened, and that confirmation charges the
+-- wallet (app/api/sales/report + app/api/sales/[id]/verify) — the same
+-- mechanism a 'lead' campaign uses when a lead is qualified.
 -- ----------------------------------------------------------------------------
 create table if not exists transactions (
   id                    uuid primary key default gen_random_uuid(),
   product_id            uuid not null references products(id),
   customer_id           uuid not null references customers(id),
   enrollment_id         uuid references affiliate_enrollments(id),  -- referring (tier-1) affiliate for this sale
-  paystack_reference     text unique,                        -- null for manually-reported PHYSICAL sales (no Paystack charge exists)
   amount_naira          numeric(14,2) not null check (amount_naira >= 0),
   status                text not null default 'pending'
                           check (status in ('pending','success','failed','refunded')),
   is_recurring_cycle    boolean not null default false,
-  -- DIGITAL sales arrive automatically via the Paystack webhook ('paystack').
-  -- PHYSICAL sales have no webhook at all — the business logs the sale
-  -- themselves after being paid directly by the customer ('manual').
-  source                text not null default 'paystack' check (source in ('paystack','manual')),
-  -- Manual (physical) sales start 'pending' until the business confirms the
-  -- sale actually happened ("Business confirms sale" in the physical-product
-  -- flow) — only then does the commission engine run. Paystack-sourced sales
-  -- don't use this column (verification is the webhook's signature check).
-  verification_status   text check (verification_status in ('pending','verified','rejected')),
-  proof_url             text,                                -- receipt/invoice/screenshot for a manually-reported sale
-  reported_by           uuid references users(id),           -- which business user logged this manual sale
+  -- Starts 'pending' until the business confirms the sale actually happened
+  -- — only then does the commission engine run and the wallet get charged.
+  verification_status   text not null default 'pending' check (verification_status in ('pending','verified','rejected')),
+  proof_url             text,                                -- receipt/invoice/screenshot for the reported sale
+  reported_by           uuid references users(id),           -- which business user logged this sale
   occurred_at           timestamptz not null default now(),
   created_at            timestamptz not null default now()
 );
 
 create index if not exists idx_transactions_product on transactions(product_id);
 create index if not exists idx_transactions_enrollment on transactions(enrollment_id);
-create unique index if not exists idx_transactions_reference on transactions(paystack_reference);
 
 -- ----------------------------------------------------------------------------
 -- COMMISSIONS  (ledger — one row PER TIER PER TRANSACTION)
 -- ----------------------------------------------------------------------------
 create table if not exists commissions (
   id                    uuid primary key default gen_random_uuid(),
-  transaction_id        uuid not null references transactions(id) on delete cascade,
+  -- Exactly one of these two is set — a commission is earned from either a
+  -- verified SALE or a verified LEAD, never both.
+  transaction_id        uuid references transactions(id) on delete cascade,
+  lead_id               uuid references leads(id) on delete cascade,
   enrollment_id         uuid not null references affiliate_enrollments(id),
   tier                  smallint not null check (tier between 1 and 3),
   commission_percent    numeric(5,2) not null,
@@ -259,11 +395,19 @@ create table if not exists commissions (
   platform_fee_naira    numeric(14,2) not null,
   affiliate_payout_naira numeric(14,2) not null,   -- commission_amount - platform_fee
   payout_status         text not null default 'pending'
-                          check (payout_status in ('pending','initiated','paid','failed','reversed','business_handles')),
+                          check (payout_status in ('pending','initiated','paid','failed','reversed')),
   paystack_transfer_code text,
   created_at            timestamptz not null default now(),
-  unique (transaction_id, tier)
+  constraint chk_exactly_one_source check (
+    (transaction_id is not null and lead_id is null) or
+    (transaction_id is null and lead_id is not null)
+  )
 );
+
+create unique index if not exists idx_commissions_one_per_transaction_tier
+  on commissions(transaction_id, tier) where transaction_id is not null;
+create unique index if not exists idx_commissions_one_per_lead_tier
+  on commissions(lead_id, tier) where lead_id is not null;
 
 create index if not exists idx_commissions_enrollment on commissions(enrollment_id);
 create index if not exists idx_commissions_transaction on commissions(transaction_id);
@@ -291,6 +435,88 @@ create table if not exists payout_commissions (
   commission_id   uuid not null references commissions(id) on delete cascade,
   primary key (payout_id, commission_id)
 );
+
+-- ----------------------------------------------------------------------------
+-- WALLET TRANSACTIONS  (the ledger behind businesses.wallet_balance_naira)
+-- ----------------------------------------------------------------------------
+-- Every credit (a Paystack top-up) and every debit (a qualified lead or
+-- verified sale) is recorded here, in addition to just updating the running
+-- balance — this is the audit trail a business (and Commission) can point
+-- to for "why is my balance what it is."
+-- ----------------------------------------------------------------------------
+create table if not exists wallet_transactions (
+  id                  uuid primary key default gen_random_uuid(),
+  business_id         uuid not null references businesses(id) on delete cascade,
+  type                text not null check (type in ('topup','qualified_lead_charge','sale_charge','refund','adjustment')),
+  -- Positive = money added to the wallet (topup, refund). Negative = money
+  -- deducted (a charge). balance_after_naira is a point-in-time snapshot so
+  -- a business's statement is reconstructable without replaying every row.
+  amount_naira        numeric(14,2) not null,
+  balance_after_naira  numeric(14,2) not null,
+  -- Set on 'topup' rows only: what the business actually paid via Paystack
+  -- (gross_amount_naira) versus what Commission kept as its plan-based fee
+  -- (platform_fee_naira) versus what actually landed in the wallet
+  -- (amount_naira above = gross - fee). This is where the fee is taken now
+  -- — NOT per-lead/per-sale — so a qualified lead or verified sale deducts
+  -- its full commission straight to affiliates with no further fee.
+  gross_amount_naira    numeric(14,2),
+  platform_fee_naira    numeric(14,2),
+  related_lead_id      uuid references leads(id),
+  related_transaction_id uuid references transactions(id),
+  paystack_reference   text,                                -- set for 'topup' rows
+  created_at           timestamptz not null default now()
+);
+
+create index if not exists idx_wallet_txns_business on wallet_transactions(business_id);
+create index if not exists idx_wallet_txns_type on wallet_transactions(type);
+
+-- Atomically credit or debit a business's wallet and log the ledger row in
+-- one round trip, with row locking so two simultaneous qualifications can
+-- never both succeed against a balance that only covers one of them.
+-- p_amount is SIGNED and is the NET change to the wallet balance: for a
+-- topup this is the gross payment MINUS the platform fee (pass p_gross and
+-- p_fee too, purely for the audit trail — they do not affect the balance
+-- math themselves, p_amount already has the fee baked in). Raises an
+-- exception (and rolls back) if a debit would take the balance below zero.
+create or replace function fn_charge_wallet(
+  p_business_id uuid,
+  p_amount numeric,
+  p_type text,
+  p_lead_id uuid default null,
+  p_transaction_id uuid default null,
+  p_paystack_reference text default null,
+  p_gross_amount numeric default null,
+  p_platform_fee numeric default null
+) returns wallet_transactions as $$
+declare
+  v_balance numeric;
+  v_txn wallet_transactions;
+begin
+  select wallet_balance_naira into v_balance from businesses where id = p_business_id for update;
+  if v_balance is null then
+    raise exception 'Business % not found', p_business_id;
+  end if;
+  if v_balance + p_amount < 0 then
+    raise exception 'Insufficient wallet balance: have %, need %', v_balance, -p_amount;
+  end if;
+
+  update businesses set wallet_balance_naira = wallet_balance_naira + p_amount where id = p_business_id;
+
+  insert into wallet_transactions (
+    business_id, type, amount_naira, balance_after_naira,
+    related_lead_id, related_transaction_id, paystack_reference,
+    gross_amount_naira, platform_fee_naira
+  )
+  values (
+    p_business_id, p_type, p_amount, v_balance + p_amount,
+    p_lead_id, p_transaction_id, p_paystack_reference,
+    p_gross_amount, p_platform_fee
+  )
+  returning * into v_txn;
+
+  return v_txn;
+end;
+$$ language plpgsql;
 
 -- ----------------------------------------------------------------------------
 -- USER REFERRAL PAYOUTS  ("pay users for referring other users into their
@@ -386,25 +612,32 @@ alter table commissions enable row level security;
 alter table payouts enable row level security;
 
 -- Users can read/update their own row
+drop policy if exists users_self_select on users;
 create policy users_self_select on users for select using (auth.uid() = auth_user_id);
+drop policy if exists users_self_update on users;
 create policy users_self_update on users for update using (auth.uid() = auth_user_id);
 
 -- Businesses: owners manage their own; anyone can read active listings via products join (handled in app layer)
+drop policy if exists businesses_owner_all on businesses;
 create policy businesses_owner_all on businesses for all
   using (owner_id in (select id from users where auth_user_id = auth.uid()));
 
 -- Products: publicly readable when active, owner can manage
+drop policy if exists products_public_read on products;
 create policy products_public_read on products for select using (status = 'active');
+drop policy if exists products_owner_manage on products;
 create policy products_owner_manage on products for all
   using (business_id in (
     select id from businesses where owner_id in (select id from users where auth_user_id = auth.uid())
   ));
 
 -- Affiliate enrollments: an affiliate can see their own; program owner can see all enrollments in their program
+drop policy if exists enrollments_self_select on affiliate_enrollments;
 create policy enrollments_self_select on affiliate_enrollments for select
   using (affiliate_id in (select id from users where auth_user_id = auth.uid()));
 
 -- Commissions: affiliate can see their own earned commissions
+drop policy if exists commissions_self_select on commissions;
 create policy commissions_self_select on commissions for select
   using (enrollment_id in (
     select id from affiliate_enrollments where affiliate_id in (
@@ -413,16 +646,59 @@ create policy commissions_self_select on commissions for select
   ));
 
 -- Payouts: affiliate can see their own payouts
+drop policy if exists payouts_self_select on payouts;
 create policy payouts_self_select on payouts for select
   using (affiliate_id in (select id from users where auth_user_id = auth.uid()));
 
--- NOTE: All writes to transactions/commissions/payouts happen server-side via
--- the service-role key (Paystack webhook handler), bypassing RLS by design.
+-- NOTE: All writes to transactions/commissions/payouts/leads/wallet_transactions
+-- happen server-side via the service-role key (Paystack webhook, lead
+-- qualification, sale verification, payout batching), bypassing RLS by design.
+
+alter table leads enable row level security;
+drop policy if exists leads_program_owner_select on leads;
+create policy leads_program_owner_select on leads for select
+  using (program_id in (
+    select ap.id from affiliate_programs ap
+    join products p on p.id = ap.product_id
+    join businesses b on b.id = p.business_id
+    where b.owner_id in (select id from users where auth_user_id = auth.uid())
+  ));
+
+alter table wallet_transactions enable row level security;
+drop policy if exists wallet_txns_owner_select on wallet_transactions;
+create policy wallet_txns_owner_select on wallet_transactions for select
+  using (business_id in (
+    select id from businesses where owner_id in (select id from users where auth_user_id = auth.uid())
+  ));
 
 alter table seo_keyword_targets enable row level security;
+drop policy if exists seo_targets_public_read on seo_keyword_targets;
 create policy seo_targets_public_read on seo_keyword_targets for select using (true);
 
 alter table notify_requests enable row level security;
+drop policy if exists notify_requests_public_insert on notify_requests;
 create policy notify_requests_public_insert on notify_requests for insert with check (true);
+
+-- ============================================================================
+-- WAITLIST REQUESTS (internal name only — never shown to users, who see
+-- "Request an account" style copy instead, see lib/ctaVariants.js). Since
+-- the dashboard is not open for general signup yet, this is the actual
+-- pre-launch conversion mechanism: the lead-magnet form embedded on every
+-- industry, program, and comparison page (components/marketing/RequestAccountForm.js).
+-- ============================================================================
+create table if not exists waitlist_requests (
+  id           uuid primary key default gen_random_uuid(),
+  first_name   text not null,
+  email        text not null,
+  phone        text not null,
+  role         text not null check (role in ('business','affiliate')),
+  source_page  text,                     -- which page slug this was submitted from, for attribution
+  created_at   timestamptz not null default now(),
+  unique (email, role)
+);
+
+alter table waitlist_requests enable row level security;
+drop policy if exists waitlist_requests_public_insert on waitlist_requests;
+create policy waitlist_requests_public_insert on waitlist_requests for insert with check (true);
 -- Deliberately no select policy — this is a write-only capture; reads happen
 -- server-side via the service-role key.

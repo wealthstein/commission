@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Container, Typography, Button, Stack, Grid } from "@mui/material";
+import { Box, Breadcrumbs, CardMedia, Container, Typography, Button, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
 export function CTASection({ content, onPrimaryCta }) {
@@ -37,41 +37,65 @@ export function CTASection({ content, onPrimaryCta }) {
 
 export function Footer() {
   return (
-    <Box component="footer" sx={{ borderTop: `1px solid ${tokens.border}`, py: 5 }}>
-      <Container maxWidth="lg">
-        <Grid container spacing={4} justifyContent="space-between">
-          <Grid item xs={12} sm={4}>
-            <Typography fontWeight={700} sx={{ mb: 1 }}>
-              Commission
-            </Typography>
-            <Typography variant="body2" sx={{ color: tokens.muted, maxWidth: 260 }}>
-              Nigeria&apos;s affiliate marketplace. All amounts on the platform are in Naira (₦).
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={7}>
-            <Stack direction="row" spacing={4} flexWrap="wrap" justifyContent={{ xs: "flex-start", sm: "flex-end" }}>
-              <Stack spacing={1}>
-                <Typography variant="caption" fontWeight={700} sx={{ color: tokens.muted }}>
-                  PRODUCT
-                </Typography>
-                <Typography variant="body2" component="a" href="#benefits">Benefits</Typography>
-                <Typography variant="body2" component="a" href="#how-it-works">How it works</Typography>
-                <Typography variant="body2" component="a" href="#faq">FAQ</Typography>
-              </Stack>
-              <Stack spacing={1}>
-                <Typography variant="caption" fontWeight={700} sx={{ color: tokens.muted }}>
-                  COMPANY
-                </Typography>
-                <Typography variant="body2" component="a" href="mailto:hello@commission.ng">Contact</Typography>
-                <Typography variant="body2" component="a" href="/terms">Terms</Typography>
-                <Typography variant="body2" component="a" href="/privacy">Privacy</Typography>
-              </Stack>
-            </Stack>
-          </Grid>
-        </Grid>
-        <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 4 }}>
-          © {new Date().getFullYear()} Commission. commission.ng
-        </Typography>
+    <Box component="footer" sx={{ borderTop: `1px solid ${tokens.border}`, py: 6 }}>
+      <Container maxWidth="lg" sx={{ textAlign: "center" }}>
+        <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 4 }}>
+          <Box style={{ display: 'flex', justifyContent: 'center' }}>
+            <CardMedia
+              sx={{ height: 28, width: 28, borderRadius: '4px' }}
+              image={`/circle.svg`}
+              alt="detail"
+            />
+          </Box>
+        </Stack>
+
+        <Box
+          sx={{
+            bgcolor: tokens.ink,
+            color: "#fff",
+            borderRadius: 4,
+            p: { xs: 3, md: 4 },
+            mb: 4,
+            maxWidth: 560,
+            mx: "auto",
+          }}
+        >
+          <Typography fontWeight={700} sx={{ mb: 0.5, fontSize: 15 }}>
+            Ready to get started?
+          </Typography>
+          <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)", mb: 2.5, fontSize: 13 }}>
+            Request early access as a business or an affiliate.
+          </Typography>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} justifyContent="center">
+            <Button variant="contained" href="/?for=business" size="small" sx={{ bgcolor: tokens.brand, color: tokens.brandInk, "&:hover": { bgcolor: "#E6B800" } }}>
+              For businesses
+            </Button>
+            <Button variant="outlined" href="/?for=affiliate" size="small" sx={{ borderColor: "rgba(255,255,255,0.4)", color: "#fff" }}>
+              For affiliates
+            </Button>
+          </Stack>
+        </Box>
+
+        <Breadcrumbs
+          separator="•"
+          aria-label="breadcrumb"
+          sx={{
+            '& ol': {
+              justifyContent: 'center',
+              fontSize: '12px',
+              margin: 'auto',
+              textDecoration: 'none'
+            }
+          }}
+        >
+          <Typography variant="caption" sx={{ color: tokens.muted, fontSize: 10 }}>
+            © {new Date().getFullYear()} Commission
+          </Typography>
+          <Typography variant="caption" sx={{ color: tokens.muted, fontSize: 10 }}>
+            Built with ❤️ in Chicago, Illinois
+          </Typography>
+        </Breadcrumbs>
+
       </Container>
     </Box>
   );

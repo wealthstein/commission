@@ -104,6 +104,71 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
   );
 }
 
+// Production: fetch from businesses.wallet_balance_naira for the signed-in user's business.
+const sampleWalletBalance = 32000;
+
+function WalletCard({ businessId, balanceNaira }) {
+  const [amount, setAmount] = useState("");
+  const [state, setState] = useState({ loading: false, error: null });
+
+  async function handleTopup(e) {
+    e.preventDefault();
+    setState({ loading: true, error: null });
+    try {
+      const res = await fetch("/api/wallet/topup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, amountNaira: Number(amount) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to start top-up");
+      window.location.href = data.authorizationUrl;
+    } catch (err) {
+      setState({ loading: false, error: err.message });
+    }
+  }
+
+  return (
+    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
+      <Typography fontWeight={700} sx={{ mb: 0.5 }}>
+        Campaign wallet
+      </Typography>
+      <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+        Commission deducts from this balance automatically whenever a lead is qualified or a sale is verified — top it up
+        anytime via Paystack.
+      </Typography>
+
+      <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: "#F1EFE7", mb: 2.5 }}>
+        <Typography variant="caption" sx={{ color: tokens.muted }}>
+          Current balance
+        </Typography>
+        <Typography variant="h4" sx={{ fontSize: 30 }}>
+          ₦{balanceNaira.toLocaleString()}
+        </Typography>
+      </Box>
+
+      {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
+
+      <Box component="form" onSubmit={handleTopup}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+          <TextField
+            label="Amount to add (₦)"
+            type="number"
+            size="small"
+            fullWidth
+            required
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+          <Button type="submit" variant="contained" disabled={state.loading} sx={{ flexShrink: 0 }}>
+            {state.loading ? <CircularProgress size={20} /> : "Add funds"}
+          </Button>
+        </Stack>
+      </Box>
+    </Paper>
+  );
+}
+
 export default function AccountPage() {
   return (
     <>
@@ -135,7 +200,7 @@ export default function AccountPage() {
           Business profile
         </Typography>
         <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-          Only needed if you&#39;re listing products. Every Commission account can act as a business, an affiliate, or both.
+          Only needed if you are listing products. Every Commission account can act as a business, an affiliate, or both.
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
@@ -166,9 +231,13 @@ export default function AccountPage() {
         }}
       />
 
+      {/* Only needed for SALE-goal campaigns — Paystack routes the
+          business's own proceeds here automatically at checkout, split from
+          the affiliate commission in the same transaction. Not used at all
+          for LEAD-goal campaigns, which use the Campaign Wallet instead. */}
       <BankConnectForm
         title="Business settlement account"
-        description="Where Paystack sends your product-sale proceeds directly, minus any affiliate commissions."
+        description="Required for direct-sale campaigns — this is where your share of each sale lands automatically, the moment a customer pays."
         submitLabel="Connect settlement account"
         extraFields={[{ name: "businessId", label: "Business ID" }]}
         onSubmit={async ({ bankCode, accountNumber, businessId }) => {
@@ -182,6 +251,10 @@ export default function AccountPage() {
           return data;
         }}
       />
+
+      {/* businessId below is a placeholder — production should read the signed-in
+          user's actual business id (e.g. from a server-fetched businesses row) */}
+      <WalletCard businessId="YOUR_BUSINESS_ID" balanceNaira={sampleWalletBalance} />
 
       <Stack direction="row" justifyContent="flex-end">
         <Button variant="contained" size="large">

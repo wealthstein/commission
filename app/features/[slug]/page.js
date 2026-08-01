@@ -1,0 +1,32 @@
+import { notFound } from "next/navigation";
+import { Box } from "@mui/material";
+import { features } from "@/lib/siteSections";
+import { buildSectionItemMetadata } from "@/lib/seo";
+import MarketingPageShell from "@/components/marketing/MarketingPageShell";
+import InternalLinksSection from "@/components/marketing/InternalLinksSection";
+import FeaturePageContent from "@/components/marketing/FeaturePageContent";
+
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  return features.map((item) => ({ slug: item.slug }));
+}
+
+export async function generateMetadata({ params }) {
+  const item = features.find((i) => i.slug === params.slug);
+  if (!item) return { title: "Not found | Commission" };
+  return buildSectionItemMetadata("features", item);
+}
+
+export default function FeaturesDetailPage({ params }) {
+  const item = features.find((i) => i.slug === params.slug);
+  if (!item) notFound();
+
+  return (
+    <MarketingPageShell internalLinks={<InternalLinksSection />}>
+      <Box sx={{ py: { xs: 6, md: 9 } }}>
+        <FeaturePageContent item={item} sourcePage={`/features/${item.slug}`} />
+      </Box>
+    </MarketingPageShell>
+  );
+}

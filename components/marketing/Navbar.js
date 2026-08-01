@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AppBar, Toolbar, Box, CardMedia, Typography, Button, ToggleButtonGroup, ToggleButton, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
@@ -13,13 +14,9 @@ const NAV_LINKS = [
 export default function Navbar({ audience, onAudienceChange, onSignIn }) {
   const links = NAV_LINKS.filter((link) => !link.businessOnly || audience === "business");
   return (
-    <AppBar
-      position="sticky"
-      elevation={0}
-      sx={{ bgcolor: "rgba(250,249,245,0.85)", backdropFilter: "blur(8px)", borderBottom: `1px solid ${tokens.border}` }}
-    >
-      <Toolbar sx={{ maxWidth: 1160, mx: "auto", width: "100%", py: 1.25, px: { xs: 3, sm: 5, md: 8 }, gap: 3 }}>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
+    <AppBar position="sticky" elevation={0} sx={{ bgcolor: "rgba(250,249,245,0.85)", backdropFilter: "blur(8px)" }}>
+      <Toolbar sx={{ maxWidth: 1060, mx: "auto", width: "100%", py: 1.25, px: { xs: 3, sm: 5, md: 8, lg: 10 }, gap: 3 }}>
+        <Stack component={Link} href="/" direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0, textDecoration: "none" }}>
           <Box style={{ display: 'flex', justifyContent: 'center' }}>
             <CardMedia
               sx={{ height: 28, width: 28, borderRadius: '4px' }}
@@ -79,9 +76,10 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
         </ToggleButtonGroup>
 
         <Button variant="contained" onClick={onSignIn} sx={{ display: { xs: "none", sm: "inline-flex" } }}>
-          Sign in
+          Get started
         </Button>
       </Toolbar>
     </AppBar>
   );
 }
+

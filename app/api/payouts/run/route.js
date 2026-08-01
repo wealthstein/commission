@@ -11,7 +11,7 @@ import { sendPayoutInitiatedEmail } from "@/lib/email";
  * each program's minimum payout threshold (TRD section 11), and initiates
  * the Paystack transfer.
  *
- * Protect this route with CRON_SECRET so it can't be triggered by anyone
+ * Protect this route with CRON_SECRET so it cannot be triggered by anyone
  * who finds the URL.
  */
 // Vercel Cron Jobs call scheduled routes with GET; POST is kept for manual/admin triggering.

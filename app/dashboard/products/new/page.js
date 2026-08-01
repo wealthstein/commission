@@ -17,6 +17,8 @@ import {
 } from "@mui/material";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import LaptopMacRoundedIcon from "@mui/icons-material/LaptopMacRounded";
+import PersonSearchRoundedIcon from "@mui/icons-material/PersonSearchRounded";
+import ShoppingBagRoundedIcon from "@mui/icons-material/ShoppingBagRounded";
 import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
@@ -31,6 +33,7 @@ const BILLING = [
 
 const DEFAULTS = {
   product_type: "digital",
+  conversion_goal: "lead",
   name: "",
   category: "",
   description: "",
@@ -38,10 +41,12 @@ const DEFAULTS = {
   billing_frequency: "one_time",
   product_url: "",
   offline_payment_instructions: "",
+  whatsapp_number: "",
+  cost_per_qualified_lead: "",
   commission_type: "one_time",
-  tier1: 8,
-  tier2: 5,
-  tier3: 2,
+  tier1: 60,
+  tier2: 25,
+  tier3: 15,
 };
 
 export default function NewProductPage() {
@@ -49,6 +54,7 @@ export default function NewProductPage() {
   const [status, setStatus] = useState({ loading: false, error: null, success: false });
 
   const isPhysical = form.product_type === "physical";
+  const isLead = form.conversion_goal === "lead";
   const totalCommission = Number(form.tier1 || 0) + Number(form.tier2 || 0) + Number(form.tier3 || 0);
   const categoryOptions = categoriesForType(form.product_type);
 
@@ -56,18 +62,18 @@ export default function NewProductPage() {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  function selectProductType(type) {
-    // Switching type resets fields that don't apply to the new type, so a
-    // half-filled physical-only field can't silently leak into a digital
-    // product (or vice versa).
-    setForm({
-      ...DEFAULTS,
-      product_type: type,
-      name: form.name,
-      description: form.description,
-      price: form.price,
-      product_url: form.product_url,
-    });
+  function selectConversionGoal(goal) {
+    // Switching goal resets the fields that only make sense for one of them
+    // — a lead campaign's tiers default to summing to 100 (the whole lead
+    // fee gets allocated), a sale campaign's default to a realistic
+    // percentage of the sale price.
+    setForm((f) => ({
+      ...f,
+      conversion_goal: goal,
+      tier1: goal === "lead" ? 60 : 8,
+      tier2: goal === "lead" ? 25 : 5,
+      tier3: goal === "lead" ? 15 : 2,
+    }));
   }
 
   async function handleSubmit(e) {
@@ -75,7 +81,19 @@ export default function NewProductPage() {
     setStatus({ loading: true, error: null, success: false });
 
     if (totalCommission > 100) {
-      setStatus({ loading: false, error: "Total affiliate commission across all tiers can't exceed 100%.", success: false });
+      setStatus({ loading: false, error: "Total affiliate commission across all tiers cannot exceed 100%.", success: false });
+      return;
+    }
+    if (!isLead && totalCommission < 10) {
+      setStatus({
+        loading: false,
+        error: "Direct-sale campaigns must commit at least 10% total commission across tiers.",
+        success: false,
+      });
+      return;
+    }
+    if (isLead && !form.cost_per_qualified_lead) {
+      setStatus({ loading: false, error: "Set a cost per qualified lead for a lead campaign.", success: false });
       return;
     }
 
@@ -105,8 +123,9 @@ export default function NewProductPage() {
         businessId = newBusiness.id;
       }
 
-      // 2. Create the product. Physical/digital-specific fields are only
-      // sent when relevant — see the Product Type toggle above.
+      // 2. Create the product. Customers always pay you directly (product_url,
+      // offline_payment_instructions) regardless of physical vs digital —
+      // that toggle now only affects which categories are available.
       const { data: product, error: productError } = await supabase
         .from("products")
         .insert({
@@ -119,18 +138,21 @@ export default function NewProductPage() {
           price_naira: Number(form.price),
           billing_frequency: isPhysical ? "one_time" : form.billing_frequency,
           product_url: form.product_url,
-          offline_payment_instructions: isPhysical ? form.offline_payment_instructions : null,
+          offline_payment_instructions: form.offline_payment_instructions || null,
           status: "active",
         })
         .select()
         .single();
       if (productError) throw productError;
 
-      // 3. Launch the affiliate program. Physical products only ever use
-      // one-time commission (no recurring billing exists for a one-off sale).
+      // 3. Launch the campaign. A lead campaign has no "commission_type" —
+      // there is nothing to recur, only sale-goal campaigns can be recurring.
       const { error: programError } = await supabase.from("affiliate_programs").insert({
         product_id: product.id,
-        commission_type: isPhysical ? "one_time" : form.commission_type,
+        conversion_goal: form.conversion_goal,
+        commission_type: isLead ? "one_time" : form.commission_type,
+        cost_per_qualified_lead_naira: isLead ? Number(form.cost_per_qualified_lead) : null,
+        whatsapp_number: isLead ? form.whatsapp_number || null : null,
         tier1_percent: Number(form.tier1),
         tier2_percent: Number(form.tier2),
         tier3_percent: Number(form.tier3),
@@ -150,9 +172,9 @@ export default function NewProductPage() {
 
   return (
     <>
-      <PageHeader title="New product" subtitle="List a product and launch its affiliate program in one step." />
+      <PageHeader title="New product" subtitle="List a product and launch its campaign in one step." />
 
-      {status.success && <Alert severity="success" sx={{ mb: 3 }}>Product listed and affiliate program launched.</Alert>}
+      {status.success && <Alert severity="success" sx={{ mb: 3 }}>Product listed and campaign launched.</Alert>}
       {status.error && <Alert severity="error" sx={{ mb: 3 }}>{status.error}</Alert>}
 
       <Box component="form" onSubmit={handleSubmit}>
@@ -161,37 +183,48 @@ export default function NewProductPage() {
             Product type
           </Typography>
           <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-            This determines how customers pay and how Commission makes money from this product.
+            Just determines which categories are available below — customers always pay you directly either way.
           </Typography>
 
           <ToggleButtonGroup
             value={form.product_type}
             exclusive
-            onChange={(_, v) => v && selectProductType(v)}
+            onChange={(_, v) => v && update("product_type", v)}
             sx={{ width: "100%", gap: 2, "& .MuiToggleButtonGroup-grouped": { border: `1px solid ${tokens.border} !important`, borderRadius: "12px !important" } }}
           >
             <ToggleButton
               value="physical"
-              sx={{
-                flex: 1,
-                flexDirection: "column",
-                alignItems: "flex-start",
-                textTransform: "none",
-                p: 2.5,
-                gap: 0.5,
-                "&.Mui-selected": { bgcolor: tokens.brand, "&:hover": { bgcolor: tokens.brand } },
-              }}
+              sx={{ flex: 1, textTransform: "none", p: 2, gap: 1, "&.Mui-selected": { bgcolor: tokens.brand, "&:hover": { bgcolor: tokens.brand } } }}
             >
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Inventory2RoundedIcon fontSize="small" />
-                <Typography fontWeight={700}>Physical Product</Typography>
-              </Stack>
-              <Typography variant="caption" sx={{ color: form.product_type === "physical" ? tokens.brandInk : tokens.muted, textAlign: "left" }}>
-                Electronics, furniture, cars, real estate, fashion, beauty, appliances. Customer pays you directly — subscription-only revenue for Commission.
-              </Typography>
+              <Inventory2RoundedIcon fontSize="small" />
+              <Typography fontWeight={700}>Physical</Typography>
             </ToggleButton>
             <ToggleButton
               value="digital"
+              sx={{ flex: 1, textTransform: "none", p: 2, gap: 1, "&.Mui-selected": { bgcolor: tokens.brand, "&:hover": { bgcolor: tokens.brand } } }}
+            >
+              <LaptopMacRoundedIcon fontSize="small" />
+              <Typography fontWeight={700}>Digital</Typography>
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Paper>
+
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
+          <Typography fontWeight={700} sx={{ mb: 0.5 }}>
+            Campaign goal
+          </Typography>
+          <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+            This is what actually determines how Commission tracks and charges for results — pick what you are trying to get more of.
+          </Typography>
+
+          <ToggleButtonGroup
+            value={form.conversion_goal}
+            exclusive
+            onChange={(_, v) => v && selectConversionGoal(v)}
+            sx={{ width: "100%", gap: 2, "& .MuiToggleButtonGroup-grouped": { border: `1px solid ${tokens.border} !important`, borderRadius: "12px !important" } }}
+          >
+            <ToggleButton
+              value="lead"
               sx={{
                 flex: 1,
                 flexDirection: "column",
@@ -203,11 +236,33 @@ export default function NewProductPage() {
               }}
             >
               <Stack direction="row" spacing={1} alignItems="center">
-                <LaptopMacRoundedIcon fontSize="small" />
-                <Typography fontWeight={700}>Digital Product</Typography>
+                <PersonSearchRoundedIcon fontSize="small" />
+                <Typography fontWeight={700}>Leads</Typography>
               </Stack>
-              <Typography variant="caption" sx={{ color: form.product_type === "digital" ? tokens.brandInk : tokens.muted, textAlign: "left" }}>
-                SaaS, HR software, HMO, insurance, internet, courses, memberships. Paid via Paystack through Commission — automatic split + payouts.
+              <Typography variant="caption" sx={{ color: isLead ? tokens.brandInk : tokens.muted, textAlign: "left" }}>
+                Visitor fills a short form, gets a WhatsApp link, you qualify them when ready. You pay a flat amount per
+                qualified lead — deducted from your campaign wallet.
+              </Typography>
+            </ToggleButton>
+            <ToggleButton
+              value="sale"
+              sx={{
+                flex: 1,
+                flexDirection: "column",
+                alignItems: "flex-start",
+                textTransform: "none",
+                p: 2.5,
+                gap: 0.5,
+                "&.Mui-selected": { bgcolor: tokens.brand, "&:hover": { bgcolor: tokens.brand } },
+              }}
+            >
+              <Stack direction="row" spacing={1} alignItems="center">
+                <ShoppingBagRoundedIcon fontSize="small" />
+                <Typography fontWeight={700}>Sales</Typography>
+              </Stack>
+              <Typography variant="caption" sx={{ color: !isLead ? tokens.brandInk : tokens.muted, textAlign: "left" }}>
+                Customer buys directly from you, you confirm the sale, commission is calculated as a % of the sale —
+                deducted from your campaign wallet.
               </Typography>
             </ToggleButton>
           </ToggleButtonGroup>
@@ -240,7 +295,7 @@ export default function NewProductPage() {
                 onChange={(e) => update("description", e.target.value)}
               />
             </Grid>
-            <Grid item xs={12} sm={isPhysical ? 6 : 4}>
+            <Grid item xs={12} sm={4}>
               <TextField
                 label="Price (₦)"
                 type="number"
@@ -248,10 +303,10 @@ export default function NewProductPage() {
                 required
                 value={form.price}
                 onChange={(e) => update("price", e.target.value)}
+                helperText={isLead ? "Shown on your Campaign Page — not what you are billed for leads" : undefined}
               />
             </Grid>
 
-            {/* DIGITAL ONLY: billing frequency (physical sales are always one-time) */}
             {!isPhysical && (
               <Grid item xs={12} sm={4}>
                 <TextField
@@ -270,57 +325,78 @@ export default function NewProductPage() {
               </Grid>
             )}
 
-            <Grid item xs={12} sm={isPhysical ? 6 : 4}>
+            <Grid item xs={12} sm={isPhysical ? 8 : 4}>
               <TextField
-                label={isPhysical ? "Where customers buy (your site, WhatsApp, store)" : "Purchase URL"}
+                label="Where customers buy (your site, WhatsApp, store)"
                 fullWidth
                 required
-                placeholder={isPhysical ? "https://wa.me/234..." : "https://yourproduct.com/checkout"}
+                placeholder="https://wa.me/234... or https://yoursite.com"
                 value={form.product_url}
                 onChange={(e) => update("product_url", e.target.value)}
               />
             </Grid>
 
-            {/* PHYSICAL ONLY: offline payment info + sales verification note */}
-            {isPhysical && (
-              <Grid item xs={12}>
-                <TextField
-                  label="Payment & sales verification instructions"
-                  fullWidth
-                  multiline
-                  minRows={2}
-                  placeholder="e.g. Bank transfer to Zenith Bank 0123456789. We'll ask for a receipt or order reference when confirming affiliate sales."
-                  value={form.offline_payment_instructions}
-                  onChange={(e) => update("offline_payment_instructions", e.target.value)}
-                  helperText="Shown on your product page, and used when you confirm a manually-reported sale."
-                />
-              </Grid>
-            )}
+            <Grid item xs={12}>
+              <TextField
+                label="Payment & sale verification instructions"
+                fullWidth
+                multiline
+                minRows={2}
+                placeholder="e.g. Bank transfer to Zenith Bank 0123456789. We will ask for a receipt or order reference when confirming a sale."
+                value={form.offline_payment_instructions}
+                onChange={(e) => update("offline_payment_instructions", e.target.value)}
+                helperText="Shown on your Campaign Page. Customers always pay you directly — Commission never touches this money."
+              />
+            </Grid>
           </Grid>
         </Paper>
 
-        <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border }}>
-          <Typography fontWeight={700} sx={{ mb: 0.5 }}>
-            Affiliate program
-          </Typography>
-          <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-            {isPhysical
-              ? "Up to 3 tiers. Physical products never carry a Commission platform fee — your affiliates get the full commission you set."
-              : "Up to 3 tiers. Commission's platform fee is taken from this commission (based on your plan), never from your sale price."}
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
+          <Typography fontWeight={700} sx={{ mb: 2 }}>
+            {isLead ? "Lead pricing" : "Sale commission"}
           </Typography>
 
-          {/* DIGITAL ONLY: one-time vs recurring commission (a one-off physical sale has nothing to recur) */}
-          {!isPhysical && (
-            <ToggleButtonGroup
-              value={form.commission_type}
-              exclusive
-              onChange={(_, v) => v && update("commission_type", v)}
-              sx={{ mb: 3 }}
-            >
+          {isLead ? (
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Cost per qualified lead (₦)"
+                  type="number"
+                  fullWidth
+                  required
+                  value={form.cost_per_qualified_lead}
+                  onChange={(e) => update("cost_per_qualified_lead", e.target.value)}
+                  helperText="Deducted from your wallet each time you mark a lead qualified"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="WhatsApp number for this campaign"
+                  fullWidth
+                  placeholder="+234..."
+                  value={form.whatsapp_number}
+                  onChange={(e) => update("whatsapp_number", e.target.value)}
+                  helperText="Leads get a unique link to this number after the short form. Leave blank to use your business default."
+                />
+              </Grid>
+            </Grid>
+          ) : (
+            <ToggleButtonGroup value={form.commission_type} exclusive onChange={(_, v) => v && update("commission_type", v)} sx={{ mb: 1 }}>
               <ToggleButton value="one_time">One-time commission</ToggleButton>
               <ToggleButton value="recurring">Recurring commission</ToggleButton>
             </ToggleButtonGroup>
           )}
+        </Paper>
+
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border }}>
+          <Typography fontWeight={700} sx={{ mb: 0.5 }}>
+            Affiliate tiers
+          </Typography>
+          <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+            {isLead
+              ? "Up to 3 tiers. These should sum to 100% — that is the whole lead fee, allocated across your affiliate tree, before Commission's plan-based fee is taken from each tier's share."
+              : "Up to 3 tiers, as a % of the sale. Commission's plan-based fee is taken from this commission (never your sale price)."}
+          </Typography>
 
           <Grid container spacing={2}>
             <Grid item xs={12} sm={4}>
@@ -359,17 +435,25 @@ export default function NewProductPage() {
 
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="body2" sx={{ color: tokens.muted }}>
-              Total commission across tiers
+              Total across tiers
             </Typography>
-            <Typography fontWeight={700} color={totalCommission > 100 ? "error" : "inherit"}>
-              {totalCommission}%
+            <Typography
+              fontWeight={700}
+              color={totalCommission > 100 || (isLead && totalCommission !== 100) || (!isLead && totalCommission < 10) ? "error" : "inherit"}
+            >
+              {totalCommission}%{" "}
+              {isLead && totalCommission !== 100
+                ? "(should be 100%)"
+                : !isLead && totalCommission < 10
+                ? "(minimum 10% for direct-sale campaigns)"
+                : ""}
             </Typography>
           </Stack>
         </Paper>
 
         <Stack direction="row" justifyContent="flex-end" sx={{ mt: 3 }}>
           <Button type="submit" variant="contained" size="large" disabled={status.loading}>
-            {status.loading ? "Publishing…" : "Publish product & program"}
+            {status.loading ? "Publishing…" : "Publish product & campaign"}
           </Button>
         </Stack>
       </Box>

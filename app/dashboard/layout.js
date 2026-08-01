@@ -22,6 +22,7 @@ import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import CampaignRoundedIcon from "@mui/icons-material/CampaignRounded";
 import Diversity3RoundedIcon from "@mui/icons-material/Diversity3Rounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
+import PersonSearchRoundedIcon from "@mui/icons-material/PersonSearchRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -32,6 +33,7 @@ const NAV = [
   { href: "/dashboard/discover", label: "Discover", icon: ExploreRoundedIcon },
   { href: "/dashboard/products", label: "My Products", icon: Inventory2RoundedIcon },
   { href: "/dashboard/promotions", label: "My Promotions", icon: CampaignRoundedIcon },
+  { href: "/dashboard/leads", label: "Leads", icon: PersonSearchRoundedIcon },
   { href: "/dashboard/network", label: "Network", icon: Diversity3RoundedIcon },
   { href: "/dashboard/transactions", label: "Transactions", icon: ReceiptLongRoundedIcon },
   { href: "/dashboard/account", label: "Account", icon: SettingsRoundedIcon },

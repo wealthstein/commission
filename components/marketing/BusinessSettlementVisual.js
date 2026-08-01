@@ -111,7 +111,7 @@ export default function BusinessSettlementVisual() {
         </Typography>
         <Typography variant="caption" sx={{ color: tokens.muted }}>
           <Box component="span" sx={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", bgcolor: tokens.ink, mr: 0.75 }} />
-          Commission&#39;s fee
+          Commission fee
         </Typography>
       </Stack>
 
@@ -125,7 +125,7 @@ export default function BusinessSettlementVisual() {
       </Box>
 
       <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 2 }}>
-        Upgrading doesn&#39;t change what you receive — it means more of your commission reaches affiliates, making your
+        Upgrading does not change what you receive — it means more of your commission reaches affiliates, making your
         program more attractive to top performers.
       </Typography>
     </Box>

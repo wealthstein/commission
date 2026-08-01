@@ -1,20 +1,28 @@
 import { NextResponse } from "next/server";
 import { verifyPaystackSignature, verifyTransaction } from "@/lib/paystack";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
-import { calculateCommission, commissionIdempotencyKey } from "@/lib/commissionEngine";
-import { sendCommissionEarnedEmail, sendPayoutPaidEmail } from "@/lib/email";
+import { chargeWallet } from "@/lib/wallet";
+import { calculateCommission } from "@/lib/commissionEngine";
 import { feePercentForPlan } from "@/lib/pricingPlans";
+import { sendCommissionEarnedEmail, sendPayoutPaidEmail } from "@/lib/email";
 
 /**
  * POST /api/paystack/webhook
  *
- * Implements the flow from the TRD, section 5:
- *   Customer -> Paystack -> Commission identifies referring affiliate ->
- *   commission engine calculates tier 1/2/3 -> platform fee calculated ->
- *   affiliate payouts initiated -> business receives sale proceeds.
- *
- * Handles charge.success (one-time or a recurring cycle) and
- * charge.failed / refund events for the failed/refunded path.
+ * charge.success can mean one of two different things, told apart by
+ * metadata.purpose:
+ *   'wallet_topup' -> a LEAD-goal business funding their Campaign Wallet.
+ *     Credits the wallet, taking Commission's plan-based fee off the top.
+ *   'direct_sale' -> a customer paying for a SALE-goal product through
+ *     Commission's checkout (see lib/checkout.js). Paystack has ALREADY
+ *     split this payment at settlement (see initializeDirectSaleCheckout) -
+ *     the business's share went straight to their own subaccount, and the
+ *     total affiliate commission stayed in Commission's main account. This
+ *     handler's job is just bookkeeping: record the sale, create the
+ *     per-tier commission ledger rows so the normal payout batch job can
+ *     transfer each affiliate their share.
+ * transfer.success / transfer.failed still just updates an affiliate
+ * payout's status either way, unchanged.
  */
 export async function POST(req) {
   const rawBody = await req.text();
@@ -30,13 +38,11 @@ export async function POST(req) {
   try {
     switch (event.event) {
       case "charge.success":
-        await handleChargeSuccess(event.data, supabase);
-        break;
-      case "charge.failed":
-        await handleChargeFailed(event.data, supabase);
-        break;
-      case "refund.processed":
-        await handleRefund(event.data, supabase);
+        if (event.data.metadata?.purpose === "direct_sale") {
+          await handleDirectSaleSuccess(event.data, supabase);
+        } else {
+          await handleWalletTopupSuccess(event.data, supabase);
+        }
         break;
       case "transfer.success":
       case "transfer.failed":
@@ -50,22 +56,62 @@ export async function POST(req) {
   } catch (err) {
     console.error("Paystack webhook error:", err);
     // Return 200 anyway after logging — Paystack retries aggressively on
-    // non-2xx, and a bug on our side shouldn't hammer the endpoint. Alerting
+    // non-2xx, and a bug on our side should not hammer the endpoint. Alerting
     // (Sentry) should be wired in here for production.
     return NextResponse.json({ received: true, error: "internal" }, { status: 200 });
   }
 }
 
-async function handleChargeSuccess(data, supabase) {
+async function handleWalletTopupSuccess(data, supabase) {
+  if (data.metadata?.purpose !== "wallet_topup") {
+    console.warn(`Ignoring charge.success with unrecognized purpose: ${data.metadata?.purpose}. reference=${data.reference}`);
+    return;
+  }
+
   // Defense in depth: re-verify with Paystack directly rather than trusting the payload alone.
   const verified = await verifyTransaction(data.reference);
   if (verified.status !== "success") return;
 
-  const referralCode = data.metadata?.referral_code;
-  const productId = data.metadata?.product_id;
+  const businessId = data.metadata.business_id;
+  const grossAmountNaira = verified.amount / 100;
+
+  // Idempotency: if this reference already produced a wallet_transactions row, skip.
+  const { data: existing } = await supabase
+    .from("wallet_transactions")
+    .select("id")
+    .eq("paystack_reference", data.reference)
+    .maybeSingle();
+  if (existing) return;
+
+  // The platform fee is taken RIGHT HERE, at top-up time — Small keeps 20%
+  // for Commission, Medium 15%, Large 10% — not per-lead or per-sale. Every
+  // qualified lead or verified sale afterward deducts its FULL commission
+  // straight to affiliates with no further fee (see the qualify/verify routes).
+  const { data: business } = await supabase.from("businesses").select("plan").eq("id", businessId).single();
+  const feePercent = feePercentForPlan(business?.plan);
+  const platformFeeNaira = Math.round((grossAmountNaira * feePercent) / 100 * 100) / 100;
+  const netCreditedNaira = Math.round((grossAmountNaira - platformFeeNaira) * 100) / 100;
+
+  await chargeWallet(supabase, {
+    businessId,
+    amountNaira: netCreditedNaira, // positive = credit; already net of the fee
+    type: "topup",
+    paystackReference: data.reference,
+    grossAmountNaira,
+    platformFeeNaira,
+  });
+}
+
+async function handleDirectSaleSuccess(data, supabase) {
+  // Defense in depth: re-verify with Paystack directly rather than trusting the payload alone.
+  const verified = await verifyTransaction(data.reference);
+  if (verified.status !== "success") return;
+
+  const productId = data.metadata.product_id;
+  const referralCode = data.metadata.referral_code;
   const amountNaira = verified.amount / 100;
 
-  // Idempotency: if we've already recorded this Paystack reference, skip.
+  // Idempotency: if this reference already produced a transaction, skip.
   const { data: existingTxn } = await supabase
     .from("transactions")
     .select("id")
@@ -73,42 +119,24 @@ async function handleChargeSuccess(data, supabase) {
     .maybeSingle();
   if (existingTxn) return;
 
-  // 1. Identify the referring affiliate's enrollment.
-  let enrollment = null;
-  if (referralCode) {
-    const { data: enr } = await supabase
-      .from("affiliate_enrollments")
-      .select("*")
-      .eq("referral_code", referralCode)
-      .maybeSingle();
-    enrollment = enr;
-  }
+  const { data: product } = await supabase.from("products").select("*, businesses(*)").eq("id", productId).single();
+  const business = product.businesses;
 
-  // 2. Load the product + its active affiliate program.
-  const { data: product } = await supabase.from("products").select("*").eq("id", productId).single();
-  const { data: program } = await supabase
-    .from("affiliate_programs")
-    .select("*")
-    .eq("product_id", productId)
-    .eq("status", "active")
-    .maybeSingle();
-
-  // 3. Upsert the customer record (attribution is last-touch: current referral wins).
   const { data: customer } = await supabase
     .from("customers")
     .upsert(
-      {
-        business_id: product.business_id,
-        email: verified.customer.email,
-        paystack_customer_code: verified.customer.customer_code,
-        attributed_enrollment_id: enrollment?.id ?? null,
-      },
+      { business_id: business.id, email: verified.customer.email, paystack_customer_code: verified.customer.customer_code },
       { onConflict: "business_id,email" }
     )
     .select()
     .single();
 
-  // 4. Record the transaction.
+  let enrollment = null;
+  if (referralCode) {
+    const { data: enr } = await supabase.from("affiliate_enrollments").select("*").eq("referral_code", referralCode).maybeSingle();
+    enrollment = enr;
+  }
+
   const { data: transaction } = await supabase
     .from("transactions")
     .insert({
@@ -118,53 +146,46 @@ async function handleChargeSuccess(data, supabase) {
       paystack_reference: data.reference,
       amount_naira: amountNaira,
       status: "success",
-      is_recurring_cycle: product.billing_frequency !== "one_time" && !!data.metadata?.is_recurring_cycle,
+      source: "paystack",
     })
     .select()
     .single();
 
-  // No affiliate involved (direct/organic sale) — nothing further to calculate.
-  if (!enrollment || !program) return;
+  // No referring affiliate on this sale — nothing further to calculate.
+  // The customer's full payment already landed with the business via their
+  // subaccount (no transaction_charge was set for an unreferred checkout).
+  if (!enrollment) return;
 
-  // Physical products are paid for directly to the business — they should
-  // never generate a Paystack charge that Commission itself processes. If
-  // one somehow does (e.g. a product was switched from digital to physical
-  // after checkout links were already shared), log it loudly rather than
-  // silently charging Commission's plan-based fee on money Commission never
-  // actually touched.
-  if (product.product_type === "physical") {
-    console.error(
-      `Paystack webhook received a charge for a PHYSICAL product (product_id=${productId}, reference=${data.reference}). ` +
-        `Physical-product sales should be reported via /api/sales/report instead. Skipping commission calculation.`
-    );
-    return;
-  }
+  const { data: program } = await supabase
+    .from("affiliate_programs")
+    .select("*")
+    .eq("product_id", productId)
+    .eq("status", "active")
+    .maybeSingle();
+  if (!program) return;
 
-  // The platform fee is determined by the BUSINESS'S PLAN at charge time —
-  // Free keeps 20% for Commission, Pro 15%, Plus 10% — never by whatever
-  // static value might be sitting on the affiliate_programs row. (Physical
-  // products always resolve to 0% here, but this webhook path is digital-only.)
-  const { data: business } = await supabase.from("businesses").select("plan").eq("id", product.business_id).single();
-  const effectiveFeePercent = feePercentForPlan(business?.plan, product.product_type);
-  const programWithPlanFee = { ...program, platform_fee_percent: effectiveFeePercent };
-
-  // 5-7. Commission engine: calculate tier 1/2/3 + platform fee.
+  const feePercent = feePercentForPlan(business.plan);
   const lookupEnrollment = async (id) => {
     const { data } = await supabase.from("affiliate_enrollments").select("*").eq("id", id).maybeSingle();
     return data;
   };
-  // calculateCommission expects a sync lookup; pre-resolve the lineage via async walk here instead.
-  const lineageIds = await resolveLineage(enrollment, lookupEnrollment);
+  const lineage = [enrollment];
+  let current = enrollment;
+  while (lineage.length < 3 && current.referrer_enrollment_id) {
+    const parent = await lookupEnrollment(current.referrer_enrollment_id);
+    if (!parent) break;
+    lineage.push(parent);
+    current = parent;
+  }
+
   const result = calculateCommission({
     amountNaira,
-    program: programWithPlanFee,
+    program: { ...program, platform_fee_percent: feePercent },
     sellingEnrollment: enrollment,
-    lookupEnrollment: (id) => lineageIds.find((e) => e.id === id) ?? null,
+    lookupEnrollment: (id) => lineage.find((e) => e.id === id) ?? null,
   });
 
-  // 8. Persist one commission ledger row per tier and initiate payouts.
   for (const line of result.lines) {
-    const idempotencyKey = commissionIdempotencyKey(data.reference, line.tier);
     await supabase.from("commissions").upsert(
       {
         transaction_id: transaction.id,
@@ -179,17 +200,14 @@ async function handleChargeSuccess(data, supabase) {
       },
       { onConflict: "transaction_id,tier" }
     );
-    void idempotencyKey; // reserved for a dedicated idempotency-keys table if needed at scale
 
-    // lineageIds rows were fetched with select("*"), so affiliate_id is already on hand.
-    const lineEnrollment = lineageIds.find((e) => e.id === line.enrollmentId);
+    const lineEnrollment = lineage.find((e) => e.id === line.enrollmentId);
     if (lineEnrollment?.affiliate_id) {
       const { data: affiliateUser } = await supabase
         .from("users")
         .select("email, full_name")
         .eq("id", lineEnrollment.affiliate_id)
         .maybeSingle();
-
       if (affiliateUser?.email) {
         await sendCommissionEarnedEmail({
           to: affiliateUser.email,
@@ -200,43 +218,6 @@ async function handleChargeSuccess(data, supabase) {
         });
       }
     }
-  }
-
-  // 9. Business proceeds settlement is handled by Paystack's split/subaccount
-  // config on the transaction itself (see businesses.paystack_subaccount_code).
-}
-
-async function resolveLineage(enrollment, lookupEnrollment) {
-  const chain = [enrollment];
-  let current = enrollment;
-  while (chain.length < 3 && current.referrer_enrollment_id) {
-    const parent = await lookupEnrollment(current.referrer_enrollment_id);
-    if (!parent) break;
-    chain.push(parent);
-    current = parent;
-  }
-  return chain;
-}
-
-async function handleChargeFailed(data, supabase) {
-  await supabase.from("transactions").update({ status: "failed" }).eq("paystack_reference", data.reference);
-}
-
-async function handleRefund(data, supabase) {
-  const { data: transaction } = await supabase
-    .from("transactions")
-    .update({ status: "refunded" })
-    .eq("paystack_reference", data.transaction_reference)
-    .select()
-    .single();
-
-  if (transaction) {
-    // Reverse any commissions tied to this transaction that haven't been paid out yet.
-    await supabase
-      .from("commissions")
-      .update({ payout_status: "reversed" })
-      .eq("transaction_id", transaction.id)
-      .in("payout_status", ["pending", "initiated"]);
   }
 }
 

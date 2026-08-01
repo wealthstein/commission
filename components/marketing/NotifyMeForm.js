@@ -28,7 +28,7 @@ export default function NotifyMeForm({ routeSlug }) {
   if (state.success) {
     return (
       <Typography variant="body2" sx={{ color: tokens.success, fontWeight: 600 }}>
-        You&#39;re on the list — we&#39;ll email you as soon as there&#39;s news.
+        You are on the list — we will email you as soon as there is news.
       </Typography>
     );
   }

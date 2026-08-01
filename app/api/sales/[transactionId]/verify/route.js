@@ -1,21 +1,23 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { calculateCommission } from "@/lib/commissionEngine";
-import { feePercentForPlan } from "@/lib/pricingPlans";
+import { chargeWallet } from "@/lib/wallet";
 import { sendCommissionEarnedEmail } from "@/lib/email";
 
 /**
  * POST /api/sales/[transactionId]/verify
  * body: { approve: boolean }
  *
- * The "Business confirms sale" step of the physical-product flow:
- *   Customer pays business directly -> Business fulfills order ->
- *   Business confirms sale -> Commission calculates affiliate commissions.
- *
- * Only once a manually-reported sale is verified do commission ledger rows
- * get created. Physical products always resolve to a 0% platform fee
- * (feePercentForPlan forces this) — Commission's revenue on physical
- * products is the subscription alone, never a cut of the affiliate payout.
+ * FALLBACK PATH for a 'sale'-goal campaign. The primary mechanism is now
+ * the live Commission-hosted checkout (see lib/checkout.js, triggered from
+ * app/r/[code]) — Paystack splits the payment automatically the moment the
+ * customer pays, no manual step required. This route exists for the edge
+ * case of a sale that happened OFF that checkout (e.g. the business closed
+ * the deal another way) and still needs the affiliate paid: the business
+ * self-reports it (app/api/sales/report), then confirms it here, which
+ * charges their Campaign Wallet for the commission owed and runs the
+ * commission engine — same "charge first, only persist on success" pattern
+ * as lead qualification.
  */
 export async function POST(req, { params }) {
   const { approve } = await req.json();
@@ -35,8 +37,8 @@ export async function POST(req, { params }) {
     .eq("id", params.transactionId)
     .single();
 
-  if (!transaction || transaction.source !== "manual") {
-    return NextResponse.json({ error: "Manually-reported transaction not found" }, { status: 404 });
+  if (!transaction) {
+    return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
   }
   if (transaction.verification_status !== "pending") {
     return NextResponse.json({ error: `Already ${transaction.verification_status}` }, { status: 400 });
@@ -47,15 +49,13 @@ export async function POST(req, { params }) {
     return NextResponse.json({ status: "rejected" });
   }
 
-  await admin.from("transactions").update({ verification_status: "verified", status: "success" }).eq("id", transaction.id);
+  const business = transaction.products.businesses;
 
-  // No affiliate on this sale — nothing further to calculate.
+  // No affiliate on this sale — nothing owed, nothing to charge. Just confirm it happened.
   if (!transaction.enrollment_id) {
+    await admin.from("transactions").update({ verification_status: "verified", status: "success" }).eq("id", transaction.id);
     return NextResponse.json({ status: "verified", commissions: [] });
   }
-
-  const business = transaction.products.businesses;
-  const platformFeePercent = feePercentForPlan(business.plan, transaction.products.product_type); // always 0 for physical
 
   const { data: program } = await admin
     .from("affiliate_programs")
@@ -64,6 +64,7 @@ export async function POST(req, { params }) {
     .eq("status", "active")
     .maybeSingle();
   if (!program) {
+    await admin.from("transactions").update({ verification_status: "verified", status: "success" }).eq("id", transaction.id);
     return NextResponse.json({ status: "verified", commissions: [], note: "No active affiliate program on this product" });
   }
 
@@ -77,62 +78,80 @@ export async function POST(req, { params }) {
     const { data } = await admin.from("affiliate_enrollments").select("*").eq("id", id).maybeSingle();
     return data;
   };
-  const lineage = [enrollment];
-  let current = enrollment;
-  while (lineage.length < 3 && current.referrer_enrollment_id) {
-    const parent = await lookupEnrollment(current.referrer_enrollment_id);
-    if (!parent) break;
-    lineage.push(parent);
-    current = parent;
-  }
+  const lineage = await resolveLineage(enrollment, lookupEnrollment);
 
   const result = calculateCommission({
     amountNaira: transaction.amount_naira,
-    program: { ...program, platform_fee_percent: platformFeePercent },
+    program: { ...program, platform_fee_percent: 0 },
     sellingEnrollment: enrollment,
     lookupEnrollment: (id) => lineage.find((e) => e.id === id) ?? null,
   });
 
-  // Physical products: who's actually responsible for paying the affiliate?
-  const payoutStatus = business.physical_payout_mode === "commission_facilitates" ? "pending" : "business_handles";
+  // The wallet is charged exactly what affiliates receive — Commission's
+  // fee was already taken when this wallet was funded (see
+  // app/api/paystack/webhook), so nothing further is skimmed here.
+  try {
+    await chargeWallet(admin, {
+      businessId: business.id,
+      amountNaira: -result.totalAffiliatePayoutNaira,
+      type: "sale_charge",
+      transactionId: transaction.id,
+    });
+  } catch (err) {
+    return NextResponse.json({ error: `Could not verify: ${err.message}` }, { status: 402 });
+  }
+
+  await admin.from("transactions").update({ verification_status: "verified", status: "success" }).eq("id", transaction.id);
 
   const createdCommissions = [];
   for (const line of result.lines) {
     const { data: commission } = await admin
       .from("commissions")
-      .upsert(
-        {
-          transaction_id: transaction.id,
-          enrollment_id: line.enrollmentId,
-          tier: line.tier,
-          commission_percent: line.commissionPercent,
-          commission_amount_naira: line.commissionNaira,
-          platform_fee_percent: line.platformFeePercent,
-          platform_fee_naira: line.platformFeeNaira,
-          affiliate_payout_naira: line.affiliatePayoutNaira,
-          payout_status: payoutStatus,
-        },
-        { onConflict: "transaction_id,tier" }
-      )
+      .insert({
+        transaction_id: transaction.id,
+        enrollment_id: line.enrollmentId,
+        tier: line.tier,
+        commission_percent: line.commissionPercent,
+        commission_amount_naira: line.commissionNaira,
+        platform_fee_percent: line.platformFeePercent,
+        platform_fee_naira: line.platformFeeNaira,
+        affiliate_payout_naira: line.affiliatePayoutNaira,
+        payout_status: "pending",
+      })
       .select()
       .single();
     createdCommissions.push(commission);
 
-    const { data: affiliateUser } = await admin
-      .from("users")
-      .select("email, full_name")
-      .eq("id", line.enrollmentId ? lineage.find((e) => e.id === line.enrollmentId)?.affiliate_id : null)
-      .maybeSingle();
-    if (affiliateUser?.email) {
-      await sendCommissionEarnedEmail({
-        to: affiliateUser.email,
-        name: affiliateUser.full_name,
-        amountNaira: line.affiliatePayoutNaira,
-        productName: transaction.products.name,
-        tier: line.tier,
-      });
+    const lineEnrollment = lineage.find((e) => e.id === line.enrollmentId);
+    if (lineEnrollment?.affiliate_id) {
+      const { data: affiliateUser } = await admin
+        .from("users")
+        .select("email, full_name")
+        .eq("id", lineEnrollment.affiliate_id)
+        .maybeSingle();
+      if (affiliateUser?.email) {
+        await sendCommissionEarnedEmail({
+          to: affiliateUser.email,
+          name: affiliateUser.full_name,
+          amountNaira: line.affiliatePayoutNaira,
+          productName: transaction.products.name,
+          tier: line.tier,
+        });
+      }
     }
   }
 
-  return NextResponse.json({ status: "verified", commissions: createdCommissions, payoutStatus });
+  return NextResponse.json({ status: "verified", commissions: createdCommissions });
+}
+
+async function resolveLineage(enrollment, lookupEnrollment) {
+  const chain = [enrollment];
+  let current = enrollment;
+  while (chain.length < 3 && current.referrer_enrollment_id) {
+    const parent = await lookupEnrollment(current.referrer_enrollment_id);
+    if (!parent) break;
+    chain.push(parent);
+    current = parent;
+  }
+  return chain;
 }
