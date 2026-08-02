@@ -6,7 +6,7 @@ import MarketingPageShell from "@/components/marketing/MarketingPageShell";
 import InternalLinksSection from "@/components/marketing/InternalLinksSection";
 
 export const metadata = {
-  title: "Corporate | Commission",
+  title: "Corporate • Commission",
   description: "About Commission, how to contact us, careers, and our terms, privacy, and security pages.",
 };
 

@@ -15,7 +15,7 @@ import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/sup
  * CTA elsewhere) defaults to creating the row if it does not exist yet.
  *
  * The FINAL redirect for an existing/newly-created user is always decided
- * here, based on the real dashboard_access_granted flag on that row —
+ * here, based on the real access_granted flag on that row —
  * never by trusting the `next` param as-is. Whoever hasn't been granted
  * access yet lands on /welcome regardless of what `next` asked for.
  */
@@ -43,7 +43,7 @@ export async function GET(req) {
   if (flow === "signin") {
     const { data: existing, error: lookupError } = await admin
       .from("users")
-      .select("dashboard_access_granted")
+      .select("access_granted")
       .eq("auth_user_id", data.user.id)
       .maybeSingle();
 
@@ -56,7 +56,7 @@ export async function GET(req) {
       // which will create it properly on the next Google click.
       return NextResponse.redirect(new URL("/signup", url.origin));
     }
-    return NextResponse.redirect(new URL(existing.dashboard_access_granted ? next : "/welcome", url.origin));
+    return NextResponse.redirect(new URL(existing.access_granted ? next : "/welcome", url.origin));
   }
 
   const upsertData = {
@@ -73,7 +73,7 @@ export async function GET(req) {
   const { data: userRow, error: upsertError } = await admin
     .from("users")
     .upsert(upsertData, { onConflict: "auth_user_id" })
-    .select("dashboard_access_granted")
+    .select("access_granted")
     .single();
 
   if (upsertError) {
@@ -85,7 +85,7 @@ export async function GET(req) {
     console.error("Auth callback: failed to upsert user row:", upsertError.message);
   }
 
-  const destination = userRow?.dashboard_access_granted ? next : "/welcome";
+  const destination = userRow?.access_granted ? next : "/welcome";
   return NextResponse.redirect(new URL(destination, url.origin));
 }
 

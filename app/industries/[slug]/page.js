@@ -14,7 +14,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const industryPage = getIndustryPageBySlug(params.slug);
-  if (!industryPage) return { title: "Not found | Commission" };
+  if (!industryPage) return { title: "Not found • Commission" };
   return buildIndustryLandingMetadata(industryPage);
 }
 

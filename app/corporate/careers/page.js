@@ -4,7 +4,7 @@ import MarketingPageShell from "@/components/marketing/MarketingPageShell";
 import InternalLinksSection from "@/components/marketing/InternalLinksSection";
 
 export const metadata = {
-  title: "Careers at Commission | Commission",
+  title: "Careers at Commission • Commission",
   description: "Commission is a small, early-stage team building a Nigerian affiliate marketplace. See what we look for and how to reach out.",
 };
 

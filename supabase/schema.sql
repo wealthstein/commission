@@ -59,7 +59,7 @@ create table if not exists users (
   -- /welcome instead of /dashboard regardless of what was requested.
   -- This is what lets Google auth double as a (higher-quality, verified)
   -- way to register interest before the dashboard is generally open.
-  dashboard_access_granted boolean not null default false,
+  access_granted boolean not null default false,
   -- Captured from whichever CTA triggered Google auth (business or
   -- affiliate) - there is no manual form anymore, so this is the only
   -- signal of which side someone was interested in. Informational for now,
@@ -662,7 +662,7 @@ create policy wallet_txns_owner_select on wallet_transactions for select
 -- WAITLIST_REQUESTS has been REMOVED. There is no longer a manual
 -- name/email/phone capture form anywhere on the site - every "request an
 -- account" CTA triggers Google auth directly (see lib/googleAuth.js), which
--- creates a real row in `users` above. dashboard_access_granted defaulting
--- to false is what keeps this safe pre-launch - see app/api/auth/callback
+-- creates a real row in `users` above. access_granted defaulting to false
+-- is what keeps this safe pre-launch - see app/api/auth/callback
 -- and middleware.js.
 -- ============================================================================

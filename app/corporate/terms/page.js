@@ -3,7 +3,7 @@ import InternalLinksSection from "@/components/marketing/InternalLinksSection";
 import LegalPageContent from "@/components/marketing/LegalPageContent";
 
 export const metadata = {
-  title: "Terms of Service | Commission",
+  title: "Terms of Service • Commission",
   description: "Terms governing use of Commission by businesses and affiliates.",
 };
 

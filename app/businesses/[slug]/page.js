@@ -30,7 +30,7 @@ async function getBusinessWithProducts(slug) {
 
 export async function generateMetadata({ params }) {
   const { business } = await getBusinessWithProducts(params.slug);
-  if (!business) return { title: "Business not found | Commission" };
+  if (!business) return { title: "Business not found • Commission" };
   return buildBusinessMetadata({ business });
 }
 

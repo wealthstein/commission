@@ -21,7 +21,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params, searchParams }) {
   const categoryLabel = categoryLabelFromSlug(params.category);
-  if (!categoryLabel) return { title: "Category not found | Commission" };
+  if (!categoryLabel) return { title: "Category not found • Commission" };
   const page = Number(searchParams?.page) || 1;
   return buildCategoryMetadata({ categoryLabel, categorySlug: params.category, page });
 }

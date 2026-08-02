@@ -3,7 +3,7 @@ import InternalLinksSection from "@/components/marketing/InternalLinksSection";
 import LegalPageContent from "@/components/marketing/LegalPageContent";
 
 export const metadata = {
-  title: "Security | Commission",
+  title: "Security • Commission",
   description: "How Commission approaches data security and payment handling.",
 };
 

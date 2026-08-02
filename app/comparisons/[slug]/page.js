@@ -14,7 +14,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const comparison = getComparisonBySlug(params.slug);
-  if (!comparison) return { title: "Not found | Commission" };
+  if (!comparison) return { title: "Not found • Commission" };
   return buildComparisonMetadata(comparison);
 }
 

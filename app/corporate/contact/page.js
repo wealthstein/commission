@@ -5,7 +5,7 @@ import MarketingPageShell from "@/components/marketing/MarketingPageShell";
 import InternalLinksSection from "@/components/marketing/InternalLinksSection";
 
 export const metadata = {
-  title: "Contact Commission | Commission",
+  title: "Contact Commission • Commission",
   description: "Get in touch with the Commission team.",
 };
 

@@ -14,7 +14,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const item = integrations.find((i) => i.slug === params.slug);
-  if (!item) return { title: "Not found | Commission" };
+  if (!item) return { title: "Not found • Commission" };
   return buildSectionItemMetadata("integrations", item);
 }
 

@@ -174,7 +174,7 @@ and sales are billable) and plan (which determines the percentage).
      check of any kind. Added `middleware.js`, which now redirects an
      unauthenticated visitor to `/signin`, and an authenticated-but-not-yet-
      granted-access user to `/welcome`.
-   - **`users.dashboard_access_granted`** (new column, defaults `false`) is
+   - **`users.access_granted`** (new column, defaults `false`) is
      the single source of truth for who can actually reach the dashboard.
      Granting it today is a manual database update — there is no admin UI
      for it yet.
@@ -188,7 +188,7 @@ and sales are billable) and plan (which determines the percentage).
      was rewritten to drop the name/email/phone fields and submit button
      entirely — every CTA on the site now triggers Google auth directly
      (`lib/googleAuth.js`), which registers a real account but (per
-     `dashboard_access_granted` defaulting false) lands on `/welcome`, not
+     `access_granted` defaulting false) lands on `/welcome`, not
      the dashboard, same as everyone else pre-launch. The old
      `waitlist_requests` table and its API route were removed as a result —
      `users.intended_role` and `users.signup_source_page` now capture what

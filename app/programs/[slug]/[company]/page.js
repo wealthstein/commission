@@ -14,8 +14,8 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { company } = await getCompanyProgram(params.slug, params.company);
-  if (!company) return { title: "Not found | Commission" };
-  const title = `Does ${company.displayName} Have a Program? | Commission`;
+  if (!company) return { title: "Not found • Commission" };
+  const title = `Does ${company.displayName} Have a Program? • Commission`;
   const description =
     company.metaDescription ||
     `Looking for a Commission program from ${company.displayName}? See what is currently available.`;

@@ -38,11 +38,11 @@ export async function middleware(req) {
 
   const { data: userRow } = await supabase
     .from("users")
-    .select("dashboard_access_granted")
+    .select("access_granted")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
-  if (!userRow?.dashboard_access_granted) {
+  if (!userRow?.access_granted) {
     return NextResponse.redirect(new URL("/welcome", req.url));
   }
 

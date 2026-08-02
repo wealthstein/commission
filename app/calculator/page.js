@@ -9,7 +9,7 @@ import SavingsCalculator from "@/components/marketing/SavingsCalculator";
 import SignUpButton from "@/components/marketing/SignUpButton";
 
 export const metadata = {
-  title: "Earnings & Savings Calculator | Commission",
+  title: "Earnings & Savings Calculator • Commission",
   description: "See exactly how a 3-tier commission splits across affiliates, and what a business could save versus running ads.",
 };
 

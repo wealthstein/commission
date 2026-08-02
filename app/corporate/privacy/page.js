@@ -3,7 +3,7 @@ import InternalLinksSection from "@/components/marketing/InternalLinksSection";
 import LegalPageContent from "@/components/marketing/LegalPageContent";
 
 export const metadata = {
-  title: "Privacy Policy | Commission",
+  title: "Privacy Policy • Commission",
   description: "How Commission handles data for businesses, affiliates, and leads.",
 };
 

@@ -1,10 +1,15 @@
+import { Suspense } from "react";
 import AuthPage from "@/components/marketing/AuthPage";
 
 export const metadata = {
-  title: "Sign in | Commission",
+  title: "Sign in • Commission",
   description: "Sign in to your Commission account.",
 };
 
 export default function SignInPage() {
-  return <AuthPage mode="signin" />;
+  return (
+    <Suspense fallback={null}>
+      <AuthPage mode="signin" />
+    </Suspense>
+  );
 }

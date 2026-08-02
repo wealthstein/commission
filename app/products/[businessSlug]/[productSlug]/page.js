@@ -47,7 +47,7 @@ async function getProductAndBusiness(businessSlug, productSlug) {
 
 export async function generateMetadata({ params }) {
   const { business, product } = await getProductAndBusiness(params.businessSlug, params.productSlug);
-  if (!business || !product) return { title: "Product not found | Commission" };
+  if (!business || !product) return { title: "Product not found • Commission" };
   return buildProductMetadata({ product, business });
 }
 

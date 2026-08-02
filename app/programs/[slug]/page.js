@@ -15,8 +15,8 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { industry } = await getIndustryProgram(params.slug);
-  if (!industry) return { title: "Not found | Commission" };
-  const title = `${industry.displayName} Affiliate Programs - For Affiliates | Commission`;
+  if (!industry) return { title: "Not found • Commission" };
+  const title = `${industry.displayName} Affiliate Programs - For Affiliates • Commission`;
   const description =
     industry.metaDescription ||
     `Browse ${industry.displayName} affiliate programs on Commission and see what you could earn promoting them.`;

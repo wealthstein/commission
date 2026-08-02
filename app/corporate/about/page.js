@@ -5,7 +5,7 @@ import InternalLinksSection from "@/components/marketing/InternalLinksSection";
 import TwoAudienceCta from "@/components/marketing/TwoAudienceCta";
 
 export const metadata = {
-  title: "About Commission | Commission",
+  title: "About Commission • Commission",
   description: "Commission is a Nigerian affiliate marketplace connecting businesses with affiliates who earn commission on qualified leads and sales.",
 };
 
