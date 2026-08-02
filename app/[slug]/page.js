@@ -1,47 +1,53 @@
 import { redirect, notFound } from "next/navigation";
-import { Box } from "@mui/material";
-import { parseSeoRouteSlug, buildComparisonMetadata } from "@/lib/seo";
-import { getComparisonBySlug, comparisons } from "@/lib/comparisons";
-import MarketingPageShell from "@/components/marketing/MarketingPageShell";
-import InternalLinksSection from "@/components/marketing/InternalLinksSection";
-import ComparisonPageContent from "@/components/marketing/ComparisonPageContent";
+import { parseSeoRouteSlug } from "@/lib/seo";
+import { getComparisonBySlug } from "@/lib/comparisons";
+import { findProgramRouteByLegacyKeyword } from "@/lib/programs";
+import { urls } from "@/lib/urls";
 
-export const revalidate = 3600;
+/**
+ * This route only exists to 301-redirect old flat-slug links to their
+ * current nested home, so nothing already indexed or shared breaks:
+ *   /commission-and-google-ads   -> /comparisons/google-ads
+ *   /google-ads (a brief bare-URL phase this site went through) -> /comparisons/google-ads
+ *   /real-estate                 -> /industries/real-estate
+ *   /gtbank-affiliate-program    -> /programs/[industry]/gtbank (looked up - the
+ *     old flat pattern does not encode which industry a company nests
+ *     under, so this needs a real database lookup, not a guess)
+ *   /fintech-affiliate-programs  -> /programs/fintech
+ *   /about, /contact, /careers, /terms, /privacy, /security (old bare
+ *     corporate URLs) -> /corporate/[page]
+ * Comparisons live at /comparisons/[slug] - see app/comparisons/[slug]/page.js
+ * for the real page. Every redirect target below comes from lib/urls.js -
+ * if that ever changes again, this file does not need to.
+ */
+const OLD_CORPORATE_SLUGS = {
+  about: urls.about(),
+  contact: urls.contact(),
+  careers: urls.careers(),
+  terms: urls.terms(),
+  privacy: urls.privacy(),
+  security: urls.security(),
+};
 
-// Comparisons live at a bare root URL on purpose (e.g. /google-ads) -
-// shorter, cleaner, and reads better in search results and shared links
-// than a nested /comparisons/google-ads would.
-export async function generateStaticParams() {
-  return comparisons.map((c) => ({ slug: c.slug }));
-}
+export default async function LegacySlugRedirect({ params }) {
+  if (OLD_CORPORATE_SLUGS[params.slug]) redirect(OLD_CORPORATE_SLUGS[params.slug]);
 
-export async function generateMetadata({ params }) {
-  const comparison = getComparisonBySlug(params.slug);
-  if (comparison) return buildComparisonMetadata(comparison);
-  return { title: "Not found | Commission" };
-}
+  // A brief bare-URL phase (e.g. /google-ads) this site went through -
+  // redirect straight to the current nested home.
+  const bareComparison = getComparisonBySlug(params.slug);
+  if (bareComparison) redirect(urls.comparison(bareComparison.slug));
 
-export default function RootSlugPage({ params }) {
-  // Primary path: a real comparison at its bare URL.
-  const comparison = getComparisonBySlug(params.slug);
-  if (comparison) {
-    return (
-      <MarketingPageShell internalLinks={<InternalLinksSection />}>
-        <Box sx={{ py: { xs: 6, md: 9 } }}>
-          <ComparisonPageContent comparison={comparison} />
-        </Box>
-      </MarketingPageShell>
-    );
-  }
-
-  // Fallback: an old flat-slug link from before some pages moved to nested
-  // folders. 301s to the new home so nothing already indexed or shared breaks.
   const parsed = parseSeoRouteSlug(params.slug);
   if (!parsed) notFound();
 
-  if (parsed.type === "comparison") redirect(`/${parsed.keywordSlug}`);
-  if (parsed.type === "industry-landing") redirect(`/industries/${params.slug}`);
-  if (parsed.type === "company" || parsed.type === "industry") redirect(`/programs/${params.slug}`);
+  if (parsed.type === "comparison") redirect(urls.comparison(parsed.keywordSlug));
+  if (parsed.type === "industry-landing") redirect(urls.industry(params.slug));
+
+  if (parsed.type === "company" || parsed.type === "industry") {
+    const currentRouteSlug = await findProgramRouteByLegacyKeyword(parsed.type, parsed.keywordSlug);
+    if (currentRouteSlug) redirect(urls.program(currentRouteSlug));
+  }
 
   notFound();
 }
+

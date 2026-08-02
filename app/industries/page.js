@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { Box, Container, Typography, Grid, Paper, Chip } from "@mui/material";
+import { Box, Container, Typography, Stack } from "@mui/material";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { tokens } from "@/lib/theme";
+import { urls } from "@/lib/urls";
 import { industryPages } from "@/lib/industryPages";
 import { buildIndustriesIndexMetadata } from "@/lib/seo";
 import MarketingPageShell from "@/components/marketing/MarketingPageShell";
@@ -9,38 +11,72 @@ import InternalLinksSection from "@/components/marketing/InternalLinksSection";
 export const metadata = buildIndustriesIndexMetadata();
 
 export default function IndustriesIndexPage() {
+  const maxPpql = Math.max(...industryPages.map((p) => p.ppqlNaira));
+  const sorted = [...industryPages].sort((a, b) => b.ppqlNaira - a.ppqlNaira);
+
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
         <Container maxWidth="lg">
-          <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
+          <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 42 }, mb: 2 }}>
             Affiliate marketing by industry
           </Typography>
-          <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5, maxWidth: 640 }}>
-            See how businesses in each industry use Commission to acquire customers through affiliates, and what a
-            qualified lead typically costs.
+          <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 6, maxWidth: 640 }}>
+            What a qualified lead typically costs, by industry - highest to lowest.
           </Typography>
 
-          <Grid container spacing={2.5}>
-            {industryPages.map((p) => (
-              <Grid item xs={12} sm={6} md={4} key={p.slug}>
-                <Paper
+          <Stack spacing={0} sx={{ border: `1px solid ${tokens.border}`, borderRadius: 3, overflow: "hidden" }}>
+            {sorted.map((p, i) => {
+              const barWidth = (p.ppqlNaira / maxPpql) * 100;
+              return (
+                <Box
+                  key={p.slug}
                   component={Link}
-                  href={`/industries/${p.slug}`}
-                  variant="outlined"
-                  sx={{ display: "block", p: 3, borderRadius: 3, borderColor: tokens.border, height: "100%", "&:hover": { borderColor: tokens.ink } }}
+                  href={urls.industry(p.slug)}
+                  sx={{
+                    display: "block",
+                    textDecoration: "none",
+                    color: "inherit",
+                    borderTop: i === 0 ? "none" : `1px solid ${tokens.border}`,
+                    px: 3,
+                    py: 2.5,
+                    position: "relative",
+                    "&:hover": { bgcolor: "#FAFAF8" },
+                  }}
                 >
-                  <Chip label={p.industryName} size="small" sx={{ bgcolor: "#F1EFE7", fontWeight: 600, mb: 1.5 }} />
-                  <Typography fontWeight={700} sx={{ mb: 0.5 }}>
-                    {p.headline}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: tokens.muted }}>
-                    Typical cost per qualified lead: ₦{p.ppqlNaira.toLocaleString()}
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: `${barWidth}%`,
+                      bgcolor: "#F1EFE7",
+                      zIndex: 0,
+                    }}
+                  />
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ position: "relative", zIndex: 1 }}>
+                    <Box>
+                      <Typography fontWeight={700}>{p.industryName}</Typography>
+                      <Typography variant="body2" sx={{ color: tokens.muted }}>
+                        {p.headline}
+                      </Typography>
+                    </Box>
+                    <Stack direction="row" alignItems="center" spacing={1.5} sx={{ flexShrink: 0, ml: 2 }}>
+                      <Typography fontWeight={700} sx={{ whiteSpace: "nowrap" }}>
+                        ₦{p.ppqlNaira.toLocaleString()}
+                      </Typography>
+                      <ArrowForwardRoundedIcon sx={{ color: tokens.muted, fontSize: 18 }} />
+                    </Stack>
+                  </Stack>
+                </Box>
+              );
+            })}
+          </Stack>
+
+          <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 2 }}>
+            Typical cost per qualified lead - a business sets its own amount per campaign.
+          </Typography>
         </Container>
       </Box>
     </MarketingPageShell>

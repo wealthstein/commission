@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { Box, Stack, Button } from "@mui/material";
 import { pickCtaPair } from "@/lib/ctaVariants";
+import { urls } from "@/lib/urls";
 
 function goToForm(role) {
   if (typeof window === "undefined") return;
@@ -18,7 +20,10 @@ export default function TwoAudienceCta({ slug }) {
         <Button variant="contained" size="large" onClick={() => goToForm("business")}>
           {businessCta}
         </Button>
-        <Button variant="outlined" size="large" onClick={() => goToForm("affiliate")}>
+        {/* Affiliate CTAs route to the earnings calculator - it is the main
+            conversion tool for affiliates, showing exactly what they could
+            earn before asking them to request access. */}
+        <Button variant="outlined" size="large" component={Link} href={urls.calculator("affiliate")}>
           {affiliateCta}
         </Button>
       </Stack>

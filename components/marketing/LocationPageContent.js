@@ -1,6 +1,7 @@
 import { Container, Typography, Box, Stack, Chip } from "@mui/material";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import { tokens } from "@/lib/theme";
+import { urls } from "@/lib/urls";
 import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 
 export default function LocationPageContent({ item }) {
@@ -40,7 +41,7 @@ export default function LocationPageContent({ item }) {
       </Stack>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={`/locations/${item.slug}`} />
+        <RequestAccountForm sourcePage={urls.location(item.slug)} fixedRole="business" />
       </Box>
 
     </Container>

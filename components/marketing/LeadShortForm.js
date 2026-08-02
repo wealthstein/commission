@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Paper, Box, Typography, TextField, Button, Stack, Alert } from "@mui/material";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -54,7 +55,7 @@ export default function LeadShortForm({ programId, productName }) {
               Continue on WhatsApp
             </Button>
           )}
-          <Button variant="outlined" endIcon={<ArrowForwardIcon />} href={`/leads/${state.whatsappRef}/continue`}>
+          <Button variant="outlined" endIcon={<ArrowForwardIcon />} component={Link} href={`/leads/${state.whatsappRef}/continue`}>
             Finish the details form
           </Button>
         </Stack>

@@ -40,7 +40,7 @@ export default async function BusinessPage({ params }) {
 
   return (
     <Box sx={{ py: { xs: 6, md: 9 } }}>
-      <Container maxWidth="md">
+      <Container maxWidth="lg">
         {business.industry && <Chip label={business.industry} size="small" sx={{ bgcolor: "#F1EFE7", fontWeight: 600, mb: 2 }} />}
         <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 2 }}>
           {business.name} Affiliate Programs

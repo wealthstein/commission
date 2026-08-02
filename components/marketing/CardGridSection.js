@@ -3,9 +3,9 @@
 import { Box, Container, Typography, Grid, Paper } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
-export default function CardGridSection({ id, title, items, columns = 4 }) {
+export default function CardGridSection({ id, title, items, columns = 4, bgcolor = tokens.paper }) {
   return (
-    <Box component="section" id={id} sx={{ py: { xs: 6, md: 9 }, borderTop: `1px solid ${tokens.border}` }}>
+    <Box component="section" id={id} sx={{ py: { xs: 6, md: 9 }, bgcolor }}>
       <Container maxWidth="lg">
         <Typography variant="h3" sx={{ fontSize: { xs: 24, md: 30 }, mb: 4 }}>
           {title}

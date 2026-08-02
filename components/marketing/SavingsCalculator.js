@@ -1,114 +1,243 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography, Slider, Stack } from "@mui/material";
+import { Box, Typography, Slider, Stack, MenuItem, Select, FormControl, InputLabel, Grid, ToggleButtonGroup, ToggleButton } from "@mui/material";
+import Link from "next/link";
 import { tokens } from "@/lib/theme";
+import { urls } from "@/lib/urls";
+import { comparisons } from "@/lib/comparisons";
+import { industryPages, DEFAULT_PPQL_NAIRA } from "@/lib/industryPages";
+import { pricingPlans, feePercentForPlan } from "@/lib/pricingPlans";
 
-// Illustrative benchmarks used only to make the slider feel concrete - a
-// business or affiliate sets their own real numbers once they are live.
-const TYPICAL_AD_COST_PER_LEAD_NAIRA = 8000; // rough Google/Meta ads CPL benchmark for comparison
-const AVERAGE_PPQL_NAIRA = 2500; // blended across industries, see lib/industryPages.js
-const AVERAGE_AFFILIATE_SHARE_PERCENT = 70; // typical tier-1 share of a qualified lead fee
+// Illustrative cost-per-lead benchmarks for each real alternative - lives
+// here (not in lib/comparisons.js) since that file holds qualitative
+// comparison copy, not numeric assumptions. A business sets its own real
+// numbers once live; this is only meant to make the slider feel concrete.
+const ALTERNATIVE_CPL_NAIRA = {
+  "google-ads": 8000,
+  "facebook-ads": 6000,
+  "cold-emails": 3000,
+  "seo-agencies": 5000,
+  "influencer-marketing": 12000,
+  "tiktok-ads": 7000,
+};
 
-const BUSINESS_MAX_NAIRA = 10000000;
-const BUSINESS_MIN_NAIRA = 100000;
-const BUSINESS_STEP_NAIRA = 50000;
+const BUDGET_MIN_NAIRA = 100000;
+const BUDGET_MAX_NAIRA = 10000000;
+const BUDGET_STEP_NAIRA = 50000;
 
-const AFFILIATE_MAX_NAIRA = 1000000;
-const AFFILIATE_MIN_NAIRA = 10000;
-const AFFILIATE_STEP_NAIRA = 10000;
-
-export default function SavingsCalculator({ audience }) {
-  const isBusiness = audience === "business";
+export default function SavingsCalculator() {
   const [budget, setBudget] = useState(1000000);
-  const [referralValue, setReferralValue] = useState(150000);
+  const [comparisonSlug, setComparisonSlug] = useState(comparisons[0]?.slug || "google-ads");
+  const [industrySlug, setIndustrySlug] = useState(industryPages[0]?.slug || "");
+  const [plan, setPlan] = useState("pro"); // 'pro' = Medium, matches the highlighted plan elsewhere on the site
 
-  const value = isBusiness ? budget : referralValue;
+  const comparison = comparisons.find((c) => c.slug === comparisonSlug) || comparisons[0];
+  const industry = industryPages.find((i) => i.slug === industrySlug);
+  const industryPpql = industry?.ppqlNaira || DEFAULT_PPQL_NAIRA;
+  const alternativeCpl = ALTERNATIVE_CPL_NAIRA[comparisonSlug] || 8000;
 
-  const leadsViaCommission = Math.floor(budget / AVERAGE_PPQL_NAIRA);
-  const leadsViaAds = Math.floor(budget / TYPICAL_AD_COST_PER_LEAD_NAIRA);
-  const extraLeads = Math.max(0, leadsViaCommission - leadsViaAds);
+  // Honest math: on a Lead-goal campaign, Commission's fee is taken the
+  // moment a business tops up their wallet - what actually funds leads is
+  // the NET amount after that fee, not the raw budget typed in. Comparing
+  // the raw budget against Commission's per-lead cost would overstate how
+  // many leads it buys.
+  const feePercent = feePercentForPlan(plan);
+  const netCampaignBudget = Math.round(budget * (1 - feePercent / 100));
+  const platformFeeNaira = budget - netCampaignBudget;
 
-  const earningsNaira = Math.round(referralValue * (AVERAGE_AFFILIATE_SHARE_PERCENT / 100));
+  const leadsViaCommission = Math.floor(netCampaignBudget / industryPpql);
+  const leadsViaAlternative = Math.floor(budget / alternativeCpl);
+  const extraLeads = Math.max(0, leadsViaCommission - leadsViaAlternative);
+  const savingsNaira = extraLeads * alternativeCpl;
+
+  const reasons = (comparison?.points || []).slice(0, 3);
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        maxWidth: 440,
-        border: `1px solid ${tokens.border}`,
-        borderRadius: 4,
-        p: 3,
-        bgcolor: tokens.paper,
-        boxShadow: "0 24px 48px -24px rgba(11,11,12,0.18)",
-      }}
-    >
+    <Box sx={{ border: `1px solid ${tokens.border}`, borderRadius: 4, p: { xs: 3, md: 4 }, maxWidth: 720, mx: "auto" }}>
       <Typography variant="overline" sx={{ color: tokens.muted, letterSpacing: 1.2 }}>
-        {isBusiness ? "See what your budget could do" : "See what you could earn"}
+        SEE WHAT YOUR BUDGET COULD DO
+      </Typography>
+      <Typography variant="body2" sx={{ color: tokens.muted, mt: 1, mb: 3 }}>
+        Pick what you would otherwise spend on, and your industry, to see a real comparison - not a generic guess.
       </Typography>
 
-      <Typography variant="body2" sx={{ color: tokens.muted, mt: 1, mb: 3 }}>
-        {isBusiness
-          ? "Drag to set your monthly marketing budget."
-          : "Drag to set the value of leads or sales you could realistically refer per month."}
-      </Typography>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Compare against</InputLabel>
+            <Select label="Compare against" value={comparisonSlug} onChange={(e) => setComparisonSlug(e.target.value)}>
+              {comparisons.map((c) => (
+                <MenuItem key={c.slug} value={c.slug}>
+                  {c.channelName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Your industry</InputLabel>
+            <Select label="Your industry" value={industrySlug} onChange={(e) => setIndustrySlug(e.target.value)}>
+              {industryPages.map((i) => (
+                <MenuItem key={i.slug} value={i.slug}>
+                  {i.industryName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
 
       <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
         <Typography variant="caption" sx={{ color: tokens.muted }}>
-          {isBusiness ? "Monthly budget" : "Referral value / month"}
+          Monthly budget
         </Typography>
         <Typography variant="caption" fontWeight={700}>
-          ₦{value.toLocaleString()}
+          ₦{budget.toLocaleString()}
         </Typography>
       </Stack>
       <Slider
-        value={value}
-        onChange={(_, v) => (isBusiness ? setBudget(v) : setReferralValue(v))}
-        min={isBusiness ? BUSINESS_MIN_NAIRA : AFFILIATE_MIN_NAIRA}
-        max={isBusiness ? BUSINESS_MAX_NAIRA : AFFILIATE_MAX_NAIRA}
-        step={isBusiness ? BUSINESS_STEP_NAIRA : AFFILIATE_STEP_NAIRA}
+        value={budget}
+        onChange={(_, v) => setBudget(v)}
+        min={BUDGET_MIN_NAIRA}
+        max={BUDGET_MAX_NAIRA}
+        step={BUDGET_STEP_NAIRA}
         sx={{ color: tokens.brand, mb: 3 }}
       />
 
-      {isBusiness ? (
-        <Stack spacing={1.5}>
+      <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mb: 1 }}>
+        Your plan
+      </Typography>
+      <ToggleButtonGroup
+        value={plan}
+        exclusive
+        size="small"
+        onChange={(_, v) => v && setPlan(v)}
+        sx={{
+          mb: 2,
+          width: "100%",
+          "& .MuiToggleButton-root": { flex: 1, textTransform: "none", fontWeight: 600 },
+        }}
+      >
+        {pricingPlans.map((p) => (
+          <ToggleButton key={p.id} value={p.id}>
+            {p.name} · {p.feePercent}% fee
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
+
+      <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F1EFE7", mb: 3 }}>
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="caption" sx={{ color: tokens.muted }}>
+            ₦{budget.toLocaleString()} top-up
+          </Typography>
+          <Typography variant="caption" sx={{ color: tokens.muted }}>
+            − ₦{platformFeeNaira.toLocaleString()} platform fee ({feePercent}%)
+          </Typography>
+        </Stack>
+        <Stack direction="row" justifyContent="space-between" sx={{ mt: 0.5 }}>
+          <Typography variant="body2" fontWeight={700}>
+            = ₦{netCampaignBudget.toLocaleString()} actual campaign budget
+          </Typography>
+        </Stack>
+      </Box>
+
+      <Grid container spacing={1.5} sx={{ mb: 3 }}>
+        <Grid item xs={6}>
           <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F1EFE7" }}>
             <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
-              Leads that budget buys via typical ads
+              Via {comparison?.channelName}
             </Typography>
-            <Typography fontWeight={700}>{leadsViaAds.toLocaleString()} leads</Typography>
+            <Typography fontWeight={700}>{leadsViaAlternative.toLocaleString()} leads</Typography>
           </Box>
+        </Grid>
+        <Grid item xs={6}>
           <Box sx={{ p: 2, borderRadius: 2, bgcolor: tokens.brand }}>
             <Typography variant="caption" sx={{ color: tokens.brandInk, display: "block" }}>
-              Leads that budget buys on Commission
+              Via Commission
             </Typography>
             <Typography fontWeight={700} sx={{ color: tokens.brandInk }}>
               {leadsViaCommission.toLocaleString()} leads
             </Typography>
           </Box>
-          <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#E7F5EE", textAlign: "center" }}>
-            <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
-              Extra leads for the same budget
-            </Typography>
-            <Typography variant="h6" fontWeight={700} sx={{ color: tokens.success }}>
-              +{extraLeads.toLocaleString()} leads
-            </Typography>
-          </Box>
-        </Stack>
-      ) : (
-        <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: "#F1EFE7", textAlign: "center" }}>
-          <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
-            Estimated monthly earnings
+        </Grid>
+      </Grid>
+
+      <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: "#E7F5EE", textAlign: "center", mb: 3 }}>
+        <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
+          {extraLeads > 0 ? "Extra leads, same budget - equivalent to" : "Estimated equivalent value"}
+        </Typography>
+        <Typography variant="h5" fontWeight={700} sx={{ color: tokens.success }}>
+          {extraLeads > 0 ? `+${extraLeads.toLocaleString()} leads · ₦${savingsNaira.toLocaleString()} saved` : "Comparable cost in this industry"}
+        </Typography>
+      </Box>
+
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="body2" fontWeight={700} sx={{ mb: 1.5 }}>
+          Same ₦{budget.toLocaleString()} top-up, by plan
+        </Typography>
+        <Grid container spacing={1}>
+          {pricingPlans.map((p) => {
+            const planNet = Math.round(budget * (1 - p.feePercent / 100));
+            const planLeads = Math.floor(planNet / industryPpql);
+            const isSelected = p.id === plan;
+            return (
+              <Grid item xs={4} key={p.id}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2,
+                    textAlign: "center",
+                    border: `1px solid ${isSelected ? tokens.ink : tokens.border}`,
+                    bgcolor: isSelected ? tokens.paper : "transparent",
+                  }}
+                >
+                  <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
+                    {p.name}
+                  </Typography>
+                  <Typography fontWeight={700}>{planLeads.toLocaleString()}</Typography>
+                  <Typography variant="caption" sx={{ color: tokens.muted }}>
+                    leads
+                  </Typography>
+                </Box>
+              </Grid>
+            );
+          })}
+        </Grid>
+        <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 1 }}>
+          Upgrading does not cost more per lead - it just leaves more of the same top-up as actual campaign budget.
+        </Typography>
+      </Box>
+
+      {reasons.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body2" fontWeight={700} sx={{ mb: 1.5 }}>
+            Why Commission beats {comparison?.channelName}
           </Typography>
-          <Typography variant="h5" fontWeight={700}>
-            ₦{earningsNaira.toLocaleString()}
+          <Stack spacing={1}>
+            {reasons.map((r) => (
+              <Typography key={r.title} variant="body2" sx={{ color: tokens.muted }}>
+                <Box component="span" sx={{ fontWeight: 700, color: tokens.ink }}>
+                  {r.title}.{" "}
+                </Box>
+                {r.body}
+              </Typography>
+            ))}
+          </Stack>
+          <Typography
+            component={Link}
+            href={urls.comparison(comparison.slug)}
+            variant="caption"
+            sx={{ color: tokens.ink, fontWeight: 600, display: "inline-block", mt: 1 }}
+          >
+            See the full comparison →
           </Typography>
         </Box>
       )}
 
-      <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 2 }}>
-        Illustrative only, based on typical figures across industries - your real numbers depend on the campaigns
-        you choose.
+      <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 3 }}>
+        Illustrative only - real numbers depend on the campaigns you choose and how they perform.
       </Typography>
     </Box>
   );

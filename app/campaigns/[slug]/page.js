@@ -25,7 +25,7 @@ export default function CampaignsDetailPage({ params }) {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <CampaignPageContent item={item} sourcePage={`/campaigns/${item.slug}`} />
+        <CampaignPageContent item={item} />
       </Box>
     </MarketingPageShell>
   );

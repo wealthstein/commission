@@ -1,5 +1,6 @@
 import { Container, Typography, Box, Grid } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { urls } from "@/lib/urls";
 import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 
 export default function CampaignPageContent({ item }) {
@@ -28,7 +29,7 @@ export default function CampaignPageContent({ item }) {
       </Box>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={`/campaigns/${item.slug}`} />
+        <RequestAccountForm sourcePage={urls.campaign(item.slug)} fixedRole="business" />
       </Box>
 
     </Container>

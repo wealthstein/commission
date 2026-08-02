@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Breadcrumbs, CardMedia, Container, Typography, Button, Stack } from "@mui/material";
+import { Box, Container, Typography, Button, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
 export function CTASection({ content, onPrimaryCta }) {
@@ -37,16 +37,15 @@ export function CTASection({ content, onPrimaryCta }) {
 
 export function Footer() {
   return (
-    <Box component="footer" sx={{ borderTop: `1px solid ${tokens.border}`, py: 6 }}>
+    <Box component="footer" sx={{ bgcolor: tokens.canvas, py: 6 }}>
       <Container maxWidth="lg" sx={{ textAlign: "center" }}>
         <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 4 }}>
-          <Box style={{ display: 'flex', justifyContent: 'center' }}>
-            <CardMedia
-              sx={{ height: 28, width: 28, borderRadius: '4px' }}
-              image={`/circle.svg`}
-              alt="detail"
-            />
+          <Box sx={{ width: 22, height: 22, borderRadius: "6px", bgcolor: tokens.brand, display: "grid", placeItems: "center" }}>
+            <Typography sx={{ color: tokens.brandInk, fontWeight: 800, fontSize: 12, lineHeight: 1 }}>C</Typography>
           </Box>
+          <Typography fontWeight={700} sx={{ fontSize: 14 }}>
+            Commission
+          </Typography>
         </Stack>
 
         <Box
@@ -76,26 +75,9 @@ export function Footer() {
           </Stack>
         </Box>
 
-        <Breadcrumbs
-          separator="•"
-          aria-label="breadcrumb"
-          sx={{
-            '& ol': {
-              justifyContent: 'center',
-              fontSize: '12px',
-              margin: 'auto',
-              textDecoration: 'none'
-            }
-          }}
-        >
-          <Typography variant="caption" sx={{ color: tokens.muted, fontSize: 10 }}>
-            © {new Date().getFullYear()} Commission
-          </Typography>
-          <Typography variant="caption" sx={{ color: tokens.muted, fontSize: 10 }}>
-            Built with ❤️ in Chicago, Illinois
-          </Typography>
-        </Breadcrumbs>
-
+        <Typography variant="caption" sx={{ color: tokens.muted, fontSize: 11 }}>
+          © Commission {new Date().getFullYear()} · Built with ♥ in Chicago, Illinois
+        </Typography>
       </Container>
     </Box>
   );

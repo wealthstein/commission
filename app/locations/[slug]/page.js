@@ -25,7 +25,7 @@ export default function LocationsDetailPage({ params }) {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <LocationPageContent item={item} sourcePage={`/locations/${item.slug}`} />
+        <LocationPageContent item={item} />
       </Box>
     </MarketingPageShell>
   );

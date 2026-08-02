@@ -25,7 +25,7 @@ export default function IntegrationsDetailPage({ params }) {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <IntegrationPageContent item={item} sourcePage={`/integrations/${item.slug}`} />
+        <IntegrationPageContent item={item} />
       </Box>
     </MarketingPageShell>
   );

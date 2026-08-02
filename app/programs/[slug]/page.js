@@ -1,10 +1,10 @@
-import { notFound, redirect } from "next/navigation";
-import { Box } from "@mui/material";
-import { getProgramBySlug } from "@/lib/programs";
-import { buildSeoTargetMetadata } from "@/lib/seo";
+import { notFound } from "next/navigation";
+import { getIndustryProgram } from "@/lib/programs";
+import { urls } from "@/lib/urls";
+import { SITE_URL } from "@/lib/seo";
 import MarketingPageShell from "@/components/marketing/MarketingPageShell";
 import InternalLinksSection from "@/components/marketing/InternalLinksSection";
-import ProgramPageContent from "@/components/marketing/ProgramPageContent";
+import IndustryProgramContent from "@/components/marketing/IndustryProgramContent";
 
 export const revalidate = 3600;
 
@@ -14,27 +14,22 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }) {
-  const { target } = await getProgramBySlug(params.slug);
-  if (!target) return { title: "Not found | Commission" };
-  return buildSeoTargetMetadata(target);
+  const { industry } = await getIndustryProgram(params.slug);
+  if (!industry) return { title: "Not found | Commission" };
+  const title = `${industry.displayName} Affiliate Programs - For Affiliates | Commission`;
+  const description =
+    industry.metaDescription ||
+    `Browse ${industry.displayName} affiliate programs on Commission and see what you could earn promoting them.`;
+  return { title, description, alternates: { canonical: `${SITE_URL}${urls.programIndustry(params.slug)}` } };
 }
 
-export default async function ProgramDetailPage({ params }) {
-  const { target, liveProducts } = await getProgramBySlug(params.slug);
-
-  // Only ever renders a seeded row (see supabase/seed_seo_targets.sql) -
-  // never an arbitrary user-typed slug.
-  if (!target) notFound();
-
-  // Once a real business matching this identity joins Commission, this
-  // permanently redirects to the real, live business page instead.
-  if (target.claimed_business_slug) {
-    redirect(`/businesses/${target.claimed_business_slug}`);
-  }
+export default async function IndustryProgramPage({ params }) {
+  const { industry, liveProducts } = await getIndustryProgram(params.slug);
+  if (!industry) notFound();
 
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
-      <ProgramPageContent target={target} liveProducts={liveProducts} />
+      <IndustryProgramContent industry={industry} liveProducts={liveProducts} />
     </MarketingPageShell>
   );
 }

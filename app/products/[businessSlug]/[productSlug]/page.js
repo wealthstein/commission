@@ -69,7 +69,7 @@ export default async function ProductPage({ params }) {
       {/* eslint-disable-next-line react/no-danger */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
-      <Container maxWidth="md">
+      <Container maxWidth="lg">
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
           <Typography variant="body2" component={Link} href="/" sx={{ color: tokens.muted }}>
             Commission

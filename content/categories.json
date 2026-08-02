@@ -1,0 +1,92 @@
+[
+  {
+    "slug": "hmo",
+    "label": "HMO",
+    "productType": "digital"
+  },
+  {
+    "slug": "hr-software",
+    "label": "HR Software",
+    "productType": "digital"
+  },
+  {
+    "slug": "saas",
+    "label": "SaaS",
+    "productType": "digital"
+  },
+  {
+    "slug": "fintech",
+    "label": "Fintech",
+    "productType": "digital"
+  },
+  {
+    "slug": "insurance",
+    "label": "Insurance",
+    "productType": "digital"
+  },
+  {
+    "slug": "internet-service-provider",
+    "label": "Internet Service Provider",
+    "productType": "digital"
+  },
+  {
+    "slug": "online-courses",
+    "label": "Online Courses",
+    "productType": "digital"
+  },
+  {
+    "slug": "memberships",
+    "label": "Memberships",
+    "productType": "digital"
+  },
+  {
+    "slug": "software-licenses",
+    "label": "Software Licenses",
+    "productType": "digital"
+  },
+  {
+    "slug": "logistics",
+    "label": "Logistics",
+    "productType": "digital"
+  },
+  {
+    "slug": "electronics",
+    "label": "Electronics",
+    "productType": "physical"
+  },
+  {
+    "slug": "furniture",
+    "label": "Furniture",
+    "productType": "physical"
+  },
+  {
+    "slug": "cars",
+    "label": "Cars",
+    "productType": "physical"
+  },
+  {
+    "slug": "real-estate",
+    "label": "Real Estate",
+    "productType": "physical"
+  },
+  {
+    "slug": "fashion",
+    "label": "Fashion",
+    "productType": "physical"
+  },
+  {
+    "slug": "beauty-products",
+    "label": "Beauty Products",
+    "productType": "physical"
+  },
+  {
+    "slug": "home-appliances",
+    "label": "Home Appliances",
+    "productType": "physical"
+  },
+  {
+    "slug": "other",
+    "label": "Other",
+    "productType": null
+  }
+]

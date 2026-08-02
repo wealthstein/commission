@@ -25,7 +25,7 @@ export default function SolutionsDetailPage({ params }) {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <SolutionPageContent item={item} sourcePage={`/solutions/${item.slug}`} />
+        <SolutionPageContent item={item} />
       </Box>
     </MarketingPageShell>
   );

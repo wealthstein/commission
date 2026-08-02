@@ -1,0 +1,67 @@
+{
+  "planFeePercent": {
+    "free": 20,
+    "pro": 15,
+    "plus": 10
+  },
+  "plans": [
+    {
+      "id": "free",
+      "name": "Small",
+      "priceNaira": 25000,
+      "priceSuffix": "/mo",
+      "feePercent": 20,
+      "tagline": "For small businesses just getting started with affiliate sales.",
+      "cta": "Start on Small",
+      "features": [
+        "1 active product",
+        "1 affiliate campaign",
+        "Up to 3 commission tiers",
+        "Referral link tracking",
+        "Automatic affiliate payouts",
+        "Commission keeps 20% whenever you top up your Campaign Wallet",
+        "Every qualified lead or verified sale then pays affiliates in full"
+      ]
+    },
+    {
+      "id": "pro",
+      "name": "Medium",
+      "priceNaira": 50000,
+      "priceSuffix": "/mo",
+      "feePercent": 15,
+      "tagline": "For mid-sized businesses running an active affiliate campaign.",
+      "cta": "Upgrade to Medium",
+      "highlighted": true,
+      "features": [
+        "Up to 10 active products",
+        "Unlimited affiliate campaigns",
+        "Up to 3 commission tiers",
+        "Marketing asset uploads",
+        "Priority affiliate recruiting placement",
+        "Custom logo on your campaign pages",
+        "API access - route qualified leads anywhere",
+        "Commission keeps 15% whenever you top up your Campaign Wallet",
+        "Every qualified lead or verified sale then pays affiliates in full"
+      ]
+    },
+    {
+      "id": "plus",
+      "name": "Large",
+      "priceNaira": 75000,
+      "priceSuffix": "/mo",
+      "feePercent": 10,
+      "tagline": "For large businesses scaling a serious affiliate channel.",
+      "cta": "Upgrade to Large",
+      "features": [
+        "Unlimited active products",
+        "Unlimited affiliate campaigns",
+        "Up to 3 commission tiers",
+        "Priority support",
+        "Custom logo and brand color on your campaign pages",
+        "API access - route qualified leads anywhere",
+        "Commission keeps only 10% whenever you top up your Campaign Wallet",
+        "Every qualified lead or verified sale then pays affiliates in full"
+      ]
+    }
+  ]
+}

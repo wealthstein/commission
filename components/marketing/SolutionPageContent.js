@@ -1,6 +1,7 @@
 import { Container, Typography, Box, Stack } from "@mui/material";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { tokens } from "@/lib/theme";
+import { urls } from "@/lib/urls";
 import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 
 const STAGE_LABELS = ["The problem", "How Commission helps", "The outcome"];
@@ -48,7 +49,7 @@ export default function SolutionPageContent({ item }) {
       </Stack>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={`/solutions/${item.slug}`} />
+        <RequestAccountForm sourcePage={urls.solution(item.slug)} fixedRole="business" />
       </Box>
 
     </Container>

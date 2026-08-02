@@ -25,7 +25,7 @@ export default function ConversionsDetailPage({ params }) {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <ConversionPageContent item={item} sourcePage={`/conversions/${item.slug}`} />
+        <ConversionPageContent item={item} />
       </Box>
     </MarketingPageShell>
   );

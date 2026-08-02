@@ -5,9 +5,9 @@ import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import { tokens } from "@/lib/theme";
 import { pricingPlans } from "@/lib/pricingPlans";
 
-export default function Pricing({ onSelectPlan }) {
+export default function Pricing({ onSelectPlan, bgcolor = tokens.paper }) {
   return (
-    <Box component="section" id="pricing" sx={{ py: { xs: 7, md: 10 }, borderTop: `1px solid ${tokens.border}` }}>
+    <Box component="section" id="pricing" sx={{ py: { xs: 7, md: 10 }, bgcolor }}>
       <Container maxWidth="lg">
         <Box sx={{ mb: 5, maxWidth: 560 }}>
           <Typography variant="h3" sx={{ fontSize: { xs: 24, md: 30 }, mb: 1.5 }}>

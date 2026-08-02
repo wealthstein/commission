@@ -2,6 +2,7 @@ import { Container, Typography, Box, Stack } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import { tokens } from "@/lib/theme";
+import { urls } from "@/lib/urls";
 import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 
 export default function FeaturePageContent({ item }) {
@@ -35,7 +36,7 @@ export default function FeaturePageContent({ item }) {
       </Stack>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={`/features/${item.slug}`} />
+        <RequestAccountForm sourcePage={urls.feature(item.slug)} fixedRole="business" />
       </Box>
 
     </Container>

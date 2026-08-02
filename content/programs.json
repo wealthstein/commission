@@ -1,0 +1,92 @@
+[
+  {
+    "routeSlug": "banking",
+    "type": "industry",
+    "keywordSlug": "banking",
+    "displayName": "Banking",
+    "industrySlug": null,
+    "industryCategory": "Banking",
+    "claimedBusinessSlug": null,
+    "metaDescription": "Browse banking affiliate programs in Nigeria and start earning commission promoting bank products."
+  },
+  {
+    "routeSlug": "fintech",
+    "type": "industry",
+    "keywordSlug": "fintech",
+    "displayName": "Fintech",
+    "industrySlug": null,
+    "industryCategory": "Fintech",
+    "claimedBusinessSlug": null,
+    "metaDescription": "Browse fintech affiliate programs in Nigeria and start earning commission promoting financial products."
+  },
+  {
+    "routeSlug": "insurance",
+    "type": "industry",
+    "keywordSlug": "insurance",
+    "displayName": "Insurance",
+    "industrySlug": null,
+    "industryCategory": "Insurance",
+    "claimedBusinessSlug": null,
+    "metaDescription": "Browse insurance affiliate programs in Nigeria and start earning commission on every policy sold."
+  },
+  {
+    "routeSlug": "real-estate",
+    "type": "industry",
+    "keywordSlug": "real-estate",
+    "displayName": "Real Estate",
+    "industrySlug": null,
+    "industryCategory": "Real Estate",
+    "claimedBusinessSlug": null,
+    "metaDescription": "Browse real estate affiliate programs in Nigeria and earn commission referring property buyers and renters."
+  },
+  {
+    "routeSlug": "healthtech",
+    "type": "industry",
+    "keywordSlug": "healthtech",
+    "displayName": "Healthtech",
+    "industrySlug": null,
+    "industryCategory": "HMO",
+    "claimedBusinessSlug": null,
+    "metaDescription": "Browse healthtech and HMO affiliate programs in Nigeria and earn commission on every plan sold."
+  },
+  {
+    "routeSlug": "edtech",
+    "type": "industry",
+    "keywordSlug": "edtech",
+    "displayName": "Edtech",
+    "industrySlug": null,
+    "industryCategory": "Online Courses",
+    "claimedBusinessSlug": null,
+    "metaDescription": "Browse edtech affiliate programs in Nigeria and earn commission promoting online courses and learning platforms."
+  },
+  {
+    "routeSlug": "logistics",
+    "type": "industry",
+    "keywordSlug": "logistics",
+    "displayName": "Logistics",
+    "industrySlug": null,
+    "industryCategory": "Logistics",
+    "claimedBusinessSlug": null,
+    "metaDescription": "Browse logistics affiliate programs in Nigeria and earn commission referring shipping and delivery customers."
+  },
+  {
+    "routeSlug": "banking/gtbank",
+    "type": "company",
+    "keywordSlug": "gtbank",
+    "displayName": "GTBank",
+    "industrySlug": "banking",
+    "industryCategory": "Fintech",
+    "claimedBusinessSlug": null,
+    "metaDescription": "Does GTBank have a program? Here is what to know, and how to get notified if one launches on Commission."
+  },
+  {
+    "routeSlug": "fintech/jumia",
+    "type": "company",
+    "keywordSlug": "jumia",
+    "displayName": "Jumia",
+    "industrySlug": "fintech",
+    "industryCategory": "Fintech",
+    "claimedBusinessSlug": null,
+    "metaDescription": "Does Jumia have a program? Here is what to know, and how to get notified if one launches on Commission."
+  }
+]

@@ -21,9 +21,7 @@ drop table if exists affiliate_enrollments cascade;
 drop table if exists marketing_assets cascade;
 drop table if exists affiliate_programs cascade;
 drop table if exists products cascade;
-drop table if exists notify_requests cascade;
 drop table if exists waitlist_requests cascade;
-drop table if exists seo_keyword_targets cascade;
 drop table if exists user_referral_rewards cascade;
 drop table if exists businesses cascade;
 drop table if exists users cascade;
@@ -558,48 +556,23 @@ create trigger trg_touch_programs before update on affiliate_programs
   for each row execute function fn_touch_updated_at();
 
 -- ============================================================================
--- SEO KEYWORD TARGETS  (the /[x]-affiliate-program and /[y]-affiliate-programs
--- pages). Deliberately a SEEDED, curated table rather than accepting any
--- arbitrary slug — auto-generating a page for every string anyone types is
--- exactly the "doorway page" / scaled-content-abuse pattern search engines
--- penalize, and for a real company name it would mean asserting something
--- ("X has an affiliate program") Commission can't actually verify.
+-- SEO KEYWORD TARGETS and NOTIFY_REQUESTS have been REMOVED.
+--
+-- Programs content (the /programs/[industry] and /programs/[industry]/[company]
+-- pages) moved from this table to content/programs.json — curated marketing
+-- copy that ships with the codebase, same as content/industries.json,
+-- content/categories.json, and content/pricingPlans.json. See lib/programs.js.
+-- The one real tradeoff: claiming a program for a real business that joins
+-- (claimedBusinessSlug) now requires editing content/programs.json and
+-- redeploying, rather than flipping one field on a live database row.
+--
+-- notify_requests backed NotifyMeForm, an email-only "get notified"
+-- capture that was redundant with RequestAccountForm (the real lead-magnet
+-- form) and has been removed from every page — see components/marketing/
+-- RequestAccountForm.js, which is the single form used everywhere now.
 -- ============================================================================
-create table if not exists seo_keyword_targets (
-  id                  uuid primary key default gen_random_uuid(),
-  route_slug          text unique not null,   -- e.g. 'gtbank-affiliate-program' or 'fintech-affiliate-programs'
-  type                text not null check (type in ('company','industry')),
-  keyword_slug        text not null,          -- bare keyword: 'gtbank' or 'fintech'
-  display_name        text not null,          -- 'GTBank' or 'Fintech'
-  -- For a COMPANY entry: which lib/categories.js-style industry bucket it
-  -- plausibly belongs to, so the placeholder page can cross-link to real
-  -- live products in that space. For an INDUSTRY entry, this can just repeat
-  -- display_name — it's used to query products.category for "real programs
-  -- in this space" regardless of entry type.
-  industry_category   text,
-  -- Once a real business matching this identity actually joins Commission,
-  -- set this and the page 301-redirects to /businesses/[slug] instead of
-  -- showing the placeholder — this is the ONE mechanism that turns a
-  -- speculative keyword page into a real, accurate one.
-  claimed_business_slug text references businesses(slug),
-  meta_description    text,
-  created_at          timestamptz not null default now()
-);
 
-create index if not exists idx_seo_targets_type on seo_keyword_targets(type);
-create index if not exists idx_seo_targets_claimed on seo_keyword_targets(claimed_business_slug);
 
--- "Notify me" capture on placeholder pages — the conversion mechanism for
--- visitors who land on a company/industry page that isn't live yet.
-create table if not exists notify_requests (
-  id              uuid primary key default gen_random_uuid(),
-  seo_target_id   uuid not null references seo_keyword_targets(id) on delete cascade,
-  email           text not null,
-  created_at      timestamptz not null default now(),
-  unique (seo_target_id, email)
-);
-
--- ============================================================================
 -- ROW LEVEL SECURITY (starter policies — refine per launch)
 -- ============================================================================
 alter table users enable row level security;
@@ -670,14 +643,6 @@ create policy wallet_txns_owner_select on wallet_transactions for select
   using (business_id in (
     select id from businesses where owner_id in (select id from users where auth_user_id = auth.uid())
   ));
-
-alter table seo_keyword_targets enable row level security;
-drop policy if exists seo_targets_public_read on seo_keyword_targets;
-create policy seo_targets_public_read on seo_keyword_targets for select using (true);
-
-alter table notify_requests enable row level security;
-drop policy if exists notify_requests_public_insert on notify_requests;
-create policy notify_requests_public_insert on notify_requests for insert with check (true);
 
 -- ============================================================================
 -- WAITLIST REQUESTS (internal name only — never shown to users, who see

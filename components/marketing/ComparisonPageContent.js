@@ -1,5 +1,6 @@
 import { Container, Typography, Grid, Paper, Box } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { urls } from "@/lib/urls";
 import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 
 export default function ComparisonPageContent({ comparison }) {
@@ -29,7 +30,7 @@ export default function ComparisonPageContent({ comparison }) {
       </Grid>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={`/${comparison.slug}`} />
+        <RequestAccountForm sourcePage={urls.comparison(comparison.slug)} fixedRole="business" />
       </Box>
 
     </Container>

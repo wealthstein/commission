@@ -1,5 +1,6 @@
 import { Container, Typography, Stack, Box } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { urls } from "@/lib/urls";
 import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 
 export default function ConversionPageContent({ item }) {
@@ -34,7 +35,7 @@ export default function ConversionPageContent({ item }) {
       </Stack>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={`/conversions/${item.slug}`} />
+        <RequestAccountForm sourcePage={urls.conversion(item.slug)} />
       </Box>
 
     </Container>

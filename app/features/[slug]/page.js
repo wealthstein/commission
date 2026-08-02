@@ -25,7 +25,7 @@ export default function FeaturesDetailPage({ params }) {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <FeaturePageContent item={item} sourcePage={`/features/${item.slug}`} />
+        <FeaturePageContent item={item} />
       </Box>
     </MarketingPageShell>
   );

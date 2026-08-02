@@ -1,0 +1,81 @@
+{
+  "audienceContent": {
+    "business": {
+      "eyebrow": "For businesses",
+      "headline": "Turn your customers' networks into your sales team",
+      "subhead": "List your product, set your commission structure, and let Commission recruit, track, and pay affiliates automatically — in naira, through Paystack.",
+      "primaryCta": "List your product",
+      "secondaryCta": "See how it works",
+      "benefits": [
+        { "title": "No wallet, no risk", "body": "Commission never holds your customers' money. Paystack settles you directly." },
+        { "title": "3-tier programs built in", "body": "Reward the affiliate who sold it — and whoever recruited them, up to 3 levels deep." },
+        { "title": "Pay only for results", "body": "Commission's fee comes out of the affiliate commission you set, never your sale price." },
+        { "title": "Recurring commissions", "body": "Running a subscription business? Affiliates can earn every month the customer stays." }
+      ],
+      "features": [
+        { "title": "Program builder", "body": "Set tier percentages, attribution window, approval rules, and minimum payout in minutes." },
+        { "title": "Affiliate recruiting", "body": "Your program is discoverable to Commission's affiliate network from day one." },
+        { "title": "Marketing assets", "body": "Upload banners and swipe copy so affiliates can promote your product correctly." },
+        { "title": "Live reporting", "body": "See every click, sale, and commission by affiliate, tier, and product in real time." }
+      ],
+      "howItWorks": [
+        { "title": "Create a business profile", "body": "Add your company details and connect Paystack for settlement." },
+        { "title": "List your product", "body": "Set price, billing frequency, and category — HMOs, HR software, SaaS, insurance, ISPs." },
+        { "title": "Launch your affiliate program", "body": "Choose one-time or recurring commissions, and up to 3 tiers." },
+        { "title": "Affiliates sell, you get paid", "body": "Every purchase is tracked, commissions calculated, and payouts sent automatically." }
+      ],
+      "comparison": {
+        "title": "Commission vs. running this yourself",
+        "rows": [
+          ["Affiliate link tracking", "Manual spreadsheets", "Automatic, per affiliate"],
+          ["Multi-tier payouts", "Custom-built or unavailable", "Built in, up to 3 tiers"],
+          ["Payment settlement", "You chase transfers", "Paystack handles it"],
+          ["Recurring commissions", "Hard to maintain accurately", "Recalculated every cycle"]
+        ]
+      }
+    },
+    "affiliate": {
+      "eyebrow": "For affiliates",
+      "headline": "Get paid for the products you already recommend",
+      "subhead": "Join affiliate programs from real Nigerian businesses, share your link on WhatsApp or social, and earn commissions automatically — including from people you bring in.",
+      "primaryCta": "Start earning",
+      "secondaryCta": "See how it works",
+      "benefits": [
+        { "title": "One link, every channel", "body": "Share on WhatsApp, Instagram, your blog, or by email — Commission tracks it all." },
+        { "title": "Earn 3 tiers deep", "body": "Bring another affiliate into a program, and earn a cut of their sales too." },
+        { "title": "Recurring income", "body": "Promote a subscription product once, keep earning every month the customer pays." },
+        { "title": "Fast, direct payouts", "body": "Commissions are paid straight to your bank account via Paystack." }
+      ],
+      "features": [
+        { "title": "Discover programs", "body": "Browse HMOs, HR tools, SaaS, insurance, and internet plans looking for affiliates." },
+        { "title": "Ready-made marketing assets", "body": "Use banners and copy provided by the business — no design work required." },
+        { "title": "Referral network view", "body": "See exactly who you've referred and what each tier is earning." },
+        { "title": "Clear earnings history", "body": "Every click, sale, and payout, in one transactions view." }
+      ],
+      "howItWorks": [
+        { "title": "Sign in with Google", "body": "Create your Commission account in seconds — no separate affiliate signup." },
+        { "title": "Join a program", "body": "Browse products and apply to the ones that fit your audience." },
+        { "title": "Share your link", "body": "Get a unique referral link like commission.ng/r/ABC123 and share it anywhere." },
+        { "title": "Earn automatically", "body": "When someone buys through your link, your commission is calculated and paid out." }
+      ],
+      "earningsExample": {
+        "title": "What it looks like in naira",
+        "body": "A ₦50,000/month SaaS subscription with a 10% recurring commission pays you ₦5,000 every month the customer stays — for as long as they're subscribed."
+      }
+    }
+  },
+  "faqByAudience": {
+    "business": [
+      { "q": "How does Commission make money?", "a": "We take a percentage of the affiliate commission you set — never a cut of your product's sale price." },
+      { "q": "Do I need to hold a wallet balance?", "a": "No. Commission is not a stored-value wallet. Paystack settles your sale proceeds directly to you." },
+      { "q": "Can I run more than 3 tiers?", "a": "The platform supports up to 3 affiliate tiers per program, matching how most referral structures actually work." },
+      { "q": "What if a customer refunds?", "a": "Any commission tied to a refunded transaction is automatically reversed before payout." }
+    ],
+    "affiliate": [
+      { "q": "Do I need a business account to become an affiliate?", "a": "No — every Commission account can promote products, list its own, or both. There is just one account type." },
+      { "q": "How do I get paid?", "a": "Commissions are paid out to your bank account via Paystack once they clear the program's minimum payout threshold." },
+      { "q": "What is a referral tier?", "a": "If you refer another affiliate into a program, you earn a percentage of their sales too — up to 2 levels below you." },
+      { "q": "How long does my referral link stay credited to me?", "a": "Each program sets its own attribution window (commonly 30 days) from when someone clicks your link." }
+    ]
+  }
+}

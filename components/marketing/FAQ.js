@@ -1,39 +1,68 @@
 "use client";
 
-import { Box, Container, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useState } from "react";
+import { Box, Container, Typography, Paper, Chip } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
-export default function FAQ({ items }) {
+function FaqRow({ item, isOpen, onToggle, isFirst }) {
   return (
-    <Box component="section" id="faq" sx={{ py: { xs: 6, md: 9 }, borderTop: `1px solid ${tokens.border}` }}>
-      <Container maxWidth="md">
-        <Typography variant="h3" sx={{ fontSize: { xs: 24, md: 30 }, mb: 4 }}>
-          Frequently asked questions
+    <Box sx={{ borderTop: isFirst ? "none" : `1px solid ${tokens.border}` }}>
+      <Box
+        component="button"
+        onClick={onToggle}
+        sx={{
+          all: "unset",
+          display: "block",
+          width: "100%",
+          cursor: "pointer",
+          py: 3,
+          "&:focus-visible": { outline: `2px solid ${tokens.ink}`, outlineOffset: 2 },
+        }}
+      >
+        <Typography fontWeight={700} sx={{ fontSize: { xs: 16, md: 18 } }}>
+          {item.q}
         </Typography>
-        {items.map((item) => (
-          <Accordion
-            key={item.q}
-            disableGutters
-            elevation={0}
-            sx={{
-              border: `1px solid ${tokens.border}`,
-              borderRadius: "12px !important",
-              mb: 1.5,
-              "&:before": { display: "none" },
-              overflow: "hidden",
-            }}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography fontWeight={600}>{item.q}</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="body2" sx={{ color: tokens.muted }}>
-                {item.a}
+      </Box>
+      {isOpen && (
+        <Typography variant="body2" sx={{ color: tokens.muted, pb: 3, maxWidth: 680, lineHeight: 1.7 }}>
+          {item.a}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
+export default function FAQ({ items, eyebrow = "FAQ", title = "Frequently asked questions", subtitle }) {
+  const [openIndex, setOpenIndex] = useState(0);
+
+  return (
+    <Box component="section" id="faq" sx={{ py: { xs: 6, md: 9 } }}>
+      <Container maxWidth="lg">
+        <Box sx={{ maxWidth: 720, mx: "auto" }}>
+          <Box sx={{ textAlign: "center", mb: 5 }}>
+            <Chip label={eyebrow} size="small" sx={{ bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700, mb: 2.5 }} />
+            <Typography variant="h3" sx={{ fontSize: { xs: 26, md: 34 }, mb: subtitle ? 1.5 : 0, maxWidth: 620, mx: "auto" }}>
+              {title}
+            </Typography>
+            {subtitle && (
+              <Typography variant="body1" sx={{ color: tokens.muted, maxWidth: 560, mx: "auto" }}>
+                {subtitle}
               </Typography>
-            </AccordionDetails>
-          </Accordion>
-        ))}
+            )}
+          </Box>
+
+          <Paper variant="outlined" sx={{ borderColor: tokens.border, borderRadius: 4, px: { xs: 3, md: 5 } }}>
+            {items.map((item, i) => (
+              <FaqRow
+                key={item.q}
+                item={item}
+                isFirst={i === 0}
+                isOpen={openIndex === i}
+                onToggle={() => setOpenIndex(openIndex === i ? -1 : i)}
+              />
+            ))}
+          </Paper>
+        </Box>
       </Container>
     </Box>
   );

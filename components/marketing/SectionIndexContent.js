@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Container, Typography, Grid, Paper, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
-export default function SectionIndexContent({ title, description, basePath, items, relatedLinks }) {
+export default function SectionIndexContent({ title, description, buildHref, items, relatedLinks }) {
   return (
     <Container maxWidth="lg">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
@@ -17,7 +17,7 @@ export default function SectionIndexContent({ title, description, basePath, item
           <Grid item xs={12} sm={6} md={4} key={item.slug}>
             <Paper
               component={Link}
-              href={`/${basePath}/${item.slug}`}
+              href={buildHref(item.slug)}
               variant="outlined"
               sx={{ display: "block", p: 3, borderRadius: 3, borderColor: tokens.border, height: "100%", "&:hover": { borderColor: tokens.ink } }}
             >

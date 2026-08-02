@@ -1,5 +1,6 @@
 import { Container, Typography, Box, Chip, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { urls } from "@/lib/urls";
 import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 
 const NATIVE_SLUGS = ["whatsapp", "email"];
@@ -45,7 +46,7 @@ export default function IntegrationPageContent({ item }) {
       </Box>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={`/integrations/${item.slug}`} />
+        <RequestAccountForm sourcePage={urls.integration(item.slug)} fixedRole="business" />
       </Box>
 
     </Container>
