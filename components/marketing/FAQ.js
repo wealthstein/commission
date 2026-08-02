@@ -24,7 +24,7 @@ function FaqRow({ item, isOpen, onToggle, isFirst }) {
         </Typography>
       </Box>
       {isOpen && (
-        <Typography variant="body2" sx={{ color: tokens.muted, pb: 3, maxWidth: 680, lineHeight: 1.7 }}>
+        <Typography variant="body2" sx={{ color: tokens.muted, pb: 3, lineHeight: 1.7 }}>
           {item.a}
         </Typography>
       )}
@@ -38,20 +38,20 @@ export default function FAQ({ items, eyebrow = "FAQ", title = "Frequently asked 
   return (
     <Box component="section" id="faq" sx={{ py: { xs: 6, md: 9 } }}>
       <Container maxWidth="lg">
-        <Box sx={{ maxWidth: 720, mx: "auto" }}>
+        <Box sx={{ mx: "auto" }}>
           <Box sx={{ textAlign: "center", mb: 5 }}>
             <Chip label={eyebrow} size="small" sx={{ bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700, mb: 2.5 }} />
-            <Typography variant="h3" sx={{ fontSize: { xs: 26, md: 34 }, mb: subtitle ? 1.5 : 0, maxWidth: 620, mx: "auto" }}>
+            <Typography variant="h3" sx={{ fontSize: { xs: 26, md: 34 }, mb: subtitle ? 1.5 : 0, mx: "auto" }}>
               {title}
             </Typography>
             {subtitle && (
-              <Typography variant="body1" sx={{ color: tokens.muted, maxWidth: 560, mx: "auto" }}>
+              <Typography variant="body1" sx={{ color: tokens.muted, mx: "auto" }}>
                 {subtitle}
               </Typography>
             )}
           </Box>
 
-          <Paper variant="outlined" sx={{ borderColor: tokens.border, borderRadius: 4, px: { xs: 3, md: 5 } }}>
+          <Paper variant="outlined" sx={{ borderColor: tokens.border, borderRadius: 1, px: { xs: 3, md: 5 } }}>
             {items.map((item, i) => (
               <FaqRow
                 key={item.q}

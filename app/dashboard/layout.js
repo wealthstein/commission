@@ -14,6 +14,7 @@ import {
   IconButton,
   Avatar,
   Stack,
+  CardMedia,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
@@ -45,9 +46,7 @@ function SidebarContent({ pathname }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 2.5, py: 3 }}>
-        <Box sx={{ width: 26, height: 26, borderRadius: "8px", bgcolor: tokens.brand, display: "grid", placeItems: "center" }}>
-          <Typography sx={{ color: tokens.brandInk, fontWeight: 800, fontSize: 14, lineHeight: 1 }}>C</Typography>
-        </Box>
+        <CardMedia sx={{ width: 26, height: 26, borderRadius: "8px" }} image="/circle.svg" alt="Commission" />
         <Typography fontWeight={700}>Commission</Typography>
       </Stack>
       <List sx={{ px: 1.5, flexGrow: 1 }}>

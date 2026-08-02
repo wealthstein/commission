@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/marketing/Navbar";
 import Hero from "@/components/marketing/Hero";
 import CardGridSection from "@/components/marketing/CardGridSection";
@@ -11,7 +12,6 @@ import Pricing from "@/components/marketing/Pricing";
 import FAQ from "@/components/marketing/FAQ";
 import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 import { CTASection } from "@/components/marketing/CTAAndFooter";
-import SignInModal from "@/components/marketing/SignInModal";
 import GoToTopButton from "@/components/marketing/GoToTopButton";
 import { audienceContent, faqByAudience } from "@/components/marketing/content";
 import { Box, Container } from "@mui/material";
@@ -29,16 +29,17 @@ function goToRequestForm(role) {
 }
 
 export default function HomeClient({ searchParams }) {
+  const router = useRouter();
   const initialAudience = searchParams?.for === "affiliate" ? "affiliate" : "business";
   const [audience, setAudience] = useState(initialAudience);
-  const [signInOpen, setSignInOpen] = useState(false);
+  // SignInModal retired in favor of the dedicated /signin page.
 
   const content = audienceContent[audience];
   const faq = faqByAudience[audience];
 
   return (
     <>
-      <Navbar audience={audience} onAudienceChange={setAudience} onSignIn={() => setSignInOpen(true)} />
+      <Navbar audience={audience} onAudienceChange={setAudience} onSignIn={() => router.push("/signin")} />
 
       <Hero content={content} audience={audience} onPrimaryCta={() => goToRequestForm(audience)} />
 
@@ -61,7 +62,7 @@ export default function HomeClient({ searchParams }) {
 
         <Box sx={{ py: { xs: 6, md: 9 } }}>
           <Container maxWidth="lg">
-            <Box sx={{ maxWidth: 480, mx: "auto" }}>
+            <Box sx={{ mx: "auto" }}>
               <RequestAccountForm sourcePage="/" />
             </Box>
           </Container>
@@ -80,7 +81,6 @@ export default function HomeClient({ searchParams }) {
         onPrimaryCta={() => goToRequestForm(audience)}
       />
 
-      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
       <GoToTopButton />
     </>
   );

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/marketing/Navbar";
 import { Footer } from "@/components/marketing/CTAAndFooter";
 import GoToTopButton from "@/components/marketing/GoToTopButton";
-import SignInModal from "@/components/marketing/SignInModal";
 
 /**
  * Shared shell for every marketing page (industries, comparisons, programs,
@@ -17,17 +17,17 @@ import SignInModal from "@/components/marketing/SignInModal";
  * instantiate one themselves.
  */
 export default function MarketingPageShell({ children, internalLinks }) {
+  const router = useRouter();
   const [audience, setAudience] = useState("business");
-  const [signInOpen, setSignInOpen] = useState(false);
+  // SignInModal retired in favor of the dedicated /signin page.
 
   return (
     <>
-      <Navbar audience={audience} onAudienceChange={setAudience} onSignIn={() => setSignInOpen(true)} />
+      <Navbar audience={audience} onAudienceChange={setAudience} onSignIn={() => router.push("/signin")} />
       {children}
       {internalLinks}
       <Footer />
       <GoToTopButton />
-      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
     </>
   );
 }

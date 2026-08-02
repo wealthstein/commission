@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Container, Typography, Button, Stack } from "@mui/material";
+import { Box, Breadcrumbs, Container, Typography, Button, Stack, CardMedia } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
 export function CTASection({ content, onPrimaryCta }) {
@@ -40,12 +40,7 @@ export function Footer() {
     <Box component="footer" sx={{ bgcolor: tokens.canvas, py: 6 }}>
       <Container maxWidth="lg" sx={{ textAlign: "center" }}>
         <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 4 }}>
-          <Box sx={{ width: 22, height: 22, borderRadius: "6px", bgcolor: tokens.brand, display: "grid", placeItems: "center" }}>
-            <Typography sx={{ color: tokens.brandInk, fontWeight: 800, fontSize: 12, lineHeight: 1 }}>C</Typography>
-          </Box>
-          <Typography fontWeight={700} sx={{ fontSize: 14 }}>
-            Commission
-          </Typography>
+          <CardMedia sx={{ width: 22, height: 22, borderRadius: "6px" }} image="/circle.svg" alt="Commission" />
         </Stack>
 
         <Box
@@ -75,9 +70,26 @@ export function Footer() {
           </Stack>
         </Box>
 
-        <Typography variant="caption" sx={{ color: tokens.muted, fontSize: 11 }}>
-          © Commission {new Date().getFullYear()} · Built with ♥ in Chicago, Illinois
-        </Typography>
+        <Breadcrumbs
+          separator="•"
+          aria-label="breadcrumb"
+          sx={{
+            '& ol': {
+              justifyContent: 'center',
+              fontSize: '12px',
+              margin: 'auto',
+              textDecoration: 'none'
+            }
+          }}
+        >
+          <Typography sx={{ color: tokens.muted, fontSize: 11 }}>
+            © {new Date().getFullYear()} Commission
+          </Typography>
+          <Typography sx={{ color: tokens.muted, fontSize: 11 }}>
+            Built with ❤️ in Chicago, Illinois
+          </Typography>
+        </Breadcrumbs>
+
       </Container>
     </Box>
   );

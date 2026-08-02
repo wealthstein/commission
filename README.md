@@ -1,9 +1,9 @@
 # Commission (commission.ng)
 
-Nigeria's affiliate marketplace — businesses list products and launch
-multi-tier (up to 3 levels) affiliate programs; affiliates share unique
-referral links and earn one-time or recurring commissions, paid out
-automatically via Paystack.
+A performance-based customer acquisition platform for businesses of every size and industry in Nigeria —
+businesses list a product or service and set what a qualified lead or sale is worth to them; affiliates share a
+unique referral link and earn one-time or recurring commissions, up to 3 tiers deep, paid out automatically via
+Paystack.
 
 This repo is a working MVP scaffold built directly from the Commission TRD.
 It is **not yet deployed or connected to live services** — you will need to
@@ -163,6 +163,48 @@ way — so the fee is now uniform, gated only by conversion goal (both leads
 and sales are billable) and plan (which determines the percentage).
 
 ## Recent changes
+
+0. **Dedicated Google auth pages, real dashboard gating, and the real logo
+   everywhere**:
+   - **`/signin` and `/signup`** — a real split-screen auth page
+     (`components/marketing/AuthPage.js`), Google-only, no email/password.
+     The right panel content differs by mode - real product stats for
+     signup, "what's waiting for you" framing for signin.
+   - **The dashboard was previously unprotected** — `/dashboard` had no auth
+     check of any kind. Added `middleware.js`, which now redirects an
+     unauthenticated visitor to `/signin`, and an authenticated-but-not-yet-
+     granted-access user to `/welcome`.
+   - **`users.dashboard_access_granted`** (new column, defaults `false`) is
+     the single source of truth for who can actually reach the dashboard.
+     Granting it today is a manual database update — there is no admin UI
+     for it yet.
+   - **The OAuth callback (`app/api/auth/callback`) decides the final
+     redirect itself**, based on that flag, regardless of what `next` was
+     requested. This is what makes it safe for `/signin`, `/signup`, and
+     every "request an account" CTA on the site to all share the exact same
+     code path — nobody can request their way past the gate by editing a
+     query string.
+   - **There is no manual form anywhere anymore.** `RequestAccountForm.js`
+     was rewritten to drop the name/email/phone fields and submit button
+     entirely — every CTA on the site now triggers Google auth directly
+     (`lib/googleAuth.js`), which registers a real account but (per
+     `dashboard_access_granted` defaulting false) lands on `/welcome`, not
+     the dashboard, same as everyone else pre-launch. The old
+     `waitlist_requests` table and its API route were removed as a result —
+     `users.intended_role` and `users.signup_source_page` now capture what
+     that table used to.
+   - **`/welcome`** shows a personalized "Hi, {first name}!" (read from the
+     Google profile server-side) with review-status messaging and a CTA
+     back to the homepage.
+   - **The old `SignInModal.js`** was already unreachable (nothing called
+     it since an earlier pass removed every button that opened it) —
+     removed entirely along with its dead wiring, superseded by the pages
+     above.
+   - **Real logo (`/circle.svg`) everywhere** the placeholder "C" badge
+     used to be — dashboard sidebar, footer, the new auth pages.
+   - **README reframed** as a performance-based customer acquisition
+     platform for businesses of every size and industry, not just
+     "Nigeria's affiliate marketplace."
 
 0. **Layout, performance, and content fixes from side-by-side comparison
    with a reference site**:

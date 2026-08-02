@@ -21,7 +21,7 @@ drop table if exists affiliate_enrollments cascade;
 drop table if exists marketing_assets cascade;
 drop table if exists affiliate_programs cascade;
 drop table if exists products cascade;
-drop table if exists waitlist_requests cascade;
+-- (waitlist_requests table removed — see the note further down where it used to be defined)
 drop table if exists user_referral_rewards cascade;
 drop table if exists businesses cascade;
 drop table if exists users cascade;
@@ -53,6 +53,20 @@ create table if not exists users (
   full_name       text,
   avatar_url      text,
   phone           text,
+  -- Set true only once this person has been manually granted real dashboard
+  -- access. Signing in with Google always creates/authenticates the auth
+  -- user - but until this is true, app/api/auth/callback sends them to
+  -- /welcome instead of /dashboard regardless of what was requested.
+  -- This is what lets Google auth double as a (higher-quality, verified)
+  -- way to register interest before the dashboard is generally open.
+  dashboard_access_granted boolean not null default false,
+  -- Captured from whichever CTA triggered Google auth (business or
+  -- affiliate) - there is no manual form anymore, so this is the only
+  -- signal of which side someone was interested in. Informational for now,
+  -- not yet used to branch any copy.
+  intended_role      text check (intended_role in ('business','affiliate')),
+  -- Which page they were on when they clicked through to Google auth.
+  signup_source_page text,
   -- Referral: who brought THIS user onto the platform (drives user-referral payouts, sec. "pay users for referring other users")
   referred_by     uuid references users(id),
   -- Payout destination for affiliate commissions (Paystack transfer recipient)
@@ -645,25 +659,10 @@ create policy wallet_txns_owner_select on wallet_transactions for select
   ));
 
 -- ============================================================================
--- WAITLIST REQUESTS (internal name only — never shown to users, who see
--- "Request an account" style copy instead, see lib/ctaVariants.js). Since
--- the dashboard is not open for general signup yet, this is the actual
--- pre-launch conversion mechanism: the lead-magnet form embedded on every
--- industry, program, and comparison page (components/marketing/RequestAccountForm.js).
+-- WAITLIST_REQUESTS has been REMOVED. There is no longer a manual
+-- name/email/phone capture form anywhere on the site - every "request an
+-- account" CTA triggers Google auth directly (see lib/googleAuth.js), which
+-- creates a real row in `users` above. dashboard_access_granted defaulting
+-- to false is what keeps this safe pre-launch - see app/api/auth/callback
+-- and middleware.js.
 -- ============================================================================
-create table if not exists waitlist_requests (
-  id           uuid primary key default gen_random_uuid(),
-  first_name   text not null,
-  email        text not null,
-  phone        text not null,
-  role         text not null check (role in ('business','affiliate')),
-  source_page  text,                     -- which page slug this was submitted from, for attribution
-  created_at   timestamptz not null default now(),
-  unique (email, role)
-);
-
-alter table waitlist_requests enable row level security;
-drop policy if exists waitlist_requests_public_insert on waitlist_requests;
-create policy waitlist_requests_public_insert on waitlist_requests for insert with check (true);
--- Deliberately no select policy — this is a write-only capture; reads happen
--- server-side via the service-role key.
