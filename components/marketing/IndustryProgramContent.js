@@ -3,7 +3,7 @@ import { Box, Container, Typography, Chip, Stack, Paper } from "@mui/material";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
-import RequestAccountForm from "@/components/marketing/RequestAccountForm";
+import SignUpButton from "@/components/marketing/SignUpButton";
 
 /**
  * /programs/[industry] - the CHILD level under Programs. Speaks to
@@ -56,7 +56,7 @@ export default function IndustryProgramContent({ industry, liveProducts }) {
         </Stack>
 
         <Box sx={{ maxWidth: 480, mb: 6 }}>
-          <RequestAccountForm sourcePage={urls.programIndustry(industry.keywordSlug)} fixedRole="affiliate" />
+          <SignUpButton role="affiliate" sourcePage={urls.programIndustry(industry.keywordSlug)} />
         </Box>
 
         {liveProducts.length > 0 ? (

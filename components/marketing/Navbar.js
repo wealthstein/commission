@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { AppBar, Toolbar, Box, CardMedia, Typography, Button, ToggleButtonGroup, ToggleButton, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
@@ -12,20 +11,8 @@ const NAV_LINKS = [
   { anchor: "faq", label: "FAQ" },
 ];
 
-/**
- * Goes to the request-account form and preselects the matching role - same
- * pattern TwoAudienceCta uses everywhere else. If already on the homepage,
- * this just scrolls in place; the href below (/?for=<role>#request-account)
- * covers the case where a full navigation happens instead.
- */
-function scrollToRequestAccountIfHome(pathname, role) {
-  if (pathname !== "/" || typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("commission:preselect-role", { detail: role }));
-  document.getElementById("request-account")?.scrollIntoView({ behavior: "smooth", block: "center" });
-}
 
 export default function Navbar({ audience, onAudienceChange, onSignIn }) {
-  const pathname = usePathname();
   const links = NAV_LINKS.filter((link) => !link.businessOnly || audience === "business");
 
   // Off the homepage, a bare "#benefits" href resolves against the CURRENT
@@ -98,14 +85,13 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
           <ToggleButton value="affiliate">Affiliate</ToggleButton>
         </ToggleButtonGroup>
 
-        {/* Routes to the request-account form (preselecting whichever
-            audience is toggled above), never the Google sign-in modal -
-            the dashboard is not open for general signup yet. */}
+        {/* Routes to the sign-in page - if this Google account has no
+            existing row, the callback bounces to /signup instead (see
+            app/api/auth/callback). No more scroll-to-form behavior. */}
         <Button
           variant="contained"
           component={Link}
-          href={`/?for=${audience}#request-account`}
-          onClick={() => scrollToRequestAccountIfHome(pathname, audience)}
+          href="/signin"
           sx={{ display: { xs: "none", sm: "inline-flex" } }}
         >
           Get started

@@ -1,7 +1,7 @@
 import { Container, Typography, Stack, Box } from "@mui/material";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
-import RequestAccountForm from "@/components/marketing/RequestAccountForm";
+import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function ConversionPageContent({ item }) {
   return (
@@ -35,7 +35,7 @@ export default function ConversionPageContent({ item }) {
       </Stack>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={urls.conversion(item.slug)} />
+        <SignUpButton sourcePage={urls.conversion(item.slug)} />
       </Box>
 
     </Container>

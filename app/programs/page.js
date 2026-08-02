@@ -6,7 +6,7 @@ import { listPrograms } from "@/lib/programs";
 import { buildProgramsIndexMetadata } from "@/lib/seo";
 import MarketingPageShell from "@/components/marketing/MarketingPageShell";
 import InternalLinksSection from "@/components/marketing/InternalLinksSection";
-import RequestAccountForm from "@/components/marketing/RequestAccountForm";
+import SignUpButton from "@/components/marketing/SignUpButton";
 
 export const revalidate = 3600;
 export const metadata = buildProgramsIndexMetadata();
@@ -75,7 +75,7 @@ export default async function ProgramsIndexPage() {
           )}
 
           <Box sx={{ maxWidth: 480, mx: "auto", mt: 7 }}>
-            <RequestAccountForm sourcePage={urls.programsIndex()} fixedRole="affiliate" />
+            <SignUpButton role="affiliate" sourcePage={urls.programsIndex()} />
           </Box>
         </Container>
       </Box>

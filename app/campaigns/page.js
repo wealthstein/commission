@@ -5,9 +5,9 @@ import { urls } from "@/lib/urls";
 import { dotPatternSx, altSectionBg } from "@/lib/patterns";
 import MarketingPageShell from "@/components/marketing/MarketingPageShell";
 import InternalLinksSection from "@/components/marketing/InternalLinksSection";
-import SectionIndexContent from "@/components/marketing/SectionIndexContent";
+import CampaignsIndexContent from "@/components/marketing/CampaignsIndexContent";
 import SavingsCalculator from "@/components/marketing/SavingsCalculator";
-import RequestAccountForm from "@/components/marketing/RequestAccountForm";
+import SignUpButton from "@/components/marketing/SignUpButton";
 
 export const metadata = buildSectionIndexMetadata("campaigns", "Campaign Types", "See how different types of campaigns run on Commission, from health insurance to account opening.");
 
@@ -15,7 +15,7 @@ export default function CampaignsIndexPage() {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <SectionIndexContent title="Campaign Types" description="See how different types of campaigns run on Commission, from health insurance to account opening." buildHref={urls.campaign} items={campaignTypes} relatedLinks={[{ label: "Browse industries", href: urls.industriesIndex() }, { label: "Qualified Leads explained", href: urls.conversion("qualified-leads") }]} />
+        <CampaignsIndexContent title="Campaign Types" description="See how different types of campaigns run on Commission, from health insurance to account opening." buildHref={urls.campaign} items={campaignTypes} relatedLinks={[{ label: "Browse industries", href: urls.industriesIndex() }, { label: "Qualified Leads explained", href: urls.conversion("qualified-leads") }]} />
       </Box>
       <Box sx={{ py: { xs: 6, md: 9 }, bgcolor: altSectionBg }}>
         <Container maxWidth="lg">
@@ -28,7 +28,7 @@ export default function CampaignsIndexPage() {
       <Box sx={{ py: { xs: 6, md: 9 }, ...dotPatternSx }}>
         <Container maxWidth="lg">
           <Box sx={{ maxWidth: 480, mx: "auto" }}>
-            <RequestAccountForm sourcePage="/campaigns" fixedRole="business" />
+            <SignUpButton role="business" sourcePage="/campaigns" />
           </Box>
         </Container>
       </Box>

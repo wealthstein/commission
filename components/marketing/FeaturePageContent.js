@@ -3,7 +3,7 @@ import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
-import RequestAccountForm from "@/components/marketing/RequestAccountForm";
+import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function FeaturePageContent({ item }) {
   return (
@@ -36,7 +36,7 @@ export default function FeaturePageContent({ item }) {
       </Stack>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={urls.feature(item.slug)} fixedRole="business" />
+        <SignUpButton role="business" sourcePage={urls.feature(item.slug)} />
       </Box>
 
     </Container>

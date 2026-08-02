@@ -1,7 +1,7 @@
 import { Container, Typography, Grid, Paper, Stack, Chip, Box } from "@mui/material";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
-import RequestAccountForm from "@/components/marketing/RequestAccountForm";
+import SignUpButton from "@/components/marketing/SignUpButton";
 import { DEFAULT_PPQL_NAIRA } from "@/lib/industryPages";
 
 export default function IndustryLandingContent({ industryPage }) {
@@ -55,7 +55,7 @@ export default function IndustryLandingContent({ industryPage }) {
       </Paper>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={urls.industry(industryPage.slug)} fixedRole="business" />
+        <SignUpButton role="business" sourcePage={urls.industry(industryPage.slug)} />
       </Box>
 
     </Container>

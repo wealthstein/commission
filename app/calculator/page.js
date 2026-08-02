@@ -6,7 +6,7 @@ import InternalLinksSection from "@/components/marketing/InternalLinksSection";
 import TierPayoutDiagram from "@/components/marketing/TierPayoutDiagram";
 import AffiliateEarningsCalculator from "@/components/marketing/AffiliateEarningsCalculator";
 import SavingsCalculator from "@/components/marketing/SavingsCalculator";
-import RequestAccountForm from "@/components/marketing/RequestAccountForm";
+import SignUpButton from "@/components/marketing/SignUpButton";
 
 export const metadata = {
   title: "Earnings & Savings Calculator | Commission",
@@ -90,7 +90,7 @@ export default function CalculatorPage({ searchParams }) {
           )}
 
           <Box sx={{ maxWidth: 480, mx: "auto" }}>
-            <RequestAccountForm sourcePage="/calculator" fixedRole={audience} />
+            <SignUpButton role={audience} sourcePage="/calculator" />
           </Box>
         </Container>
       </Box>

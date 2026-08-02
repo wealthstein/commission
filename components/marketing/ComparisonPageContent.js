@@ -1,7 +1,7 @@
 import { Container, Typography, Grid, Paper, Box } from "@mui/material";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
-import RequestAccountForm from "@/components/marketing/RequestAccountForm";
+import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function ComparisonPageContent({ comparison }) {
   return (
@@ -30,7 +30,7 @@ export default function ComparisonPageContent({ comparison }) {
       </Grid>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={urls.comparison(comparison.slug)} fixedRole="business" />
+        <SignUpButton role="business" sourcePage={urls.comparison(comparison.slug)} />
       </Box>
 
     </Container>

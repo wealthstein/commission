@@ -1,57 +1,68 @@
 "use client";
 
-import { Box, Grid, Typography, Button, Stack } from "@mui/material";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Box, Breadcrumbs, Grid, Typography, Button, Avatar } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 import Link from "next/link";
 import CardMedia from "@mui/material/CardMedia";
 import { tokens } from "@/lib/theme";
 import { triggerGoogleAuth } from "@/lib/googleAuth";
 import { urls } from "@/lib/urls";
+import teamData from "@/content/team.json";
+import siteConfig from "@/content/site.json";
 
-const VALUE_POINTS = {
-  signup: {
-    headline: "Every conversion tracked. Every commission paid automatically.",
-    points: [
-      { stat: "3", label: "commission tiers, paid automatically" },
-      { stat: "0", label: "leads stored on our side - forwarded straight to you" },
-      { stat: "100%", label: "of your affiliate commission tracked from click to payout" },
-    ],
-  },
-  signin: {
-    headline: "Your campaigns, your commissions, right where you left them.",
-    points: [
-      { stat: "24/7", label: "your dashboard reflects every click and conversion live" },
-      { stat: "1", label: "account for listing products, promoting them, or both" },
-      { stat: "0", label: "spreadsheets needed to track who is owed what" },
-    ],
-  },
-};
+/**
+ * One random team member's message, picked once per page load - reloading
+ * /signin or /signup shows a different one.
+ */
+function pickRandomMember() {
+  const members = teamData.members;
+  return members[Math.floor(Math.random() * members.length)];
+}
 
 export default function AuthPage({ mode }) {
   const isSignup = mode === "signup";
+  const searchParams = useSearchParams();
+  // Starts deterministic (always members[0]) so server and client render
+  // the exact same thing on first paint - picking randomly during the
+  // initial render itself produces a different result on the server vs.
+  // during client hydration, which is what previously threw a hydration
+  // mismatch error. The real random pick only happens after mount, in an
+  // effect, which never runs during server rendering.
+  const [member, setMember] = useState(teamData.members[0]);
+
+  useEffect(() => {
+    setMember(pickRandomMember());
+  }, []);
 
   async function handleGoogleAuth() {
-    await triggerGoogleAuth({ sourcePage: mode === "signup" ? urls.signup() : urls.signin() });
+    // A CTA elsewhere on the site can link here with ?source=/wherever and
+    // ?role=business|affiliate when it already knows the answer - both
+    // preserved through to the account record instead of every signup
+    // starting from a blank slate.
+    const source = searchParams.get("source");
+    const role = searchParams.get("role");
+    await triggerGoogleAuth({
+      sourcePage: source || (isSignup ? urls.signup() : urls.signin()),
+      role: role || undefined,
+      flow: isSignup ? "signup" : "signin",
+    });
   }
 
   return (
     <Grid container sx={{ minHeight: "100vh" }}>
       <Grid item xs={12} md={6}>
-        <Box sx={{ maxWidth: 420, mx: "auto", px: 3, py: { xs: 8, md: 12 } }}>
-          <Stack component={Link} href="/" direction="row" alignItems="center" spacing={1} sx={{ mb: 6, textDecoration: "none" }}>
-            <CardMedia sx={{ height: 28, width: 28, borderRadius: "8px" }} image="/circle.svg" alt="Commission" />
-            <Typography fontWeight={700} sx={{ color: tokens.ink, fontSize: 18 }}>
-              Commission
-            </Typography>
-          </Stack>
+        <Box sx={{ maxWidth: 420, mx: "auto", px: 3, py: { xs: 8, md: 12 }, textAlign: "center" }}>
+          <Box component={Link} href="/" sx={{ display: "inline-block", mb: 3 }}>
+            <CardMedia sx={{ height: 32, width: 32, borderRadius: "9px" }} image="/circle.svg" alt={siteConfig.name} />
+          </Box>
 
           <Typography variant="h4" fontWeight={700} sx={{ mb: 1 }}>
             {isSignup ? "Create your account" : "Welcome back"}
           </Typography>
-          <Typography variant="body1" sx={{ color: tokens.muted, mb: 4 }}>
-            {isSignup
-              ? "One account for listing products, promoting them, or both."
-              : "Sign in to your Commission account."}
+          <Typography variant="body2" sx={{ color: tokens.muted, mb: 4 }}>
+            {isSignup ? "One account for launching & joining a campaign." : `Sign in to your ${siteConfig.name} account.`}
           </Typography>
 
           <Button
@@ -65,7 +76,7 @@ export default function AuthPage({ mode }) {
             Continue with Google
           </Button>
 
-          <Typography variant="body2" sx={{ color: tokens.muted, textAlign: "center" }}>
+          <Typography variant="body2" sx={{ color: tokens.muted }}>
             {isSignup ? (
               <>
                 Already have an account?{" "}
@@ -83,17 +94,39 @@ export default function AuthPage({ mode }) {
             )}
           </Typography>
 
-          <Typography variant="caption" sx={{ color: tokens.muted, display: "block", textAlign: "center", mt: 4 }}>
-            By continuing, you agree to Commission&apos;s{" "}
+          <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 4 }}>
+            By continuing, you agree to {siteConfig.name}&apos;s{" "}
             <Typography component={Link} href={urls.terms()} sx={{ color: tokens.muted, textDecoration: "underline", display: "inline" }}>
-              Terms of Service
+              Terms
             </Typography>{" "}
             and{" "}
             <Typography component={Link} href={urls.privacy()} sx={{ color: tokens.muted, textDecoration: "underline", display: "inline" }}>
-              Privacy Policy
+              Policy
             </Typography>
             .
           </Typography>
+
+          <Breadcrumbs
+            marginTop="20px"
+            separator="•"
+            aria-label="breadcrumb"
+            sx={{
+              '& ol': {
+                justifyContent: 'center',
+                fontSize: '12px',
+                margin: 'auto',
+                textDecoration: 'none'
+              }
+            }}
+          >
+            <Typography sx={{ color: tokens.muted, fontSize: 11 }}>
+              © {new Date().getFullYear()} {siteConfig.name}
+            </Typography>
+            <Typography sx={{ color: tokens.muted, fontSize: 11 }}>
+              Built with ❤️ in Chicago, Illinois
+            </Typography>
+          </Breadcrumbs>
+
         </Box>
       </Grid>
 
@@ -110,21 +143,25 @@ export default function AuthPage({ mode }) {
         }}
       >
         <Box sx={{ maxWidth: 420 }}>
-          <Typography variant="h4" fontWeight={700} sx={{ mb: 4, lineHeight: 1.3 }}>
-            {VALUE_POINTS[mode].headline}
+          <Typography variant="h3" sx={{ color: tokens.muted, lineHeight: 1, mb: 1 }}>
+            &ldquo;
           </Typography>
-          <Stack spacing={3}>
-            {VALUE_POINTS[mode].points.map((v) => (
-              <Stack key={v.label} direction="row" spacing={2} alignItems="baseline">
-                <Typography variant="h4" fontWeight={800} sx={{ minWidth: 64 }}>
-                  {v.stat}
-                </Typography>
-                <Typography variant="body1" sx={{ color: tokens.muted }}>
-                  {v.label}
-                </Typography>
-              </Stack>
-            ))}
-          </Stack>
+          <Typography variant="h5" fontWeight={600} sx={{ mb: 4, lineHeight: 1.4 }}>
+            {member.quote}
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Avatar src={member.photo} alt={member.name} sx={{ width: 44, height: 44 }}>
+              {member.name.charAt(0)}
+            </Avatar>
+            <Box>
+              <Typography fontWeight={700} sx={{ fontSize: 14 }}>
+                {member.name}
+              </Typography>
+              <Typography variant="body2" sx={{ color: tokens.muted, fontSize: 13 }}>
+                {member.role}, {member.business}
+              </Typography>
+            </Box>
+          </Box>
         </Box>
       </Grid>
     </Grid>

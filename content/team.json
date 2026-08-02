@@ -1,0 +1,124 @@
+{
+  "members": [
+    {
+      "name": "Adeola",
+      "role": "Product Manager",
+      "photo": "/team/adeola.webp",
+      "audience": "business",
+      "quote": "The fee only ever comes out of the affiliate commission, never the sale price. That one rule is the whole trust model.",
+      "business": "Northbridge Retail"
+    },
+    {
+      "name": "Aisha",
+      "role": "Software Engineer",
+      "photo": "/team/aisha.webp",
+      "audience": "affiliate",
+      "quote": "One link, three tiers, automatic payout. I didn't have to build a single spreadsheet to know what I was owed.",
+      "business": "Lagos Fintech Co"
+    },
+    {
+      "name": "Amina",
+      "role": "Growth Manager",
+      "photo": "/team/amina.webp",
+      "audience": "business",
+      "quote": "Every lead that reaches you has already had a real conversation on WhatsApp. That's the difference from a cold form fill.",
+      "business": "Bluewave Logistics"
+    },
+    {
+      "name": "Aminu",
+      "role": "Chief Technology Officer",
+      "photo": "/team/aminu.webp",
+      "audience": "affiliate",
+      "quote": "I referred someone who referred someone else, and I still get a cut of their sales. That's the part people don't believe until they see it happen.",
+      "business": "Prime Properties NG"
+    },
+    {
+      "name": "Ayomide",
+      "role": "AI Engineer",
+      "photo": "/team/ayomide.webp",
+      "audience": "business",
+      "quote": "We never hold your customers' money. Paystack settles you directly - Commission is never in that path.",
+      "business": "Sahara Insurance Group"
+    },
+    {
+      "name": "Bisola",
+      "role": "Sales Engineer",
+      "photo": "/team/bisola.webp",
+      "audience": "affiliate",
+      "quote": "No application, no waiting for approval. I picked a program and started sharing my link the same day.",
+      "business": "Ridgeway Health"
+    },
+    {
+      "name": "Bukola",
+      "role": "Chied Marketing Officer",
+      "photo": "/team/bukola.webp",
+      "audience": "business",
+      "quote": "You set what a qualified lead is worth to you. Nobody tells you what to pay - you decide, and only pay when it actually happens.",
+      "business": "Coastline Media"
+    },
+    {
+      "name": "Chidimma",
+      "role": "Data Scientist",
+      "photo": "/team/chidimma.webp",
+      "audience": "business",
+      "quote": "Every lead, every sale, every payout - it's all in one dashboard. I stopped reconciling numbers across three different tools.",
+      "business": "Ironbridge Capital"
+    },
+    {
+      "name": "Fatima",
+      "role": "Head of Engineering",
+      "photo": "/team/fatima.webp",
+      "audience": "affiliate",
+      "quote": "A subscription product I promoted once is still paying me every month the customer stays. That's the part that changed how I think about this.",
+      "business": "Sunrise Learning Hub"
+    },
+    {
+      "name": "Hakeem",
+      "role": "VP, Sales",
+      "photo": "/team/hakeen.webp",
+      "audience": "business",
+      "quote": "No ad account, no bidding war, no learning curve. Listing a campaign took less time than writing the ad copy would have.",
+      "business": "Delta Freight Systems"
+    },
+    {
+      "name": "Ibrahim",
+      "role": "Account Manager",
+      "photo": "/team/ibrahim.webp",
+      "audience": "affiliate",
+      "quote": "The payout math is transparent - I can see exactly which tier, which referral, which amount, before the money even lands.",
+      "business": "Marble Realty"
+    },
+    {
+      "name": "Mary",
+      "role": "VP, Product",
+      "photo": "/team/mary.webp",
+      "audience": "business",
+      "quote": "We never store a lead's identity - it's forwarded straight to the business and forgotten on our side. That's not a policy, it's how the system is actually built.",
+      "business": "Everline Digital"
+    },
+    {
+      "name": "Musa",
+      "role": "Account Manager",
+      "photo": "/team/musa.webp",
+      "audience": "affiliate",
+      "quote": "I'm not competing with an algorithm for reach. I'm sharing something with people who already trust my recommendation.",
+      "business": "Westgate Motors"
+    },
+    {
+      "name": "Precious",
+      "role": "Sales Engineer",
+      "photo": "/team/precious.webp",
+      "audience": "business",
+      "quote": "Small, Medium, or Large - the plan only changes the fee percentage, never how the platform works. You're never locked out of a feature.",
+      "business": "Harborview Consulting"
+    },
+    {
+      "name": "Temitope",
+      "role": "Chief Operations Officer",
+      "photo": "/team/temitope.webp",
+      "audience": "affiliate",
+      "quote": "I checked my payout history the other day out of curiosity, not because I doubted it. It was just all there, correct, automatic.",
+      "business": "Greenfield Agro"
+    }
+  ]
+}

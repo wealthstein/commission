@@ -1,7 +1,7 @@
 import { Container, Typography, Box, Grid } from "@mui/material";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
-import RequestAccountForm from "@/components/marketing/RequestAccountForm";
+import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function CampaignPageContent({ item }) {
   return (
@@ -29,7 +29,7 @@ export default function CampaignPageContent({ item }) {
       </Box>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={urls.campaign(item.slug)} fixedRole="business" />
+        <SignUpButton role="business" sourcePage={urls.campaign(item.slug)} />
       </Box>
 
     </Container>

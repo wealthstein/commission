@@ -2,7 +2,7 @@ import { Container, Typography, Box, Stack, Chip } from "@mui/material";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
-import RequestAccountForm from "@/components/marketing/RequestAccountForm";
+import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function LocationPageContent({ item }) {
   return (
@@ -41,7 +41,7 @@ export default function LocationPageContent({ item }) {
       </Stack>
 
       <Box sx={{ mb: 5 }}>
-        <RequestAccountForm sourcePage={urls.location(item.slug)} fixedRole="business" />
+        <SignUpButton role="business" sourcePage={urls.location(item.slug)} />
       </Box>
 
     </Container>

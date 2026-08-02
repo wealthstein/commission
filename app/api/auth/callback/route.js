@@ -2,19 +2,22 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabaseServer";
 
 /**
- * GET /api/auth/callback?code=...&next=...&role=...&source_page=...
+ * GET /api/auth/callback?code=...&next=...&role=...&source_page=...&flow=...
  * Supabase redirects here after Google Sign-In completes. We exchange the
  * auth code for a session, then ensure a corresponding row exists in our
  * own `users` table (the unified account — see TRD section 4).
  *
- * The FINAL redirect is always decided here, based on the real
- * dashboard_access_granted flag on that user's row — never by trusting the
- * `next` param as-is. This is deliberate: it means /signin, /signup, and
- * every "request an account" CTA on the site (see lib/googleAuth.js) can
- * all call the exact same signInWithOAuth + callback flow safely. Whoever
- * hasn't been granted access yet lands on /welcome regardless of what
- * `next` asked for, and there is no way to request your way past that by
- * editing the query string.
+ * `flow=signin` (from /signin only) means: only look this account up, never
+ * create it. If no row exists for this auth_user_id, this Google account
+ * has never been through Commission before - redirect to /signup instead
+ * of silently creating an account from what was framed as a returning-user
+ * sign-in. Every other entry point (signup, or any "request an account"
+ * CTA elsewhere) defaults to creating the row if it does not exist yet.
+ *
+ * The FINAL redirect for an existing/newly-created user is always decided
+ * here, based on the real dashboard_access_granted flag on that row —
+ * never by trusting the `next` param as-is. Whoever hasn't been granted
+ * access yet lands on /welcome regardless of what `next` asked for.
  */
 export async function GET(req) {
   const url = new URL(req.url);
@@ -22,6 +25,7 @@ export async function GET(req) {
   const next = url.searchParams.get("next") || "/dashboard";
   const role = url.searchParams.get("role");
   const sourcePage = url.searchParams.get("source_page");
+  const flow = url.searchParams.get("flow");
 
   if (!code) {
     return NextResponse.redirect(new URL("/signin", url.origin));
@@ -35,6 +39,26 @@ export async function GET(req) {
   }
 
   const admin = createAdminSupabaseClient();
+
+  if (flow === "signin") {
+    const { data: existing, error: lookupError } = await admin
+      .from("users")
+      .select("dashboard_access_granted")
+      .eq("auth_user_id", data.user.id)
+      .maybeSingle();
+
+    if (lookupError) {
+      console.error("Auth callback: failed to look up existing user:", lookupError.message);
+    }
+    if (!existing) {
+      // This Google account has never been through Commission before -
+      // /signin should not silently create one. Send them to /signup,
+      // which will create it properly on the next Google click.
+      return NextResponse.redirect(new URL("/signup", url.origin));
+    }
+    return NextResponse.redirect(new URL(existing.dashboard_access_granted ? next : "/welcome", url.origin));
+  }
+
   const upsertData = {
     auth_user_id: data.user.id,
     email: data.user.email,
@@ -46,11 +70,20 @@ export async function GET(req) {
   if (role) upsertData.intended_role = role;
   if (sourcePage) upsertData.signup_source_page = sourcePage;
 
-  const { data: userRow } = await admin
+  const { data: userRow, error: upsertError } = await admin
     .from("users")
     .upsert(upsertData, { onConflict: "auth_user_id" })
     .select("dashboard_access_granted")
     .single();
+
+  if (upsertError) {
+    // Previously swallowed silently, which meant a schema mismatch (e.g.
+    // migrations not yet run against the live database) could leave the
+    // users table empty while the person still landed on /welcome, looking
+    // like everything worked. Now at least logged server-side so this is
+    // debuggable from Vercel/hosting logs.
+    console.error("Auth callback: failed to upsert user row:", upsertError.message);
+  }
 
   const destination = userRow?.dashboard_access_granted ? next : "/welcome";
   return NextResponse.redirect(new URL(destination, url.origin));

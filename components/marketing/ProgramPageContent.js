@@ -3,7 +3,7 @@ import { Box, Container, Typography, Chip, Stack, Avatar } from "@mui/material";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
 import { buildSeoTargetFaqJsonLd } from "@/lib/seo";
-import RequestAccountForm from "@/components/marketing/RequestAccountForm";
+import SignUpButton from "@/components/marketing/SignUpButton";
 
 /**
  * /programs/[industry]/[company] - the SUB-CHILD level under Programs.
@@ -54,7 +54,7 @@ export default function ProgramPageContent({ target, industry, liveProducts }) {
         </Typography>
 
         <Box sx={{ maxWidth: 440, mx: "auto", mb: 6 }}>
-          <RequestAccountForm sourcePage={urls.program(target.routeSlug)} fixedRole="affiliate" />
+          <SignUpButton role="affiliate" sourcePage={urls.program(target.routeSlug)} />
         </Box>
 
         {liveProducts.length > 0 ? (
