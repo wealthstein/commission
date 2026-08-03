@@ -29,7 +29,7 @@ export default function AffiliateEarningsCalculator() {
         YOUR PROJECTED MONTHLY EARNINGS
       </Typography>
       <Typography variant="body2" sx={{ color: tokens.muted, mt: 1, mb: 3 }}>
-        Based on a typical 10,000 naira commission pool per Intent Qualified Lead (IQL) or sale, split 50% / 30% /
+        Based on a typical 10,000 naira commission pool per Intent Intent Qualified Lead (IQL) or sale, split 50% / 30% /
         20% across tiers.
       </Typography>
 

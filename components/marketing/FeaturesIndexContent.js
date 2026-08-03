@@ -6,6 +6,8 @@ import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
 import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded";
+import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
+import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
 import { tokens } from "@/lib/theme";
 
 const ICONS = {
@@ -15,6 +17,8 @@ const ICONS = {
   "data-analytics": BarChartRoundedIcon,
   "campaign-wallet": AccountBalanceWalletRoundedIcon,
   "custom-branding": PaletteRoundedIcon,
+  "lead-management": FilterAltRoundedIcon,
+  "team-management": BadgeRoundedIcon,
 };
 
 function FeatureTile({ item, featured }) {

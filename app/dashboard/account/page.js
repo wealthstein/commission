@@ -16,7 +16,9 @@ import {
   CircularProgress,
 } from "@mui/material";
 import PageHeader from "@/components/dashboard/PageHeader";
+import TeamSection from "@/components/dashboard/TeamSection";
 import { tokens } from "@/lib/theme";
+import { createClient } from "@/lib/supabaseClient";
 
 function BankConnectForm({ title, description, onSubmit, extraFields, submitLabel }) {
   const [banks, setBanks] = useState([]);
@@ -170,24 +172,46 @@ function WalletCard({ businessId, balanceNaira }) {
 }
 
 export default function AccountPage() {
+  const [user, setUser] = useState(null);
+  const [business, setBusiness] = useState(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
+      setUser(authUser);
+      if (!authUser) return;
+      const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
+      if (!userRow) return;
+      // Explicitly scoped to this user's own business - unlike the earlier
+      // .limit(1) in campaigns/new, which grabbed whichever business
+      // happened to be first in the table.
+      const { data: biz } = await supabase.from("businesses").select("id, plan").eq("owner_id", userRow.id).maybeSingle();
+      setBusiness(biz || null);
+    });
+  }, []);
+
+  const firstName = user?.user_metadata?.given_name || user?.user_metadata?.full_name?.split(" ")[0];
+
   return (
     <>
       <PageHeader title="Account" subtitle="Profile, business information, payment details, and settings." />
 
       <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
-          <Avatar sx={{ width: 56, height: 56, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700 }}>U</Avatar>
+          <Avatar src={user?.user_metadata?.avatar_url} sx={{ width: 56, height: 56, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700 }}>
+            {(firstName || user?.email || "?").charAt(0).toUpperCase()}
+          </Avatar>
           <Box>
             <Typography fontWeight={700}>Signed in with Google</Typography>
             <Typography variant="body2" sx={{ color: tokens.muted }}>
-              you@example.com
+              {user?.email || "…"}
             </Typography>
           </Box>
         </Stack>
         <Divider sx={{ mb: 3 }} />
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
-            <TextField label="Full name" fullWidth defaultValue="" />
+            <TextField label="Full name" fullWidth defaultValue={user?.user_metadata?.full_name || ""} />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField label="Phone number" fullWidth defaultValue="" />
@@ -200,7 +224,7 @@ export default function AccountPage() {
           Business profile
         </Typography>
         <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-          Only needed if you are listing products. Every Commission account can act as a business, an affiliate, or both.
+          Only needed if you are running campaigns. Every Commission account can act as a business, an affiliate, or both.
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
@@ -254,7 +278,12 @@ export default function AccountPage() {
 
       {/* businessId below is a placeholder — production should read the signed-in
           user's actual business id (e.g. from a server-fetched businesses row) */}
-      <WalletCard businessId="YOUR_BUSINESS_ID" balanceNaira={sampleWalletBalance} />
+      <TeamSection businessId={business?.id} plan={business?.plan} />
+
+      {/* businessId below is still a placeholder for balanceNaira specifically -
+          the wallet balance itself is not yet wired to a real query, only
+          the business row lookup above (used by TeamSection) is real now. */}
+      <WalletCard businessId={business?.id || "YOUR_BUSINESS_ID"} balanceNaira={sampleWalletBalance} />
 
       <Stack direction="row" justifyContent="flex-end">
         <Button variant="contained" size="large">

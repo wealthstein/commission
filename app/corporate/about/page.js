@@ -6,17 +6,17 @@ import TwoAudienceCta from "@/components/marketing/TwoAudienceCta";
 
 export const metadata = {
   title: "About Commission • Commission",
-  description: "Commission is a Nigerian affiliate marketplace connecting businesses with affiliates who earn commission on qualified leads and sales.",
+  description: "Commission is a Nigerian affiliate marketplace connecting businesses with affiliates who earn commission on Intent Qualified Leads and sales.",
 };
 
 const PRINCIPLES = [
   {
     title: "Pay for results, never for reach",
-    body: "A business only pays Commission's platform fee when a real qualified lead or sale happens - never for clicks, impressions, or a promise of exposure.",
+    body: "A business only pays Commission's platform fee when a real Intent Qualified Lead or sale happens - never for clicks, impressions, or a promise of exposure.",
   },
   {
     title: "A lead's identity is never ours to keep",
-    body: "Every qualified lead's name, phone, and email is forwarded straight to the business running that campaign and discarded on Commission's side - not stored, not resold.",
+    body: "Every Intent Qualified Lead's name, phone, and email is forwarded straight to the business running that campaign and discarded on Commission's side - not stored, not resold.",
   },
   {
     title: "Automatic, tiered, and transparent",
@@ -36,7 +36,7 @@ export default function AboutPage() {
             </Typography>
             <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, lineHeight: 1.6 }}>
               Commission connects businesses who want more customers with affiliates who already have an audience
-              that trusts them - a business lists a campaign and sets what a qualified lead or sale is worth, an
+              that trusts them - a business lists a campaign and sets what a Intent Qualified Lead or sale is worth, an
               affiliate shares a link, and the commission is tracked and paid automatically.
             </Typography>
           </Box>

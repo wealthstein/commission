@@ -18,9 +18,7 @@
         "1 affiliate campaign",
         "Up to 3 commission tiers",
         "Referral link tracking",
-        "Automatic affiliate payouts",
-        "Commission keeps 20% whenever you top up your Campaign Wallet",
-        "Every qualified lead or verified sale then pays affiliates in full"
+        "Automatic affiliate payouts"
       ]
     },
     {
@@ -32,16 +30,17 @@
       "tagline": "For mid-sized businesses running an active affiliate campaign.",
       "cta": "Upgrade to Medium",
       "highlighted": true,
+      "includesFrom": "free",
       "features": [
         "Up to 10 active products",
         "Unlimited affiliate campaigns",
-        "Up to 3 commission tiers",
         "Marketing asset uploads",
         "Priority affiliate recruiting placement",
         "Custom logo on your campaign pages",
-        "API access - route qualified leads anywhere",
-        "Commission keeps 15% whenever you top up your Campaign Wallet",
-        "Every qualified lead or verified sale then pays affiliates in full"
+        "API access - route Intent Qualified Leads anywhere",
+        "Lead management - filter, search, and export your leads",
+        "Team management - invite teammates with their own access roles",
+        "Custom fields - up to 5 questions of your own on the Long Form"
       ]
     },
     {
@@ -52,15 +51,12 @@
       "feePercent": 10,
       "tagline": "For large businesses scaling a serious affiliate channel.",
       "cta": "Upgrade to Large",
+      "includesFrom": "pro",
       "features": [
         "Unlimited active products",
-        "Unlimited affiliate campaigns",
-        "Up to 3 commission tiers",
         "Priority support",
-        "Custom logo and brand color on your campaign pages",
-        "API access - route qualified leads anywhere",
-        "Commission keeps only 10% whenever you top up your Campaign Wallet",
-        "Every qualified lead or verified sale then pays affiliates in full"
+        "Brand color on your campaign pages too, on top of your logo",
+        "Custom fields - unlimited questions on the Long Form"
       ]
     }
   ]

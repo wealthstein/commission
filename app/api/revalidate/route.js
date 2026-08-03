@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
  * body: { secret, businessSlug, productSlug?, categorySlug? }
  *
  * Call this right after creating/updating a product or business (see the
- * comment in app/dashboard/products/new/page.js) so the new page and its
+ * comment in app/dashboard/campaigns/new/page.js) so the new page and its
  * relevant category hub go live immediately instead of waiting out the
  * revalidate=3600 window. The sitemap chunk itself will pick up the new
  * URL on its own next revalidation (or immediately if you also revalidate

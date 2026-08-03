@@ -13,20 +13,20 @@ const CHANNELS = [
   {
     title: "Business inquiries",
     body: "Questions about listing a campaign, pricing, or how the platform works for your business.",
-    cta: "Email hello@commission.ng",
-    href: "mailto:hello@commission.ng?subject=Business%20inquiry",
+    cta: "Email business@commission.ng",
+    href: "mailto:business@commission.ng?subject=Business%20inquiry",
   },
   {
     title: "Affiliate support",
     body: "Questions about promoting programs, commissions, or getting paid.",
-    cta: "Email hello@commission.ng",
-    href: "mailto:hello@commission.ng?subject=Affiliate%20support",
+    cta: "Email affiliate@commission.ng",
+    href: "mailto:affiliate@commission.ng?subject=Affiliate%20support",
   },
   {
     title: "Partnerships & press",
     body: "Media inquiries, partnership proposals, or anything else.",
-    cta: "Email hello@commission.ng",
-    href: "mailto:hello@commission.ng?subject=Partnerships%20and%20press",
+    cta: "Email nigeria@commission.ng",
+    href: "mailto:nigeria@commission.ng?subject=Partnerships%20and%20press",
   },
 ];
 

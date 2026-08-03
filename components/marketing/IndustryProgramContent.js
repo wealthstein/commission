@@ -24,7 +24,7 @@ export default function IndustryProgramContent({ industry, liveProducts }) {
         </Typography>
 
         <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 4, maxWidth: 640 }}>
-          Share a unique link, earn a commission automatically on every qualified lead or sale - no application
+          Share a unique link, earn a commission automatically on every Intent Qualified Lead or sale - no application
           process, no waiting on approval.
         </Typography>
 

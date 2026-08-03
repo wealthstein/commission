@@ -16,7 +16,7 @@ export const metadata = {
 function buildOneTimeExample() {
   const parts = splitPool(10000);
   const labels = ["Kemi", "Sadiku", "Amaka"];
-  const sublabels = ["Generated the Intent Qualified Lead (IQL)", "Referred Kemi to Commission", "Referred Sadiku to Commission"];
+  const sublabels = ["Generated the Intent Intent Qualified Lead (IQL)", "Referred Kemi to Commission", "Referred Sadiku to Commission"];
   return parts.map((p, i) => ({ tier: p.tier, label: labels[i], sublabel: sublabels[i], percent: p.percent, amountNaira: p.amountNaira }));
 }
 
@@ -46,8 +46,8 @@ export default function CalculatorPage({ searchParams }) {
           </Typography>
           <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 6, maxWidth: 640 }}>
             {audience === "business"
-              ? "Commission only charges you for a real Intent Qualified Lead (IQL) or a verified sale - never for reach, clicks, or impressions."
-              : "Every Intent Qualified Lead (IQL) or sale pays up to 3 tiers of affiliates automatically. Here is exactly how the math works, with a real example."}
+              ? "Commission only charges you for a real Intent Intent Qualified Lead (IQL) or a verified sale - never for reach, clicks, or impressions."
+              : "Every Intent Intent Qualified Lead (IQL) or sale pays up to 3 tiers of affiliates automatically. Here is exactly how the math works, with a real example."}
           </Typography>
 
           {audience === "affiliate" ? (
@@ -58,7 +58,7 @@ export default function CalculatorPage({ searchParams }) {
                     Worked example: one-time commission
                   </Typography>
                   <Typography variant="body2" sx={{ color: tokens.muted, mb: 3 }}>
-                    Flipper pays a ₦10,000 commission pool per Intent Qualified Lead (IQL) or sale, split 50% / 30% /
+                    Flipper pays a ₦10,000 commission pool per Intent Intent Qualified Lead (IQL) or sale, split 50% / 30% /
                     20% across tiers. Amaka referred Sadiku, and Sadiku referred Kemi. Kemi joins Flipper&apos;s
                     program, shares her link, and gets one IQL.
                   </Typography>

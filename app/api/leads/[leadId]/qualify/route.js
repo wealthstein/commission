@@ -11,7 +11,7 @@ import { qualifyLead } from "@/lib/leadQualification";
  * for that public path instead). Two ways to call this, both ending at the
  * same place:
  *   1. A business user, signed in, confirming a lead from their dashboard
- *      (see app/dashboard/leads) - normal session auth.
+ *      (see app/dashboard/transactions (Leads tab)) - normal session auth.
  *   2. A business's own CRM calling this directly with the program's
  *      postback_token instead of a human filling out a form - no session
  *      needed, for advanced integrations.

@@ -22,7 +22,7 @@ export default function IndustriesIndexPage() {
             Affiliate marketing by industry
           </Typography>
           <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 6, maxWidth: 640 }}>
-            What a qualified lead typically costs, by industry - highest to lowest.
+            What a Intent Qualified Lead typically costs, by industry - highest to lowest.
           </Typography>
 
           <Stack spacing={0} sx={{ border: `1px solid ${tokens.border}`, borderRadius: 3, overflow: "hidden" }}>
@@ -75,7 +75,7 @@ export default function IndustriesIndexPage() {
           </Stack>
 
           <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 2 }}>
-            Typical cost per qualified lead - a business sets its own amount per campaign.
+            Typical cost per Intent Qualified Lead - a business sets its own amount per campaign.
           </Typography>
         </Container>
       </Box>

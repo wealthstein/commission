@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Container, Typography, Grid, Box, Stack, Chip } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
-const NATIVE_SLUGS = ["whatsapp", "email"];
+const NATIVE_SLUGS = ["whatsapp", "email", "native"];
 
 export default function IntegrationsIndexContent({ title, description, buildHref, items, relatedLinks }) {
   return (
@@ -43,7 +43,8 @@ export default function IntegrationsIndexContent({ title, description, buildHref
                     width: 40,
                     height: 40,
                     borderRadius: "50%",
-                    bgcolor: "#F1EFE7",
+                    bgcolor: tokens.brand,
+                    color: tokens.brandInk,
                     display: "grid",
                     placeItems: "center",
                     fontWeight: 800,

@@ -2,16 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Paper, Box, Typography, TextField, Button, Stack, Alert } from "@mui/material";
+import { Paper, Box, Typography, TextField, Button, Stack, Alert, MenuItem } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
-export default function LeadLongForm({ whatsappRef, productName }) {
+export default function LeadLongForm({ whatsappRef, productName, customFields = [] }) {
   const router = useRouter();
   const [form, setForm] = useState({ fullName: "", phone: "", email: "", details: "" });
+  const [customAnswers, setCustomAnswers] = useState({});
   const [state, setState] = useState({ loading: false, error: null });
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  function updateCustom(fieldId, value) {
+    setCustomAnswers((a) => ({ ...a, [fieldId]: value }));
   }
 
   async function handleSubmit(e) {
@@ -21,7 +26,15 @@ export default function LeadLongForm({ whatsappRef, productName }) {
       const res = await fetch("/api/leads/continue", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ whatsappRef, ...form }),
+        body: JSON.stringify({
+          whatsappRef,
+          ...form,
+          customFieldAnswers: customFields.map((f) => ({
+            fieldId: f.id,
+            label: f.label,
+            value: customAnswers[f.id] || "",
+          })),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
@@ -54,6 +67,34 @@ export default function LeadLongForm({ whatsappRef, productName }) {
             value={form.details}
             onChange={(e) => update("details", e.target.value)}
           />
+
+          {customFields.map((f) =>
+            f.field_type === "select" ? (
+              <TextField
+                key={f.id}
+                select
+                label={f.label}
+                required={f.required}
+                value={customAnswers[f.id] || ""}
+                onChange={(e) => updateCustom(f.id, e.target.value)}
+              >
+                {(f.options || []).map((opt) => (
+                  <MenuItem key={opt} value={opt}>
+                    {opt}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ) : (
+              <TextField
+                key={f.id}
+                label={f.label}
+                required={f.required}
+                value={customAnswers[f.id] || ""}
+                onChange={(e) => updateCustom(f.id, e.target.value)}
+              />
+            )
+          )}
+
           <Button type="submit" variant="contained" size="large" disabled={state.loading}>
             {state.loading ? "Submitting…" : "Submit"}
           </Button>

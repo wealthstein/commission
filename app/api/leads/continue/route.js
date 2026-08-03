@@ -5,17 +5,20 @@ import { forwardLeadToBusiness } from "@/lib/leadForwarding";
 
 /**
  * POST /api/leads/continue
- * body: { whatsappRef, fullName, phone, email?, details? }
+ * body: { whatsappRef, fullName, phone, email?, details?, customFieldAnswers? }
+ * customFieldAnswers: [{ fieldId, label, value }]
  *
  * The "Long Form" step of the funnel: Short Form -> WhatsApp handoff ->
  * Long Form (this) -> Thank You. Submitting this is what makes a lead
  * billable - the prospect is providing NEW information here (Commission
  * only had the Short Form's name/phone in a WhatsApp message, never stored),
  * so it gets forwarded straight to the business (their email or CRM webhook)
- * and then discarded - never written to Commission's own database.
+ * and then discarded - never written to Commission's own database. Custom
+ * field ANSWERS get the identical treatment - only the business's own
+ * QUESTIONS (campaign_custom_fields) are stored, never a prospect's answers.
  */
 export async function POST(req) {
-  const { whatsappRef, fullName, phone, email, details } = await req.json();
+  const { whatsappRef, fullName, phone, email, details, customFieldAnswers } = await req.json();
   if (!whatsappRef || !fullName || !phone) {
     return NextResponse.json({ error: "whatsappRef, fullName, and phone are required" }, { status: 400 });
   }
@@ -36,6 +39,21 @@ export async function POST(req) {
     .eq("id", lead.program_id)
     .single();
   const business = program.products.businesses;
+
+  // Validate any required custom questions this campaign's business defined -
+  // done here, not just client-side, since this is the actual billable moment.
+  const { data: fields } = await admin
+    .from("campaign_custom_fields")
+    .select("id, label, required")
+    .eq("affiliate_program_id", program.id);
+  const answered = new Map((customFieldAnswers || []).map((a) => [a.fieldId, a.value]));
+  const missingRequired = (fields || []).filter((f) => f.required && !answered.get(f.id)?.trim?.());
+  if (missingRequired.length > 0) {
+    return NextResponse.json(
+      { error: `Please answer: ${missingRequired.map((f) => f.label).join(", ")}` },
+      { status: 400 }
+    );
+  }
 
   // 1. Charge the wallet + run the commission engine FIRST. If the business
   // cannot afford it, nothing is charged and the lead stays 'captured' so
@@ -65,6 +83,7 @@ export async function POST(req) {
     phone,
     email,
     details,
+    customFieldAnswers,
   });
 
   // 3. Mark the lead qualified now that everything above succeeded.

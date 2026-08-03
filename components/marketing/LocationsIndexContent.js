@@ -42,8 +42,8 @@ export default function LocationsIndexContent({ title, description, buildHref, i
                 "&:hover": { borderColor: tokens.ink },
               }}
             >
-              <Box sx={{ width: 44, height: 44, borderRadius: "12px", bgcolor: "#F1EFE7", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                <LocationOnRoundedIcon sx={{ color: tokens.ink }} />
+              <Box sx={{ width: 44, height: 44, borderRadius: "12px", bgcolor: tokens.brand, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                <LocationOnRoundedIcon sx={{ color: tokens.brandInk }} />
               </Box>
               <Box>
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>

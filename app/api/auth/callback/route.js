@@ -18,6 +18,12 @@ import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/sup
  * here, based on the real access_granted flag on that row —
  * never by trusting the `next` param as-is. Whoever hasn't been granted
  * access yet lands on /welcome regardless of what `next` asked for.
+ *
+ * EXCEPTION: /team/accept is always honored regardless of access_granted.
+ * Accepting a team invite grants membership on one specific business
+ * (business_team_members), which is a narrower, different permission than
+ * full Commission dashboard access - someone should be able to accept an
+ * invite even if their own account is still pending review.
  */
 export async function GET(req) {
   const url = new URL(req.url);
@@ -26,6 +32,7 @@ export async function GET(req) {
   const role = url.searchParams.get("role");
   const sourcePage = url.searchParams.get("source_page");
   const flow = url.searchParams.get("flow");
+  const alwaysHonorNext = next.startsWith("/team/accept");
 
   if (!code) {
     return NextResponse.redirect(new URL("/signin", url.origin));
@@ -56,7 +63,7 @@ export async function GET(req) {
       // which will create it properly on the next Google click.
       return NextResponse.redirect(new URL("/signup", url.origin));
     }
-    return NextResponse.redirect(new URL(existing.access_granted ? next : "/welcome", url.origin));
+    return NextResponse.redirect(new URL(alwaysHonorNext || existing.access_granted ? next : "/welcome", url.origin));
   }
 
   const upsertData = {
@@ -85,7 +92,7 @@ export async function GET(req) {
     console.error("Auth callback: failed to upsert user row:", upsertError.message);
   }
 
-  const destination = userRow?.access_granted ? next : "/welcome";
+  const destination = alwaysHonorNext || userRow?.access_granted ? next : "/welcome";
   return NextResponse.redirect(new URL(destination, url.origin));
 }
 

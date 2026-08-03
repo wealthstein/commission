@@ -35,7 +35,7 @@ export default function SolutionsIndexContent({ title, description, buildHref, i
                 fontSize: { xs: 32, md: 44 },
                 fontWeight: 800,
                 color: "transparent",
-                WebkitTextStroke: `1.5px ${tokens.border}`,
+                WebkitTextStroke: `1.5px ${tokens.brand}`,
                 minWidth: { xs: 56, md: 76 },
               }}
             >

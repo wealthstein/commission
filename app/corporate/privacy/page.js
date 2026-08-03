@@ -10,7 +10,7 @@ export const metadata = {
 const sections = [
   {
     heading: "The principle behind this policy",
-    body: "Commission is deliberately built to store as little as possible. Account data for businesses and affiliates is kept because the platform cannot function without it. A lead's identity is not - see the section below on qualified leads, which is the part of this policy most worth reading in full.",
+    body: "Commission is deliberately built to store as little as possible. Account data for businesses and affiliates is kept because the platform cannot function without it. A lead's identity is not - see the section below on Intent Qualified Leads, which is the part of this policy most worth reading in full.",
   },
   {
     heading: "What we collect for accounts",
@@ -21,7 +21,7 @@ const sections = [
     ],
   },
   {
-    heading: "Qualified leads: the no-PII-storage principle",
+    heading: "Intent Qualified Leads: the no-PII-storage principle",
     body: [
       "When a prospect completes a qualified-lead campaign's forms, their name, phone number, email, and any answers they give are forwarded directly to the business running that campaign - by email, or by a webhook the business controls - and Commission does not keep a copy on its own side once that forwarding happens.",
       "This means Commission genuinely cannot look up a lead's identity after the fact. The business that received the forward is the source of truth for that person's data, not Commission.",
@@ -37,11 +37,11 @@ const sections = [
   },
   {
     heading: "Data sharing",
-    body: "Data is shared with Paystack (to process payments) and, for qualified leads specifically, with the business running that campaign (as described above). Commission does not share account data with advertisers or data brokers.",
+    body: "Data is shared with Paystack (to process payments) and, for Intent Qualified Leads specifically, with the business running that campaign (as described above). Commission does not share account data with advertisers or data brokers.",
   },
   {
     heading: "Your rights",
-    body: "You can request a copy of the account data Commission holds about you, or request it be deleted, by contacting hello@commission.ng. Deleting a business or affiliate account does not retroactively recall lead data already forwarded to a business before deletion.",
+    body: "You can request a copy of the account data Commission holds about you, or request it be deleted, by contacting legal@commission.ng. Deleting a business or affiliate account does not retroactively recall lead data already forwarded to a business before deletion.",
   },
   {
     heading: "Changes to this policy",

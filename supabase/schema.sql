@@ -24,6 +24,8 @@ drop table if exists products cascade;
 -- (waitlist_requests table removed — see the note further down where it used to be defined)
 drop table if exists user_referral_rewards cascade;
 drop table if exists businesses cascade;
+drop table if exists business_team_members cascade;
+drop table if exists campaign_custom_fields cascade;
 drop table if exists users cascade;
 drop function if exists fn_charge_wallet(uuid, numeric, text, uuid, uuid, text) cascade;
 drop function if exists fn_charge_wallet(uuid, numeric, text, uuid, uuid, text, numeric, numeric) cascade;
@@ -128,6 +130,61 @@ create table if not exists businesses (
 );
 
 create index if not exists idx_businesses_owner on businesses(owner_id);
+
+-- ----------------------------------------------------------------------------
+-- BUSINESS TEAM MEMBERS — Medium/Large plan feature (see lib/siteSections.js
+-- "team-management"). A business owner invites a teammate by email; the row
+-- starts 'invited' with user_id null, and becomes 'active' with user_id set
+-- once that person signs in with Google and accepts (see
+-- app/api/team/accept/route.js). Distinct from businesses.owner_id, which
+-- always stays the original creator and can never be removed here.
+-- ----------------------------------------------------------------------------
+create table if not exists business_team_members (
+  id            uuid primary key default gen_random_uuid(),
+  business_id   uuid not null references businesses(id) on delete cascade,
+  -- Null until the invite is accepted - see status below.
+  user_id       uuid references users(id) on delete cascade,
+  email         text not null,
+  -- admin: everything owner can do except remove the owner or delete the
+  -- business. member: view/manage campaigns and leads, no billing or team access.
+  role          text not null default 'member' check (role in ('admin', 'member')),
+  status        text not null default 'invited' check (status in ('invited', 'active', 'revoked')),
+  invited_by    uuid not null references users(id),
+  invite_token  uuid not null default gen_random_uuid(),
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  unique (business_id, email)
+);
+
+create index if not exists idx_team_members_business on business_team_members(business_id);
+create index if not exists idx_team_members_user on business_team_members(user_id);
+
+alter table business_team_members enable row level security;
+
+drop policy if exists team_members_select on business_team_members;
+create policy team_members_select on business_team_members for select
+  using (
+    business_id in (
+      select id from businesses where owner_id in (select id from users where auth_user_id = auth.uid())
+      union
+      select business_id from business_team_members
+      where user_id in (select id from users where auth_user_id = auth.uid()) and status = 'active'
+    )
+  );
+
+-- Only the business owner or an active admin teammate can invite/edit/remove
+-- team members - a plain member cannot manage the team even though they can
+-- see who else is on it (the select policy above).
+drop policy if exists team_members_manage on business_team_members;
+create policy team_members_manage on business_team_members for all
+  using (
+    business_id in (
+      select id from businesses where owner_id in (select id from users where auth_user_id = auth.uid())
+      union
+      select business_id from business_team_members
+      where user_id in (select id from users where auth_user_id = auth.uid()) and status = 'active' and role = 'admin'
+    )
+  );
 
 -- ----------------------------------------------------------------------------
 -- PRODUCTS
@@ -327,6 +384,56 @@ create table if not exists customers (
 -- commission engine (see app/api/leads/[id]/qualify) — nothing is owed for
 -- a merely-captured lead, only a qualified one.
 -- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- CAMPAIGN CUSTOM FIELDS — Medium/Large plan feature (see
+-- lib/siteSections.js "custom-fields"). A business designs its own Long
+-- Form questions per campaign (e.g. "What's your budget?", "How soon are
+-- you looking to start?"). This table stores only the QUESTION
+-- DEFINITIONS a business writes - never a prospect's ANSWERS. Answers get
+-- the exact same treatment as name/phone/email: forwarded to the business
+-- (see lib/leadForwarding.js) and discarded, never written to Commission's
+-- own database. This keeps the no-PII-storage principle intact even though
+-- a business could technically write a sensitive question here themselves
+-- - the answer still never lands in Commission's database either way.
+-- ----------------------------------------------------------------------------
+create table if not exists campaign_custom_fields (
+  id                    uuid primary key default gen_random_uuid(),
+  affiliate_program_id  uuid not null references affiliate_programs(id) on delete cascade,
+  label                 text not null,
+  field_type            text not null default 'text' check (field_type in ('text', 'select')),
+  -- Only used when field_type = 'select' - a JSON array of option strings.
+  options               jsonb,
+  required              boolean not null default false,
+  display_order         int not null default 0,
+  created_at            timestamptz not null default now()
+);
+
+create index if not exists idx_custom_fields_program on campaign_custom_fields(affiliate_program_id);
+
+alter table campaign_custom_fields enable row level security;
+
+drop policy if exists custom_fields_select on campaign_custom_fields;
+create policy custom_fields_select on campaign_custom_fields for select
+  using (true); -- public - the Long Form page needs to read these for an anonymous prospect
+
+drop policy if exists custom_fields_manage on campaign_custom_fields;
+create policy custom_fields_manage on campaign_custom_fields for all
+  using (
+    affiliate_program_id in (
+      select ap.id from affiliate_programs ap
+      join products p on p.id = ap.product_id
+      join businesses b on b.id = p.business_id
+      where b.owner_id in (select id from users where auth_user_id = auth.uid())
+      union
+      select ap.id from affiliate_programs ap
+      join products p on p.id = ap.product_id
+      where p.business_id in (
+        select business_id from business_team_members
+        where user_id in (select id from users where auth_user_id = auth.uid()) and status = 'active'
+      )
+    )
+  );
+
 create table if not exists leads (
   id                uuid primary key default gen_random_uuid(),
   program_id        uuid not null references affiliate_programs(id) on delete cascade,

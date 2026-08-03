@@ -62,8 +62,8 @@ export default function CareersPage() {
               Send a short note about what you would want to work on - engineering, growth, or partnerships - and
               we will reach out when something fits.
             </Typography>
-            <Button variant="contained" href="mailto:hello@commission.ng?subject=Speculative%20application">
-              Email hello@commission.ng
+            <Button variant="contained" href="mailto:work@commission.ng?subject=Speculative%20application">
+              Email work@commission.ng
             </Button>
           </Paper>
         </Container>

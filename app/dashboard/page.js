@@ -33,7 +33,7 @@ export default function DashboardHome() {
           <StatCard label="Active referrals" value={o.activeReferrals} hint="Across your network" />
         </Grid>
         <Grid item xs={6} md={4}>
-          <StatCard label="Products listed" value={o.productsListed} />
+          <StatCard label="Campaigns listed" value={o.productsListed} />
         </Grid>
         <Grid item xs={6} md={4}>
           <StatCard label="Programs running" value={o.programsRunning} />

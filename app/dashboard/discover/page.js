@@ -10,14 +10,14 @@ import { tokens } from "@/lib/theme";
 export default function DiscoverPage() {
   return (
     <>
-      <PageHeader title="Discover" subtitle="Find products and affiliate programs to promote." />
+      <PageHeader title="Discover" subtitle="Find campaigns to promote." />
 
       <Paper
         variant="outlined"
         sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, py: 1, mb: 3, borderRadius: 999, borderColor: tokens.border }}
       >
         <SearchIcon fontSize="small" sx={{ color: tokens.muted }} />
-        <InputBase placeholder="Search products, categories, businesses…" fullWidth />
+        <InputBase placeholder="Search campaigns, categories, businesses…" fullWidth />
       </Paper>
 
       <Grid container spacing={2.5}>

@@ -43,7 +43,7 @@ export default function ComparisonsIndexPage() {
                       </Typography>
                       <Typography fontWeight={700}>Commission</Typography>
                       <Typography variant="body2" sx={{ opacity: 0.75, mt: 0.5 }}>
-                        Qualified leads &amp; sales
+                        Intent Qualified Leads &amp; sales
                       </Typography>
                     </Box>
                     <Box

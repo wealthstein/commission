@@ -9,10 +9,18 @@ async function getLeadContext(whatsappRef) {
   const supabase = createAdminSupabaseClient();
   const { data: lead } = await supabase
     .from("leads")
-    .select("status, affiliate_programs(products(name, businesses(plan, landing_logo_url, landing_primary_color)))")
+    .select("status, program_id, affiliate_programs(products(name, businesses(plan, landing_logo_url, landing_primary_color)))")
     .eq("whatsapp_ref", whatsappRef)
     .maybeSingle();
-  return lead;
+  if (!lead) return null;
+
+  const { data: customFields } = await supabase
+    .from("campaign_custom_fields")
+    .select("id, label, field_type, options, required, display_order")
+    .eq("affiliate_program_id", lead.program_id)
+    .order("display_order", { ascending: true });
+
+  return { ...lead, customFields: customFields || [] };
 }
 
 export default async function LeadContinuePage({ params }) {
@@ -43,7 +51,7 @@ export default async function LeadContinuePage({ params }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={branding.logoUrl} alt="" style={{ height: 40, marginBottom: 24 }} />
         )}
-        <LeadLongForm whatsappRef={params.whatsappRef} productName={product.name} />
+        <LeadLongForm whatsappRef={params.whatsappRef} productName={product.name} customFields={lead.customFields} />
       </Container>
     </Box>
   );

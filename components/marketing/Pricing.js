@@ -61,6 +61,11 @@ export default function Pricing({ onSelectPlan, bgcolor = tokens.paper }) {
                   variant="outlined"
                   sx={{ mb: 3, fontWeight: 600, borderColor: tokens.border }}
                 />
+                {plan.includesFrom && (
+                  <Typography variant="body2" fontWeight={700} sx={{ mb: 1 }}>
+                    Everything in {pricingPlans.find((p) => p.id === plan.includesFrom)?.name}, plus:
+                  </Typography>
+                )}
                 <Stack spacing={1.25} sx={{ mb: 3 }}>
                   {plan.features.map((f) => (
                     <Stack key={f} direction="row" spacing={1} alignItems="flex-start">

@@ -18,7 +18,7 @@ const sections = [
   },
   {
     heading: "Minimal data by design",
-    body: "A qualified lead's identity (name, phone, email) is never stored in Commission's own database - it is forwarded directly to the business running that campaign and discarded from Commission's side. Data that is never stored cannot be part of a data breach.",
+    body: "A Intent Qualified Lead's identity (name, phone, email) is never stored in Commission's own database - it is forwarded directly to the business running that campaign and discarded from Commission's side. Data that is never stored cannot be part of a data breach.",
   },
   {
     heading: "Infrastructure",
@@ -26,7 +26,7 @@ const sections = [
   },
   {
     heading: "Reporting a vulnerability",
-    body: "If you believe you have found a security issue with Commission, email hello@commission.ng with details. Please do not publicly disclose a vulnerability before it has been addressed.",
+    body: "If you believe you have found a security issue with Commission, email legal@commission.ng with details. Please do not publicly disclose a vulnerability before it has been addressed.",
   },
 ];
 
@@ -37,7 +37,7 @@ export default function SecurityPage() {
         eyebrow="Legal"
         title="Security"
         lastUpdated="August 2026"
-        intro="A summary of how Commission is built, not a formal security audit or certification. If you need more detail for a vendor security review, contact hello@commission.ng."
+        intro="A summary of how Commission is built, not a formal security audit or certification. If you need more detail for a vendor security review, contact legal@commission.ng."
         sections={sections}
       />
     </MarketingPageShell>
