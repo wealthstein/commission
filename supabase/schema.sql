@@ -26,6 +26,7 @@ drop table if exists user_referral_rewards cascade;
 drop table if exists businesses cascade;
 drop table if exists business_team_members cascade;
 drop table if exists campaign_custom_fields cascade;
+drop table if exists cold_outreach_contacts cascade;
 drop table if exists users cascade;
 drop function if exists fn_charge_wallet(uuid, numeric, text, uuid, uuid, text) cascade;
 drop function if exists fn_charge_wallet(uuid, numeric, text, uuid, uuid, text, numeric, numeric) cascade;
@@ -139,6 +140,33 @@ create index if not exists idx_businesses_owner on businesses(owner_id);
 -- app/api/team/accept/route.js). Distinct from businesses.owner_id, which
 -- always stays the original creator and can never be removed here.
 -- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- COLD OUTREACH CONTACTS — the 300-business cold-email sequence (5 emails,
+-- 3 days apart, see app/api/cron/outreach and lib/emailTemplates.js
+-- "coldOutreach1" through "coldOutreach5"). Entirely separate from the
+-- `users` table - these are not Commission accounts, just a list being
+-- prospected. Import the 300 rows directly via Supabase's own Table Editor
+-- CSV import (Table Editor -> cold_outreach_contacts -> Insert -> Import
+-- data from CSV) - no custom upload endpoint needed for a one-time list.
+-- ----------------------------------------------------------------------------
+create table if not exists cold_outreach_contacts (
+  id            uuid primary key default gen_random_uuid(),
+  email         text not null unique,
+  company_name  text,
+  -- 0 = nothing sent yet. Set to N after email N sends successfully.
+  sequence_step int not null default 0,
+  status        text not null default 'active' check (status in ('active', 'replied', 'completed', 'bounced')),
+  last_sent_at  timestamptz,
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists idx_outreach_status on cold_outreach_contacts(status);
+
+alter table cold_outreach_contacts enable row level security;
+-- No public policies at all - this table is only ever touched by the admin
+-- client (cron route, inbound-reply webhook), never by an authenticated
+-- end user or an anonymous request.
+
 create table if not exists business_team_members (
   id            uuid primary key default gen_random_uuid(),
   business_id   uuid not null references businesses(id) on delete cascade,
