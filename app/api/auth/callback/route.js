@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabaseServer";
+import { sendWelcomeEmail } from "@/lib/email";
 
 /**
  * GET /api/auth/callback?code=...&next=...&role=...&source_page=...&flow=...
@@ -77,6 +78,16 @@ export async function GET(req) {
   if (role) upsertData.intended_role = role;
   if (sourcePage) upsertData.signup_source_page = sourcePage;
 
+  // Checked BEFORE the upsert, specifically so we know whether this is a
+  // genuinely new account - the welcome email should send exactly once, not
+  // on every later sign-in from the same person.
+  const { data: existingBeforeUpsert } = await admin
+    .from("users")
+    .select("id")
+    .eq("auth_user_id", data.user.id)
+    .maybeSingle();
+  const isNewSignup = !existingBeforeUpsert;
+
   const { data: userRow, error: upsertError } = await admin
     .from("users")
     .upsert(upsertData, { onConflict: "auth_user_id" })
@@ -90,9 +101,11 @@ export async function GET(req) {
     // like everything worked. Now at least logged server-side so this is
     // debuggable from Vercel/hosting logs.
     console.error("Auth callback: failed to upsert user row:", upsertError.message);
+  } else if (isNewSignup) {
+    const firstName = data.user.user_metadata?.given_name || upsertData.full_name?.split(" ")[0] || "there";
+    await sendWelcomeEmail({ to: data.user.email, firstName });
   }
 
   const destination = alwaysHonorNext || userRow?.access_granted ? next : "/welcome";
   return NextResponse.redirect(new URL(destination, url.origin));
 }
-
