@@ -44,10 +44,14 @@ export default function HomeClient({ searchParams }) {
 
       <Hero content={content} audience={audience} onPrimaryCta={() => goToRequestForm(audience)} />
 
-      <ProblemSolutionSection
+      {/* TEMPORARILY DISABLED for debugging the homepage stack-overflow - if
+          the site works with this commented out, ProblemSolutionSection (or
+          the data it receives) is confirmed as the cause. Re-enable once
+          confirmed either way. */}
+      {/* <ProblemSolutionSection
         items={content.problemsAndSolutions}
         eyebrow={audience === "business" ? "What businesses actually deal with" : "What affiliates actually deal with"}
-      />
+      /> */}
 
       <CardGridSection id="benefits" title="Why Commission" items={content.benefits} columns={4} bgcolor={altSectionBg} />
 
