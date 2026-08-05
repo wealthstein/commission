@@ -71,6 +71,9 @@ export async function GET(req) {
     auth_user_id: data.user.id,
     email: data.user.email,
     full_name: data.user.user_metadata?.full_name ?? null,
+    // Google's own parsed fields - not derived by splitting full_name.
+    first_name: data.user.user_metadata?.given_name ?? null,
+    last_name: data.user.user_metadata?.family_name ?? null,
     avatar_url: data.user.user_metadata?.avatar_url ?? null,
   };
   // Only recorded when present, so a later real sign-in (no role/source_page
@@ -102,8 +105,7 @@ export async function GET(req) {
     // debuggable from Vercel/hosting logs.
     console.error("Auth callback: failed to upsert user row:", upsertError.message);
   } else if (isNewSignup) {
-    const firstName = data.user.user_metadata?.given_name || upsertData.full_name?.split(" ")[0] || "there";
-    await sendWelcomeEmail({ to: data.user.email, firstName });
+    await sendWelcomeEmail({ to: data.user.email, firstName: upsertData.first_name || "there" });
   }
 
   const destination = alwaysHonorNext || userRow?.access_granted ? next : "/welcome";
