@@ -6,6 +6,28 @@
       "subhead": "List your product, set your commission structure, and let Commission recruit, track, and pay affiliates automatically — in naira, through Paystack.",
       "primaryCta": "List your product",
       "secondaryCta": "See how it works",
+      "problemsAndSolutions": [
+        {
+          "problem": "Marketing budgets rarely match ambition",
+          "solution": "Pay only for a qualified lead or verified sale - never for reach that doesn't convert."
+        },
+        {
+          "problem": "Startups struggle for funding and visibility to get their product out to the world",
+          "solution": "List a campaign in minutes and reach real buyers immediately - no funding round required to start acquiring customers."
+        },
+        {
+          "problem": "Getting discovered without brand recognition is hard",
+          "solution": "Tap into a network of affiliates who already have an audience - instant distribution without needing brand recognition first."
+        },
+        {
+          "problem": "Customers are wary of businesses they don't know",
+          "solution": "A referral from someone a customer already trusts converts differently than a cold ad from a stranger."
+        },
+        {
+          "problem": "Hiring a marketing agency is expensive and risky",
+          "solution": "No agency, no retainer - list a campaign yourself in minutes, pay only for results."
+        }
+      ],
       "benefits": [
         { "title": "No wallet, no risk", "body": "Commission never holds your customers' money. Paystack settles you directly." },
         { "title": "3-tier programs built in", "body": "Reward the affiliate who sold it — and whoever recruited them, up to 3 levels deep." },
@@ -40,6 +62,24 @@
       "subhead": "Join affiliate programs from real Nigerian businesses, share your link on WhatsApp or social, and earn commissions automatically — including from people you bring in.",
       "primaryCta": "Start earning",
       "secondaryCta": "See how it works",
+      "problemsAndSolutions": [
+        {
+          "problem": "Referral hustles rarely pay what they promise",
+          "solution": "Every commission is calculated and paid automatically via Paystack - see exactly what you're owed, before it lands."
+        },
+        {
+          "problem": "You need a huge following to make real money",
+          "solution": "No follower minimum. Share a link with the people who already trust you - that's the whole requirement."
+        },
+        {
+          "problem": "No way to know if your referral actually converted",
+          "solution": "A real-time dashboard shows every click and conversion tied to your link, automatically."
+        },
+        {
+          "problem": "One-off payouts, no compounding",
+          "solution": "Up to 3 tiers - earn from your own referrals, and from the affiliates they bring in too."
+        }
+      ],
       "benefits": [
         { "title": "One link, every channel", "body": "Share on WhatsApp, Instagram, your blog, or by email — Commission tracks it all." },
         { "title": "Earn 3 tiers deep", "body": "Bring another affiliate into a program, and earn a cut of their sales too." },
