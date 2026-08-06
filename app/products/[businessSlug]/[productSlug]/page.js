@@ -82,7 +82,7 @@ export default async function ProductPage({ params }) {
           </Typography>
         </Stack>
 
-        {product.category && <Chip label={product.category} size="small" sx={{ bgcolor: "#F1EFE7", fontWeight: 600, mb: 2, mr: 1 }} />}
+        {product.category && <Chip label={product.category} size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2, mr: 1 }} />}
         <Chip
           label={product.product_type === "physical" ? "Physical Product" : "Digital Product"}
           size="small"
@@ -140,7 +140,7 @@ export default async function ProductPage({ params }) {
         )}
 
         {product.offline_payment_instructions && (
-          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, borderColor: tokens.border, mb: 4, bgcolor: "#F1EFE7" }}>
+          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, borderColor: tokens.border, mb: 4, bgcolor: "#F7F6F2" }}>
             <Typography variant="caption" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 0.5 }}>
               HOW TO BUY
             </Typography>

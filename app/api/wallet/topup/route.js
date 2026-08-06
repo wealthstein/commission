@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { initializeWalletTopup } from "@/lib/paystack";
 
+const MIN_TOPUP_NAIRA = 250000;
+
 /**
  * POST /api/wallet/topup
  * body: { businessId, amountNaira }
@@ -13,6 +15,9 @@ export async function POST(req) {
   const { businessId, amountNaira } = await req.json();
   if (!businessId || !amountNaira || amountNaira <= 0) {
     return NextResponse.json({ error: "businessId and a positive amountNaira are required" }, { status: 400 });
+  }
+  if (amountNaira < MIN_TOPUP_NAIRA) {
+    return NextResponse.json({ error: `Minimum top-up is ₦${MIN_TOPUP_NAIRA.toLocaleString()}` }, { status: 400 });
   }
 
   const supabase = createServerSupabaseClient();

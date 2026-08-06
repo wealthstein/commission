@@ -1,16 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Paper, Box, Typography, Chip, Button, Stack, ToggleButtonGroup, ToggleButton } from "@mui/material";
+import { Paper, Box, Typography, Chip, Button, Stack, ToggleButtonGroup, ToggleButton, CircularProgress } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import LaptopMacRoundedIcon from "@mui/icons-material/LaptopMacRounded";
 import PageHeader from "@/components/dashboard/PageHeader";
-import { sampleProducts } from "@/lib/sampleData";
 import { tokens } from "@/lib/theme";
-
-// Production query: supabase.from("products").select("*").eq("business_id", myBusinessId)
+import { createClient } from "@/lib/supabaseClient";
 
 const TYPE_META = {
   physical: { label: "Physical", icon: Inventory2RoundedIcon },
@@ -19,8 +17,58 @@ const TYPE_META = {
 
 export default function CampaignsPage() {
   const [typeFilter, setTypeFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState([]);
 
-  const products = typeFilter === "all" ? sampleProducts : sampleProducts.filter((p) => p.product_type === typeFilter);
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function load() {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+      if (!authUser) {
+        setLoading(false);
+        return;
+      }
+      const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
+      if (!userRow) {
+        setLoading(false);
+        return;
+      }
+      const { data: business } = await supabase.from("businesses").select("id").eq("owner_id", userRow.id).maybeSingle();
+      if (!business) {
+        setLoading(false);
+        return;
+      }
+
+      const { data: rows } = await supabase
+        .from("products")
+        .select("id, name, category, product_type, price_naira, billing_frequency, status, affiliate_programs(id)")
+        .eq("business_id", business.id);
+
+      const programIds = (rows || []).flatMap((p) => p.affiliate_programs?.map((ap) => ap.id) || []);
+      let countsByProgram = {};
+      if (programIds.length > 0) {
+        const { data: enrollments } = await supabase.from("affiliate_enrollments").select("program_id").in("program_id", programIds);
+        countsByProgram = (enrollments || []).reduce((acc, e) => {
+          acc[e.program_id] = (acc[e.program_id] || 0) + 1;
+          return acc;
+        }, {});
+      }
+
+      setProducts(
+        (rows || []).map((p) => ({
+          ...p,
+          affiliates: (p.affiliate_programs || []).reduce((sum, ap) => sum + (countsByProgram[ap.id] || 0), 0),
+        }))
+      );
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const filtered = typeFilter === "all" ? products : products.filter((p) => p.product_type === typeFilter);
 
   return (
     <>
@@ -41,7 +89,7 @@ export default function CampaignsPage() {
         onChange={(_, v) => v && setTypeFilter(v)}
         sx={{
           mb: 3,
-          bgcolor: "#F1EFE7",
+          bgcolor: "#F7F6F2",
           borderRadius: 999,
           p: 0.4,
           "& .MuiToggleButton-root": {
@@ -66,71 +114,77 @@ export default function CampaignsPage() {
         </ToggleButton>
       </ToggleButtonGroup>
 
-      <Paper variant="outlined" sx={{ borderColor: tokens.border, borderRadius: 3, overflow: "hidden" }}>
-        {products.map((p, i) => {
-          const meta = TYPE_META[p.product_type];
-          const TypeIcon = meta.icon;
-          return (
-            <Box
-              key={p.id}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                px: 2.5,
-                py: 2,
-                borderTop: i === 0 ? "none" : `1px solid ${tokens.border}`,
-                gap: 2,
-                flexWrap: "wrap",
-              }}
-            >
-              <Box sx={{ minWidth: 200 }}>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.25 }}>
-                  <Typography fontWeight={700}>{p.name}</Typography>
-                  <Chip
-                    size="small"
-                    icon={<TypeIcon sx={{ fontSize: 14 }} />}
-                    label={meta.label}
-                    sx={{ bgcolor: p.product_type === "physical" ? "#F1EFE7" : "#FFF3C4", fontWeight: 600, height: 22 }}
-                  />
-                </Stack>
-                <Typography variant="caption" sx={{ color: tokens.muted }}>
-                  {p.category} · ₦{p.price.toLocaleString()}
-                  {p.product_type === "digital" ? ` / ${p.billing}` : " one-time"}
-                </Typography>
-              </Box>
-              <Stack direction="row" spacing={3} alignItems="center">
-                <Box sx={{ textAlign: "right" }}>
-                  <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
-                    Affiliates
-                  </Typography>
-                  <Typography variant="body2" fontWeight={700}>
-                    {p.affiliates}
+      {loading ? (
+        <Box sx={{ display: "grid", placeItems: "center", py: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Paper variant="outlined" sx={{ borderColor: tokens.border, borderRadius: 3, overflow: "hidden" }}>
+          {filtered.map((p, i) => {
+            const meta = TYPE_META[p.product_type] || TYPE_META.digital;
+            const TypeIcon = meta.icon;
+            return (
+              <Box
+                key={p.id}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  px: 2.5,
+                  py: 2,
+                  borderTop: i === 0 ? "none" : `1px solid ${tokens.border}`,
+                  gap: 2,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Box sx={{ minWidth: 200 }}>
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.25 }}>
+                    <Typography fontWeight={700}>{p.name}</Typography>
+                    <Chip
+                      size="small"
+                      icon={<TypeIcon sx={{ fontSize: 14 }} />}
+                      label={meta.label}
+                      sx={{ bgcolor: p.product_type === "physical" ? "#F7F6F2" : "#FFF3C4", fontWeight: 600, height: 22 }}
+                    />
+                  </Stack>
+                  <Typography variant="caption" sx={{ color: tokens.muted }}>
+                    {p.category} · ₦{Number(p.price_naira).toLocaleString()}
+                    {p.product_type === "digital" ? ` / ${p.billing_frequency}` : " one-time"}
                   </Typography>
                 </Box>
-                <Chip
-                  size="small"
-                  label={p.status}
-                  sx={{
-                    textTransform: "capitalize",
-                    bgcolor: p.status === "active" ? "#E7F5EE" : "#F1EFE7",
-                    color: p.status === "active" ? tokens.success : tokens.muted,
-                    fontWeight: 700,
-                  }}
-                />
-              </Stack>
+                <Stack direction="row" spacing={3} alignItems="center">
+                  <Box sx={{ textAlign: "right" }}>
+                    <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
+                      Affiliates
+                    </Typography>
+                    <Typography variant="body2" fontWeight={700}>
+                      {p.affiliates}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    size="small"
+                    label={p.status}
+                    sx={{
+                      textTransform: "capitalize",
+                      bgcolor: p.status === "active" ? "#E7F5EE" : "#F7F6F2",
+                      color: p.status === "active" ? tokens.success : tokens.muted,
+                      fontWeight: 700,
+                    }}
+                  />
+                </Stack>
+              </Box>
+            );
+          })}
+          {filtered.length === 0 && (
+            <Box sx={{ p: 5, textAlign: "center" }}>
+              <Typography sx={{ color: tokens.muted }}>
+                No {typeFilter !== "all" ? TYPE_META[typeFilter].label.toLowerCase() : ""} campaigns yet. List your
+                first campaign to launch an affiliate program.
+              </Typography>
             </Box>
-          );
-        })}
-        {products.length === 0 && (
-          <Box sx={{ p: 5, textAlign: "center" }}>
-            <Typography sx={{ color: tokens.muted }}>
-              No {typeFilter !== "all" ? TYPE_META[typeFilter].label.toLowerCase() : ""} campaigns yet. List your
-              first campaign to launch an affiliate program.
-            </Typography>
-          </Box>
-        )}
-      </Paper>
+          )}
+        </Paper>
+      )}
     </>
   );
 }

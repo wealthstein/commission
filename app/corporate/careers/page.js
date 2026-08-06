@@ -29,7 +29,7 @@ export default function CareersPage() {
       <Box sx={{ py: { xs: 8, md: 12 } }}>
         <Container maxWidth="lg">
           <Box sx={{ maxWidth: 640, mb: 6 }}>
-            <Chip label="Careers" size="small" sx={{ bgcolor: "#F1EFE7", fontWeight: 600, mb: 2 }} />
+            <Chip label="Careers" size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
             <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 2 }}>
               No open roles right now - but we are building fast
             </Typography>

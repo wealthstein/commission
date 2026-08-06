@@ -7,7 +7,6 @@ import { tokens } from "@/lib/theme";
 const NAV_LINKS = [
   { anchor: "benefits", label: "Benefits" },
   { anchor: "how-it-works", label: "How it works" },
-  { anchor: "pricing", label: "Pricing", businessOnly: true },
   { anchor: "faq", label: "FAQ" },
 ];
 
@@ -24,7 +23,7 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
   }
 
   return (
-    <AppBar position="sticky" elevation={0} sx={{ bgcolor: "rgba(250,249,245,0.85)", backdropFilter: "blur(8px)" }}>
+    <AppBar position="sticky" elevation={0} sx={{ bgcolor: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)" }}>
       <Toolbar sx={{ maxWidth: 1060, mx: "auto", width: "100%", py: 1.25, px: { xs: 3, sm: 5, md: 8, lg: 10 }, gap: 3 }}>
         <Stack component={Link} href="/" direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0, textDecoration: "none" }}>
           <Box style={{ display: "flex", justifyContent: "center" }}>
@@ -62,7 +61,7 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
           size="small"
           onChange={(_, val) => val && onAudienceChange(val)}
           sx={{
-            bgcolor: "#F1EFE7",
+            bgcolor: "#F7F6F2",
             borderRadius: 999,
             p: 0.4,
             "& .MuiToggleButton-root": {

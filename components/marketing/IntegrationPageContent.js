@@ -3,26 +3,15 @@ import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
 import SignUpButton from "@/components/marketing/SignUpButton";
 
-const NATIVE_SLUGS = ["whatsapp", "email"];
-
 export default function IntegrationPageContent({ item }) {
-  const isNative = NATIVE_SLUGS.includes(item.slug);
-  const isApiItself = item.slug === "api";
-
   return (
     <Container maxWidth="lg">
       <Stack direction="row" spacing={1} sx={{ mb: 2 }} flexWrap="wrap">
         <Chip
-          label={isNative ? "Native integration" : "Via API"}
+          label="Native integration"
           size="small"
-          sx={{
-            bgcolor: isNative ? "#E7F5EE" : "#FFF3C4",
-            color: isNative ? tokens.success : tokens.brandInk,
-            fontWeight: 700,
-          }}
+          sx={{ bgcolor: "#E7F5EE", color: tokens.success, fontWeight: 700 }}
         />
-        {isApiItself && <Chip label="Premium feature" size="small" sx={{ bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700 }} />}
-        {!isNative && !isApiItself && <Chip label="Requires API access" size="small" variant="outlined" />}
       </Stack>
 
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>

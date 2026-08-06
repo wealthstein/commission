@@ -10,7 +10,7 @@ export default function LegalPageContent({ eyebrow, title, intro, lastUpdated, s
     <Box sx={{ py: { xs: 8, md: 12 } }}>
       <Container maxWidth="lg">
         <Box sx={{ maxWidth: 720, mx: "auto" }}>
-          <Chip label={eyebrow} size="small" sx={{ bgcolor: "#F1EFE7", fontWeight: 600, mb: 2 }} />
+          <Chip label={eyebrow} size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
           <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 1.5 }}>
             {title}
           </Typography>

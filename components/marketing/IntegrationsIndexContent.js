@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Container, Typography, Grid, Box, Stack, Chip } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
-const NATIVE_SLUGS = ["whatsapp", "email", "native"];
+const NATIVE_SLUGS = ["whatsapp", "email", "native", "paystack", "excel"];
 
 export default function IntegrationsIndexContent({ title, description, buildHref, items, relatedLinks }) {
   return (

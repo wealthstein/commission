@@ -16,7 +16,7 @@ export const metadata = buildProgramsIndexMetadata();
 const TILE_STYLES = [
   { bg: tokens.ink, fg: "#fff" },
   { bg: tokens.brand, fg: tokens.brandInk },
-  { bg: "#F1EFE7", fg: tokens.ink },
+  { bg: "#F7F6F2", fg: tokens.ink },
 ];
 
 export default async function ProgramsIndexPage() {

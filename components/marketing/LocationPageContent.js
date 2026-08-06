@@ -11,7 +11,7 @@ export default function LocationPageContent({ item }) {
         icon={<LocationOnRoundedIcon sx={{ fontSize: 16 }} />}
         label="Nigeria"
         size="small"
-        sx={{ bgcolor: "#F1EFE7", fontWeight: 600, mb: 2 }}
+        sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }}
       />
       <Typography variant="h1" sx={{ fontSize: { xs: 32, md: 48 }, mb: 2 }}>
         {item.name}

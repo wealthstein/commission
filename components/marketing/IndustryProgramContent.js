@@ -17,7 +17,7 @@ export default function IndustryProgramContent({ industry, liveProducts }) {
   return (
     <Box sx={{ py: { xs: 6, md: 9 } }}>
       <Container maxWidth="lg">
-        <Chip label="For affiliates" size="small" sx={{ bgcolor: "#F1EFE7", fontWeight: 600, mb: 2 }} />
+        <Chip label="For affiliates" size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
 
         <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 42 }, mb: 2, maxWidth: 720 }}>
           {industry.displayName} programs you can promote
@@ -45,7 +45,7 @@ export default function IndustryProgramContent({ industry, liveProducts }) {
               earn on your own referrals, and on affiliates you bring in
             </Typography>
           </Box>
-          <Box sx={{ flex: 1, bgcolor: "#F1EFE7", p: 3 }}>
+          <Box sx={{ flex: 1, bgcolor: "#F7F6F2", p: 3 }}>
             <Typography component={Link} href={urls.calculator("affiliate")} variant="h4" fontWeight={700} sx={{ display: "block", color: tokens.ink }}>
               Calculate →
             </Typography>

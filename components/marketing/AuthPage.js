@@ -123,7 +123,7 @@ export default function AuthPage({ mode }) {
               © {new Date().getFullYear()} {siteConfig.name}
             </Typography>
             <Typography sx={{ color: tokens.muted, fontSize: 11 }}>
-              Built with ❤️ in Chicago, Illinois
+              Built with ❤️ in Brooklyn, New York
             </Typography>
           </Breadcrumbs>
 
@@ -137,7 +137,7 @@ export default function AuthPage({ mode }) {
         sx={{
           display: { xs: "none", md: "flex" },
           alignItems: "center",
-          bgcolor: "#F1EFE7",
+          bgcolor: "#F7F6F2",
           borderLeft: `1px solid ${tokens.border}`,
           px: 8,
         }}

@@ -29,7 +29,7 @@ export default function ConversionsIndexContent({ title, description, buildHref,
                 borderRadius: 2.5,
                 textDecoration: "none",
                 color: "inherit",
-                "&:hover": { bgcolor: "#F1EFE7" },
+                "&:hover": { bgcolor: "#F7F6F2" },
               }}
             >
               <Box

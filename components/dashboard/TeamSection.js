@@ -22,7 +22,7 @@ import { createClient } from "@/lib/supabaseClient";
 const STATUS_STYLE = {
   active: { bg: "#E7F5EE", fg: tokens.success, label: "Active" },
   invited: { bg: "#FFF3C4", fg: tokens.brandInk, label: "Invited" },
-  revoked: { bg: "#F1EFE7", fg: tokens.muted, label: "Removed" },
+  revoked: { bg: "#F7F6F2", fg: tokens.muted, label: "Removed" },
 };
 
 export default function TeamSection({ businessId, plan }) {
@@ -112,7 +112,7 @@ export default function TeamSection({ businessId, plan }) {
                     direction="row"
                     alignItems="center"
                     justifyContent="space-between"
-                    sx={{ p: 1.5, borderRadius: 2, bgcolor: "#F1EFE7" }}
+                    sx={{ p: 1.5, borderRadius: 2, bgcolor: "#F7F6F2" }}
                   >
                     <Box>
                       <Typography variant="body2" fontWeight={600}>

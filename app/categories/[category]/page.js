@@ -74,7 +74,7 @@ export default async function CategoryPage({ params, searchParams }) {
                   size="small"
                   icon={p.product_type === "physical" ? <Inventory2RoundedIcon sx={{ fontSize: 14 }} /> : <LaptopMacRoundedIcon sx={{ fontSize: 14 }} />}
                   label={p.product_type === "physical" ? "Physical" : "Digital"}
-                  sx={{ bgcolor: p.product_type === "physical" ? "#F1EFE7" : "#FFF3C4", fontWeight: 600, height: 22 }}
+                  sx={{ bgcolor: p.product_type === "physical" ? "#F7F6F2" : "#FFF3C4", fontWeight: 600, height: 22 }}
                 />
               </Paper>
             </Grid>

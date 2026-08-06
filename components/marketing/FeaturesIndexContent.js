@@ -44,7 +44,7 @@ function FeatureTile({ item, featured }) {
           width: featured ? 48 : 40,
           height: featured ? 48 : 40,
           borderRadius: "12px",
-          bgcolor: featured ? tokens.brand : "#F1EFE7",
+          bgcolor: featured ? tokens.brand : "#F7F6F2",
           display: "grid",
           placeItems: "center",
           mb: 2,

@@ -1,10 +1,10 @@
 {
-  "defaultPpqlNaira": 1000,
+  "defaultPpqlNaira": 1200,
   "industries": [
     {
       "slug": "banking",
       "industryName": "Banking",
-      "ppqlNaira": 4000,
+      "ppqlNaira": 6000,
       "headline": "Turn account-opening interest into verified new customers",
       "painPoints": [
         "Account-opening and product sign-up campaigns that get expensive on broad ad platforms",
@@ -30,7 +30,7 @@
     {
       "slug": "real-estate",
       "industryName": "Real Estate",
-      "ppqlNaira": 5000,
+      "ppqlNaira": 20000,
       "headline": "Turn every referral into a qualified viewing request",
       "painPoints": [
         "Property listings sit unseen without the right audience finding them",
@@ -56,7 +56,7 @@
     {
       "slug": "healthcare",
       "industryName": "Healthcare",
-      "ppqlNaira": 3000,
+      "ppqlNaira": 5000,
       "headline": "Fill more HMO enrollments and appointment requests, affordably",
       "painPoints": [
         "Enrollment and appointment volume that depends on expensive, broad advertising",
@@ -82,7 +82,7 @@
     {
       "slug": "fintech",
       "industryName": "Fintech",
-      "ppqlNaira": 2000,
+      "ppqlNaira": 3500,
       "headline": "Acquire verified sign-ups without paying for every click",
       "painPoints": [
         "App install and sign-up campaigns that get expensive fast on ad platforms",
@@ -108,7 +108,7 @@
     {
       "slug": "education",
       "industryName": "Education",
-      "ppqlNaira": 1500,
+      "ppqlNaira": 2500,
       "headline": "Fill more course enrollments through people who already teach or mentor",
       "painPoints": [
         "Course and program enrollment that depends on expensive paid reach",
@@ -134,7 +134,7 @@
     {
       "slug": "logistics",
       "industryName": "Logistics",
-      "ppqlNaira": 1200,
+      "ppqlNaira": 1500,
       "headline": "Grow your customer base through people who already ship with you",
       "painPoints": [
         "Acquiring new shipping or delivery customers through expensive broad advertising",
@@ -160,7 +160,7 @@
     {
       "slug": "insurance",
       "industryName": "Insurance",
-      "ppqlNaira": 2500,
+      "ppqlNaira": 4000,
       "headline": "Turn policy inquiries into a performance-based channel",
       "painPoints": [
         "Policy sales that depend on broad, expensive advertising with unclear returns",

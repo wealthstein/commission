@@ -9,7 +9,6 @@ import CardGridSection from "@/components/marketing/CardGridSection";
 import HowItWorks from "@/components/marketing/HowItWorks";
 import Comparison from "@/components/marketing/Comparison";
 import EarningsExample from "@/components/marketing/EarningsExample";
-import Pricing from "@/components/marketing/Pricing";
 import FAQ from "@/components/marketing/FAQ";
 import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 import { CTASection } from "@/components/marketing/CTAAndFooter";
@@ -58,12 +57,11 @@ export default function HomeClient({ searchParams }) {
       {audience === "business" && <Comparison data={content.comparison} />}
       {audience === "affiliate" && <EarningsExample data={content.earningsExample} bgcolor={altSectionBg} />}
 
-      {/* Pricing (business only), FAQ, and the Request Access form form one
-          continuous closing zone with a shared dot-texture background,
-          matching the reference site - no divider lines between them. */}
+      {/* FAQ and the Request Access form form one continuous closing zone
+          with a shared dot-texture background, matching the reference
+          site - no divider lines between them. Pricing removed - flat
+          20% platform fee applies to every business, no plans to compare. */}
       <Box sx={dotPatternSx}>
-        {audience === "business" && <Pricing onSelectPlan={() => goToRequestForm("business")} bgcolor="transparent" />}
-
         <FAQ items={faq} />
 
         <Box sx={{ py: { xs: 6, md: 9 } }}>

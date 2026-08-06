@@ -43,7 +43,7 @@ export default function RequestAccountForm({ sourcePage }) {
         onChange={(_, v) => v && setRole(v)}
         sx={{
           mb: 2.5,
-          bgcolor: "#F1EFE7",
+          bgcolor: "#F7F6F2",
           borderRadius: 999,
           p: 0.4,
           "& .MuiToggleButton-root": { border: "none", borderRadius: 999, textTransform: "none", fontWeight: 600, px: 2 },

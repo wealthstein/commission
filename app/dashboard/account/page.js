@@ -16,7 +16,6 @@ import {
   CircularProgress,
 } from "@mui/material";
 import PageHeader from "@/components/dashboard/PageHeader";
-import TeamSection from "@/components/dashboard/TeamSection";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
 
@@ -106,9 +105,6 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
   );
 }
 
-// Production: fetch from businesses.wallet_balance_naira for the signed-in user's business.
-const sampleWalletBalance = 32000;
-
 function WalletCard({ businessId, balanceNaira }) {
   const [amount, setAmount] = useState("");
   const [state, setState] = useState({ loading: false, error: null });
@@ -140,7 +136,7 @@ function WalletCard({ businessId, balanceNaira }) {
         anytime via Paystack.
       </Typography>
 
-      <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: "#F1EFE7", mb: 2.5 }}>
+      <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: "#F7F6F2", mb: 2.5 }}>
         <Typography variant="caption" sx={{ color: tokens.muted }}>
           Current balance
         </Typography>
@@ -161,6 +157,7 @@ function WalletCard({ businessId, balanceNaira }) {
             required
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
+            helperText="Minimum ₦250,000"
           />
           <Button type="submit" variant="contained" disabled={state.loading} sx={{ flexShrink: 0 }}>
             {state.loading ? <CircularProgress size={20} /> : "Add funds"}
@@ -173,22 +170,63 @@ function WalletCard({ businessId, balanceNaira }) {
 
 export default function AccountPage() {
   const [user, setUser] = useState(null);
+  const [userRow, setUserRow] = useState(null);
   const [business, setBusiness] = useState(null);
+  const [form, setForm] = useState({ phone: "", businessName: "", industry: "", website: "" });
+  const [saveState, setSaveState] = useState({ loading: false, error: null, success: false });
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
       setUser(authUser);
       if (!authUser) return;
-      const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
-      if (!userRow) return;
+      const { data: uRow } = await supabase
+        .from("users")
+        .select("id, phone")
+        .eq("auth_user_id", authUser.id)
+        .single();
+      if (!uRow) return;
+      setUserRow(uRow);
+
       // Explicitly scoped to this user's own business - unlike the earlier
       // .limit(1) in campaigns/new, which grabbed whichever business
       // happened to be first in the table.
-      const { data: biz } = await supabase.from("businesses").select("id, plan").eq("owner_id", userRow.id).maybeSingle();
+      const { data: biz } = await supabase
+        .from("businesses")
+        .select("id, plan, name, industry, website, wallet_balance_naira")
+        .eq("owner_id", uRow.id)
+        .maybeSingle();
       setBusiness(biz || null);
+
+      setForm({
+        phone: uRow.phone || "",
+        businessName: biz?.name || "",
+        industry: biz?.industry || "",
+        website: biz?.website || "",
+      });
     });
   }, []);
+
+  async function handleSave() {
+    setSaveState({ loading: true, error: null, success: false });
+    try {
+      const supabase = createClient();
+      if (userRow) {
+        const { error: userError } = await supabase.from("users").update({ phone: form.phone }).eq("id", userRow.id);
+        if (userError) throw userError;
+      }
+      if (business) {
+        const { error: bizError } = await supabase
+          .from("businesses")
+          .update({ name: form.businessName, industry: form.industry, website: form.website })
+          .eq("id", business.id);
+        if (bizError) throw bizError;
+      }
+      setSaveState({ loading: false, error: null, success: true });
+    } catch (err) {
+      setSaveState({ loading: false, error: err.message, success: false });
+    }
+  }
 
   const firstName = user?.user_metadata?.given_name || user?.user_metadata?.full_name?.split(" ")[0];
 
@@ -214,7 +252,7 @@ export default function AccountPage() {
             <TextField label="Full name" fullWidth defaultValue={user?.user_metadata?.full_name || ""} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField label="Phone number" fullWidth defaultValue="" />
+            <TextField label="Phone number" fullWidth value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
           </Grid>
         </Grid>
       </Paper>
@@ -228,13 +266,13 @@ export default function AccountPage() {
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
-            <TextField label="Business name" fullWidth defaultValue="" />
+            <TextField label="Business name" fullWidth value={form.businessName} onChange={(e) => setForm((f) => ({ ...f, businessName: e.target.value }))} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField label="Industry" fullWidth defaultValue="" />
+            <TextField label="Industry" fullWidth value={form.industry} onChange={(e) => setForm((f) => ({ ...f, industry: e.target.value }))} />
           </Grid>
           <Grid item xs={12}>
-            <TextField label="Website" fullWidth defaultValue="" />
+            <TextField label="Website" fullWidth value={form.website} onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))} />
           </Grid>
         </Grid>
       </Paper>
@@ -276,18 +314,14 @@ export default function AccountPage() {
         }}
       />
 
-      {/* businessId below is a placeholder — production should read the signed-in
-          user's actual business id (e.g. from a server-fetched businesses row) */}
-      <TeamSection businessId={business?.id} plan={business?.plan} />
+      <WalletCard businessId={business?.id} balanceNaira={business?.wallet_balance_naira || 0} />
 
-      {/* businessId below is still a placeholder for balanceNaira specifically -
-          the wallet balance itself is not yet wired to a real query, only
-          the business row lookup above (used by TeamSection) is real now. */}
-      <WalletCard businessId={business?.id || "YOUR_BUSINESS_ID"} balanceNaira={sampleWalletBalance} />
+      {saveState.error && <Alert severity="error" sx={{ mb: 2 }}>{saveState.error}</Alert>}
+      {saveState.success && <Alert severity="success" sx={{ mb: 2 }}>Saved</Alert>}
 
       <Stack direction="row" justifyContent="flex-end">
-        <Button variant="contained" size="large">
-          Save changes
+        <Button variant="contained" size="large" onClick={handleSave} disabled={saveState.loading}>
+          {saveState.loading ? <CircularProgress size={20} /> : "Save changes"}
         </Button>
       </Stack>
     </>

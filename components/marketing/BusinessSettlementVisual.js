@@ -45,7 +45,7 @@ export default function BusinessSettlementVisual() {
         onChange={(_, v) => v && setPlanId(v)}
         sx={{
           my: 2,
-          bgcolor: "#F1EFE7",
+          bgcolor: "#F7F6F2",
           borderRadius: 999,
           p: 0.4,
           width: "100%",
@@ -115,7 +115,7 @@ export default function BusinessSettlementVisual() {
         </Typography>
       </Stack>
 
-      <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F1EFE7" }}>
+      <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F7F6F2" }}>
         <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
           Your proceeds — unaffected by plan
         </Typography>

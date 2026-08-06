@@ -41,7 +41,7 @@ export default function ProgramPageContent({ target, industry, liveProducts }) {
           {initial}
         </Avatar>
 
-        <Chip label="For affiliates" size="small" sx={{ bgcolor: "#F1EFE7", fontWeight: 600, mb: 2 }} />
+        <Chip label="For affiliates" size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
 
         <Typography variant="h1" sx={{ fontSize: { xs: 26, md: 34 }, mb: 2 }}>
           Does {target.displayName} have a program you can promote?

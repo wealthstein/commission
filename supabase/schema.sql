@@ -27,6 +27,7 @@ drop table if exists businesses cascade;
 drop table if exists business_team_members cascade;
 drop table if exists campaign_custom_fields cascade;
 drop table if exists cold_outreach_contacts cascade;
+drop table if exists wallet_funding_nudges cascade;
 drop table if exists users cascade;
 drop function if exists fn_charge_wallet(uuid, numeric, text, uuid, uuid, text) cascade;
 drop function if exists fn_charge_wallet(uuid, numeric, text, uuid, uuid, text, numeric, numeric) cascade;
@@ -140,6 +141,32 @@ create index if not exists idx_businesses_owner on businesses(owner_id);
 -- app/api/team/accept/route.js). Distinct from businesses.owner_id, which
 -- always stays the original creator and can never be removed here.
 -- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- WALLET FUNDING NUDGES — 5-email sequence to real signed-up businesses who
+-- have never funded their Campaign Wallet (see app/api/cron/wallet-nudge).
+-- Distinct from cold_outreach_contacts below, which is for the pre-signup
+-- 300-business list - this table only ever holds real businesses already
+-- in the product. Day 0/3/6/9/12 cadence; if still unfunded after email 5,
+-- pauses 14 days, then repeats once more (cycle 2) before going quiet.
+-- Stops immediately, permanently, the moment a real topup is detected in
+-- wallet_transactions.
+-- ----------------------------------------------------------------------------
+create table if not exists wallet_funding_nudges (
+  id             uuid primary key default gen_random_uuid(),
+  business_id    uuid not null references businesses(id) on delete cascade unique,
+  cycle          smallint not null default 1 check (cycle in (1, 2)),
+  sequence_step  smallint not null default 0,
+  status         text not null default 'active' check (status in ('active', 'topped_up', 'exhausted')),
+  last_sent_at   timestamptz,
+  paused_until   timestamptz,
+  created_at     timestamptz not null default now()
+);
+
+create index if not exists idx_wallet_nudges_status on wallet_funding_nudges(status);
+
+alter table wallet_funding_nudges enable row level security;
+-- No public policies - only ever touched by the admin client (cron route).
+
 -- ----------------------------------------------------------------------------
 -- COLD OUTREACH CONTACTS — the 300-business cold-email sequence (5 emails,
 -- 3 days apart, see app/api/cron/outreach and lib/emailTemplates.js

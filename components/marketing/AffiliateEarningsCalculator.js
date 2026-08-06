@@ -109,19 +109,19 @@ export default function AffiliateEarningsCalculator() {
 
         <Grid item xs={12} md={6}>
           <Stack spacing={1.5} sx={{ height: "100%", justifyContent: "center" }}>
-            <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F1EFE7" }}>
+            <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F7F6F2" }}>
               <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
                 Tier 1 (direct)
               </Typography>
               <Typography fontWeight={700}>₦{result.tier1Naira.toLocaleString()}</Typography>
             </Box>
-            <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F1EFE7" }}>
+            <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F7F6F2" }}>
               <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
                 Tier 2 (referred affiliates)
               </Typography>
               <Typography fontWeight={700}>₦{result.tier2Naira.toLocaleString()}</Typography>
             </Box>
-            <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F1EFE7" }}>
+            <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F7F6F2" }}>
               <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
                 Tier 3 (their affiliates)
               </Typography>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Paper,
   Box,
@@ -28,11 +28,11 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
 import { categoriesForType } from "@/lib/categories";
+import { TIER_RATIOS } from "@/lib/commissionEngine";
 
-// Custom Questions is a Medium/Large plan feature (see lib/siteSections.js
-// "custom-fields") - Medium caps at 5 questions per campaign, Large is
-// unlimited, Small does not get the section at all.
-const CUSTOM_FIELD_CAP = { free: 0, pro: 5, plus: Infinity };
+// Custom Questions - now free for every business, flat cap of 5 per
+// campaign. No more plan-based tiering since subscriptions were removed.
+const CUSTOM_FIELD_CAP = 5;
 
 const BILLING = [
   { value: "one_time", label: "One-time" },
@@ -54,29 +54,18 @@ const DEFAULTS = {
   whatsapp_number: "",
   cost_per_qualified_lead: "",
   commission_type: "one_time",
-  tier1: 60,
-  tier2: 25,
-  tier3: 15,
+  // Only used for sale-goal campaigns - lead-goal always splits the whole
+  // pool 50/30/20 (see TIER_RATIOS in lib/commissionEngine.js), fixed
+  // platform-wide and not something a business can change.
+  total_commission_percent: 10,
 };
 
 export default function NewCampaignPage() {
   const [form, setForm] = useState(DEFAULTS);
   const [status, setStatus] = useState({ loading: false, error: null, success: false });
   const [customFields, setCustomFields] = useState([]);
-  const [plan, setPlan] = useState(null);
 
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return;
-      const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", user.id).single();
-      if (!userRow) return;
-      const { data: biz } = await supabase.from("businesses").select("plan").eq("owner_id", userRow.id).maybeSingle();
-      setPlan(biz?.plan || "free");
-    });
-  }, []);
-
-  const fieldCap = CUSTOM_FIELD_CAP[plan] ?? 0;
+  const fieldCap = CUSTOM_FIELD_CAP;
 
   function addCustomField() {
     if (customFields.length >= fieldCap) return;
@@ -91,7 +80,6 @@ export default function NewCampaignPage() {
 
   const isPhysical = form.product_type === "physical";
   const isLead = form.conversion_goal === "lead";
-  const totalCommission = Number(form.tier1 || 0) + Number(form.tier2 || 0) + Number(form.tier3 || 0);
   const categoryOptions = categoriesForType(form.product_type);
 
   function update(field, value) {
@@ -99,33 +87,23 @@ export default function NewCampaignPage() {
   }
 
   function selectConversionGoal(goal) {
-    // Switching goal resets the fields that only make sense for one of them
-    // — a lead campaign's tiers default to summing to 100 (the whole lead
-    // fee gets allocated), a sale campaign's default to a realistic
-    // percentage of the sale price.
-    setForm((f) => ({
-      ...f,
-      conversion_goal: goal,
-      tier1: goal === "lead" ? 60 : 8,
-      tier2: goal === "lead" ? 25 : 5,
-      tier3: goal === "lead" ? 15 : 2,
-    }));
+    setForm((f) => ({ ...f, conversion_goal: goal }));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setStatus({ loading: true, error: null, success: false });
 
-    if (totalCommission > 100) {
-      setStatus({ loading: false, error: "Total affiliate commission across all tiers cannot exceed 100%.", success: false });
-      return;
-    }
-    if (!isLead && totalCommission < 10) {
+    if (!isLead && Number(form.total_commission_percent) < 10) {
       setStatus({
         loading: false,
         error: "Direct-sale campaigns must commit at least 10% total commission across tiers.",
         success: false,
       });
+      return;
+    }
+    if (!isLead && Number(form.total_commission_percent) > 100) {
+      setStatus({ loading: false, error: "Total commission cannot exceed 100%.", success: false });
       return;
     }
     if (isLead && !form.cost_per_qualified_lead) {
@@ -187,6 +165,16 @@ export default function NewCampaignPage() {
 
       // 3. Launch the campaign. A lead campaign has no "commission_type" —
       // there is nothing to recur, only sale-goal campaigns can be recurring.
+      // Tier split is fixed platform-wide (TIER_RATIOS: 50/30/20) - a
+      // business cannot change the relative proportions. For lead-goal
+      // campaigns this IS the tier split (the whole pool). For sale-goal,
+      // the business's single "total commission %" gets divided in these
+      // exact proportions.
+      const totalPercent = isLead ? 100 : Number(form.total_commission_percent);
+      const tier1Percent = (totalPercent * TIER_RATIOS.tier1) / 100;
+      const tier2Percent = (totalPercent * TIER_RATIOS.tier2) / 100;
+      const tier3Percent = (totalPercent * TIER_RATIOS.tier3) / 100;
+
       const { data: program, error: programError } = await supabase
         .from("affiliate_programs")
         .insert({
@@ -195,9 +183,9 @@ export default function NewCampaignPage() {
           commission_type: isLead ? "one_time" : form.commission_type,
           cost_per_qualified_lead_naira: isLead ? Number(form.cost_per_qualified_lead) : null,
           whatsapp_number: isLead ? form.whatsapp_number || null : null,
-          tier1_percent: Number(form.tier1),
-          tier2_percent: Number(form.tier2),
-          tier3_percent: Number(form.tier3),
+          tier1_percent: tier1Percent,
+          tier2_percent: tier2Percent,
+          tier3_percent: tier3Percent,
           status: "active",
         })
         .select()
@@ -459,13 +447,7 @@ export default function NewCampaignPage() {
               same as name and phone. Commission never stores the answers, only these question definitions.
             </Typography>
 
-            {plan === "free" ? (
-              <Alert severity="info" sx={{ borderRadius: 2 }}>
-                Custom questions are available on Medium and Large plans. Upgrade to add your own.
-              </Alert>
-            ) : (
-              <>
-                <Stack spacing={2} sx={{ mb: 2 }}>
+            <Stack spacing={2} sx={{ mb: 2 }}>
                   {customFields.map((f, i) => (
                     <Stack key={i} direction="row" spacing={1.5} alignItems="flex-start">
                       <TextField
@@ -521,13 +503,9 @@ export default function NewCampaignPage() {
                 >
                   Add question
                 </Button>
-                {fieldCap !== Infinity && (
-                  <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 1 }}>
-                    {customFields.length}/{fieldCap} questions used on your plan.
-                  </Typography>
-                )}
-              </>
-            )}
+                <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 1 }}>
+                  {customFields.length}/{fieldCap} questions used.
+                </Typography>
           </Paper>
         )}
 
@@ -536,62 +514,56 @@ export default function NewCampaignPage() {
             Affiliate tiers
           </Typography>
           <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-            {isLead
-              ? "Up to 3 tiers. These should sum to 100% — that is the whole lead fee, allocated across your affiliate tree, before Commission's plan-based fee is taken from each tier's share."
-              : "Up to 3 tiers, as a % of the sale. Commission's plan-based fee is taken from this commission (never your sale price)."}
+            Commission's tier split is fixed platform-wide - this keeps the multi-tier incentive consistent for
+            every affiliate, on every campaign. It is not something a business can adjust.
           </Typography>
 
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Tier 1 (%)"
-                type="number"
-                fullWidth
-                value={form.tier1}
-                onChange={(e) => update("tier1", e.target.value)}
-                helperText="Direct affiliate — required"
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Tier 2 (%)"
-                type="number"
-                fullWidth
-                value={form.tier2}
-                onChange={(e) => update("tier2", e.target.value)}
-                helperText="Who referred tier 1 — optional"
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Tier 3 (%)"
-                type="number"
-                fullWidth
-                value={form.tier3}
-                onChange={(e) => update("tier3", e.target.value)}
-                helperText="Who referred tier 2 — optional"
-              />
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: 3 }} />
-
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="body2" sx={{ color: tokens.muted }}>
-              Total across tiers
-            </Typography>
-            <Typography
-              fontWeight={700}
-              color={totalCommission > 100 || (isLead && totalCommission !== 100) || (!isLead && totalCommission < 10) ? "error" : "inherit"}
-            >
-              {totalCommission}%{" "}
-              {isLead && totalCommission !== 100
-                ? "(should be 100%)"
-                : !isLead && totalCommission < 10
-                ? "(minimum 10% for direct-sale campaigns)"
-                : ""}
-            </Typography>
+          <Stack direction="row" spacing={2} sx={{ mb: !isLead ? 3 : 0 }}>
+            {[
+              { tier: 1, percent: TIER_RATIOS.tier1, note: "Direct affiliate" },
+              { tier: 2, percent: TIER_RATIOS.tier2, note: "Who referred tier 1" },
+              { tier: 3, percent: TIER_RATIOS.tier3, note: "Who referred tier 2" },
+            ].map((t) => (
+              <Box
+                key={t.tier}
+                sx={{ flex: 1, p: 2, borderRadius: 2, bgcolor: "#F7F6F2", textAlign: "center" }}
+              >
+                <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mb: 0.5 }}>
+                  Tier {t.tier}
+                </Typography>
+                <Typography variant="h5" fontWeight={800} sx={{ color: tokens.brandInk }}>
+                  {t.percent}%
+                </Typography>
+                <Typography variant="caption" sx={{ color: tokens.muted }}>
+                  {t.note}
+                </Typography>
+              </Box>
+            ))}
           </Stack>
+
+          {isLead ? (
+            <Typography variant="body2" sx={{ color: tokens.muted, mt: 2 }}>
+              This splits your full cost per Intent Qualified Lead - Commission's plan-based fee is then taken from
+              each tier's share, never from your sale price.
+            </Typography>
+          ) : (
+            <>
+              <Divider sx={{ my: 3 }} />
+              <TextField
+                label="Total commission (%)"
+                type="number"
+                value={form.total_commission_percent}
+                onChange={(e) => update("total_commission_percent", e.target.value)}
+                helperText="Minimum 10% - divided 50/30/20 across tiers automatically. Commission's plan-based fee is taken from this commission, never your sale price."
+                sx={{ maxWidth: 320 }}
+              />
+              {(Number(form.total_commission_percent) < 10 || Number(form.total_commission_percent) > 100) && (
+                <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                  {Number(form.total_commission_percent) < 10 ? "Minimum 10% total for direct-sale campaigns." : "Cannot exceed 100%."}
+                </Typography>
+              )}
+            </>
+          )}
         </Paper>
 
         <Stack direction="row" justifyContent="flex-end" sx={{ mt: 3 }}>

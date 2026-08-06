@@ -127,7 +127,7 @@ export default function SavingsCalculator() {
         ))}
       </ToggleButtonGroup>
 
-      <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F1EFE7", mb: 3 }}>
+      <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F7F6F2", mb: 3 }}>
         <Stack direction="row" justifyContent="space-between">
           <Typography variant="caption" sx={{ color: tokens.muted }}>
             ₦{budget.toLocaleString()} top-up
@@ -145,7 +145,7 @@ export default function SavingsCalculator() {
 
       <Grid container spacing={1.5} sx={{ mb: 3 }}>
         <Grid item xs={6}>
-          <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F1EFE7" }}>
+          <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F7F6F2" }}>
             <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
               Via {comparison?.channelName}
             </Typography>

@@ -65,7 +65,7 @@ export default function HeroCalculatorTeaser({ audience }) {
         sx={{ color: tokens.brand, mb: 2.5 }}
       />
 
-      <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: isBusiness ? "#E7F5EE" : "#F1EFE7", textAlign: "center", mb: 2.5 }}>
+      <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: isBusiness ? "#E7F5EE" : "#F7F6F2", textAlign: "center", mb: 2.5 }}>
         <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
           {isBusiness ? "Extra leads for the same budget" : "Estimated monthly earnings"}
         </Typography>

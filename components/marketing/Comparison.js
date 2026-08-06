@@ -15,7 +15,7 @@ export default function Comparison({ data, bgcolor = tokens.paper }) {
             sx={{
               display: "grid",
               gridTemplateColumns: "1.2fr 1fr 1fr",
-              bgcolor: "#F1EFE7",
+              bgcolor: "#F7F6F2",
               px: { xs: 2, md: 3 },
               py: 1.5,
             }}

@@ -109,3 +109,4 @@ export async function GET(req) {
   const destination = alwaysHonorNext || userRow?.access_granted ? next : "/welcome";
   return NextResponse.redirect(new URL(destination, url.origin));
 }
+

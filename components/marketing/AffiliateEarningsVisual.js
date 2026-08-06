@@ -74,7 +74,7 @@ export default function AffiliateEarningsVisual() {
         })}
       </Stack>
 
-      <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F1EFE7", textAlign: "center" }}>
+      <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#F7F6F2", textAlign: "center" }}>
         <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
           Earned so far
         </Typography>

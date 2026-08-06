@@ -1,28 +1,16 @@
--- ============================================================================
--- Fires automatically whenever users.access_granted changes from anything
--- else to true - including a manual edit in Table Editor, exactly like the
--- workflow already in use. Calls app/api/webhooks/access-granted, which
--- sends the approval email (lib/email.js -> sendApprovalEmail).
+-- Fires automatically whenever users.access_granted changes to true.
+-- Fixed to use www.commission.ng (your canonical domain - commission.ng
+-- redirects to it, and pg_net does not reliably follow redirects on POST).
 --
--- Prerequisites, both one-time, done in the Supabase Dashboard:
---   1. Database -> Extensions -> enable "pg_net" (lets Postgres make HTTP
---      calls). Usually already on by default on newer projects.
---   2. Set DB_WEBHOOK_SECRET in your Vercel/hosting environment variables -
---      any random string, e.g. via `openssl rand -hex 32`. This is a
---      shared secret so nobody else can call your webhook route and
---      trigger fake approval emails.
---
--- Before running this file: replace YOUR_WEBHOOK_SECRET_HERE and the
--- commission.ng URL below with your real values. Do not commit the real
--- secret to git - this file is a template, not a source of truth for the
--- secret itself.
--- ============================================================================
+-- Before running: replace YOUR_WEBHOOK_SECRET_HERE with your real
+-- DB_WEBHOOK_SECRET value (same one already in Vercel). Do not commit the
+-- real secret to git - this file is a template.
 
 create or replace function notify_access_granted() returns trigger as $$
 begin
   if NEW.access_granted = true and (OLD.access_granted is distinct from true) then
     perform net.http_post(
-      url := 'https://commission.ng/api/webhooks/access-granted',
+      url := 'https://www.commission.ng/api/webhooks/access-granted',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
         'x-webhook-secret', 'YOUR_WEBHOOK_SECRET_HERE'

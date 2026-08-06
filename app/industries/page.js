@@ -51,7 +51,7 @@ export default function IndustriesIndexPage() {
                       top: 0,
                       bottom: 0,
                       width: `${barWidth}%`,
-                      bgcolor: "#F1EFE7",
+                      bgcolor: "#F7F6F2",
                       zIndex: 0,
                     }}
                   />

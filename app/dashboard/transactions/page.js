@@ -20,10 +20,10 @@ import {
   DialogContent,
   DialogActions,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
 import PageHeader from "@/components/dashboard/PageHeader";
-import { sampleTransactions } from "@/lib/sampleData";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
 
@@ -45,13 +45,13 @@ const sampleLeads = [
 const STATUS_STYLE = {
   captured: { bg: "#FFF3C4", fg: tokens.brandInk, label: "Awaiting qualification" },
   qualified: { bg: "#E7F5EE", fg: tokens.success, label: "Intent Qualified" },
-  rejected: { bg: "#F1EFE7", fg: tokens.muted, label: "Rejected" },
+  rejected: { bg: "#F7F6F2", fg: tokens.muted, label: "Rejected" },
 };
 
-// Lead Management (filter/search/export) is a Medium/Large plan feature -
-// see lib/siteSections.js "lead-management". Export is client-side since
-// the leads already visible on screen are exactly what gets exported -
-// no extra request needed.
+// Lead Management (filter/search/export) is free for every business - no
+// plan gating since subscriptions were removed. See lib/siteSections.js
+// "lead-management". Export is client-side since the leads already visible
+// on screen are exactly what gets exported - no extra request needed.
 function exportLeadsToCsv(leads) {
   const header = ["Reference", "Campaign", "Status", "Charge (NGN)", "Date"];
   const rows = leads.map((l) => [
@@ -71,32 +71,76 @@ function exportLeadsToCsv(leads) {
   URL.revokeObjectURL(url);
 }
 
-function PayoutsTab() {
+function PayoutsTab({ userRowId }) {
+  const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState([]);
+
+  useEffect(() => {
+    if (!userRowId) {
+      setLoading(false);
+      return;
+    }
+    const supabase = createClient();
+
+    async function load() {
+      const { data: enrollments } = await supabase
+        .from("affiliate_enrollments")
+        .select("id, affiliate_programs(tier1_percent, products(name))")
+        .eq("affiliate_id", userRowId);
+      const enrollmentIds = (enrollments || []).map((e) => e.id);
+      const enrollmentById = Object.fromEntries((enrollments || []).map((e) => [e.id, e]));
+
+      if (enrollmentIds.length === 0) {
+        setRows([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data: commissions } = await supabase
+        .from("commissions")
+        .select("id, enrollment_id, affiliate_payout_naira, payout_status, created_at")
+        .in("enrollment_id", enrollmentIds)
+        .order("created_at", { ascending: false });
+
+      setRows(
+        (commissions || []).map((c) => ({
+          id: c.id,
+          date: new Date(c.created_at).toLocaleDateString(),
+          product: enrollmentById[c.enrollment_id]?.affiliate_programs?.products?.name || "Campaign",
+          commissionNaira: Number(c.affiliate_payout_naira),
+          status: c.payout_status,
+        }))
+      );
+      setLoading(false);
+    }
+    load();
+  }, [userRowId]);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "grid", placeItems: "center", py: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Paper variant="outlined" sx={{ borderColor: tokens.border, borderRadius: 3, overflow: "auto" }}>
       <Table size="small">
         <TableHead>
-          <TableRow sx={{ bgcolor: "#F1EFE7" }}>
+          <TableRow sx={{ bgcolor: "#F7F6F2" }}>
             <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Campaign</TableCell>
-            <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
-            <TableCell sx={{ fontWeight: 700 }}>Sale amount</TableCell>
-            <TableCell sx={{ fontWeight: 700 }}>Tier</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Commission</TableCell>
-            <TableCell sx={{ fontWeight: 700 }}>Platform fee</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {sampleTransactions.map((t) => (
+          {rows.map((t) => (
             <TableRow key={t.id}>
               <TableCell>{t.date}</TableCell>
               <TableCell>{t.product}</TableCell>
-              <TableCell sx={{ color: tokens.muted }}>{t.customer}</TableCell>
-              <TableCell>₦{t.amountNaira.toLocaleString()}</TableCell>
-              <TableCell>Tier {t.tier}</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>₦{t.commissionNaira.toLocaleString()}</TableCell>
-              <TableCell sx={{ color: tokens.muted }}>₦{t.feeNaira.toLocaleString()}</TableCell>
               <TableCell>
                 <Chip
                   size="small"
@@ -111,6 +155,13 @@ function PayoutsTab() {
               </TableCell>
             </TableRow>
           ))}
+          {rows.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={4} sx={{ textAlign: "center", py: 5, color: tokens.muted }}>
+                No commissions yet.
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </Paper>
@@ -161,10 +212,9 @@ function QualifyDialog({ lead, open, onClose, onDone }) {
   );
 }
 
-function LeadsTab({ plan }) {
+function LeadsTab() {
   const [leads, setLeads] = useState(sampleLeads);
   const [activeLead, setActiveLead] = useState(null);
-  const canExport = plan === "pro" || plan === "plus";
 
   function handleDone(lead, result) {
     setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, status: result.status, charge_amount_naira: result.chargeAmount } : l)));
@@ -177,10 +227,9 @@ function LeadsTab({ plan }) {
           size="small"
           variant="outlined"
           startIcon={<FileDownloadRoundedIcon />}
-          disabled={!canExport}
           onClick={() => exportLeadsToCsv(leads)}
         >
-          {canExport ? "Export CSV" : "Export CSV (Medium/Large)"}
+          Export CSV
         </Button>
       </Stack>
 
@@ -242,7 +291,7 @@ function LeadsTab({ plan }) {
 
 export default function TransactionsPage() {
   const [tab, setTab] = useState(0);
-  const [plan, setPlan] = useState(null);
+  const [userRowId, setUserRowId] = useState(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -250,8 +299,7 @@ export default function TransactionsPage() {
       if (!authUser) return;
       const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
       if (!userRow) return;
-      const { data: biz } = await supabase.from("businesses").select("plan").eq("owner_id", userRow.id).maybeSingle();
-      setPlan(biz?.plan || null);
+      setUserRowId(userRow.id);
     });
   }, []);
 
@@ -264,7 +312,7 @@ export default function TransactionsPage() {
         <Tab label="Leads" sx={{ textTransform: "none", fontWeight: 600 }} />
       </Tabs>
 
-      {tab === 0 ? <PayoutsTab /> : <LeadsTab plan={plan} />}
+      {tab === 0 ? <PayoutsTab userRowId={userRowId} /> : <LeadsTab />}
     </>
   );
 }
