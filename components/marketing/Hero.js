@@ -19,12 +19,8 @@ export default function Hero({ content, audience, onPrimaryCta }) {
             <Typography variant="h1" sx={{ fontSize: { xs: 34, md: 52 }, lineHeight: 1.08, mb: 3 }}>
               {content.headline}
             </Typography>
-            <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, maxWidth: 480, mb: 3 }}>
+            <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, maxWidth: 480, mb: 4 }}>
               {content.subhead}
-            </Typography>
-            <Typography variant="body2" sx={{ color: tokens.muted, maxWidth: 480, mb: 4 }}>
-              Commission is an affiliate marketing platform that lets businesses in Nigeria set up commission-based
-              referral programs, track affiliate sales, and pay out automatically via Paystack.
             </Typography>
             <Stack direction="row" spacing={2}>
               <Button
