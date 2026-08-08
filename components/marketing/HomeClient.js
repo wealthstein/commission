@@ -15,8 +15,9 @@ import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 import { CTASection } from "@/components/marketing/CTAAndFooter";
 import GoToTopButton from "@/components/marketing/GoToTopButton";
 import { audienceContent, faqByAudience } from "@/components/marketing/content";
-import { Box, Container } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 import { dotPatternSx, altSectionBg } from "@/lib/patterns";
+import { tokens } from "@/lib/theme";
 
 // Scrolls to the Request Access form and preselects the matching role -
 // same mechanism TwoAudienceCta uses on every other page (see
@@ -43,6 +44,16 @@ export default function HomeClient({ searchParams }) {
       <Navbar audience={audience} onAudienceChange={setAudience} onSignIn={() => router.push("/signin")} />
 
       <Hero content={content} audience={audience} onPrimaryCta={() => goToRequestForm(audience)} />
+
+      <Container maxWidth="md" sx={{ textAlign: "center", py: { xs: 2, md: 3 } }}>
+        <Typography variant="h2" sx={{ fontSize: { xs: 24, md: 32 }, mb: 1.5 }}>
+          We're Commission!
+        </Typography>
+        <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400 }}>
+          Commission is a performance-based customer acquisition platform that lets businesses in Nigeria set up
+          commission-based affiliate programs, track referral sales, and pay out automatically via Paystack.
+        </Typography>
+      </Container>
 
       <ProblemSolutionSection
         items={content.problemsAndSolutions}

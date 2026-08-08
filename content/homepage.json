@@ -1,7 +1,7 @@
 {
   "audienceContent": {
     "business": {
-      "eyebrow": "Performance-based customer acquisition platform for Nigerian businesses",
+      "eyebrow": "For Businesses",
       "headline": "Turn your customers' networks into your sales team",
       "subhead": "List your product, set your commission structure, and let Commission recruit, track, and pay affiliates automatically — in naira, through Paystack.",
       "primaryCta": "List your product",
@@ -57,7 +57,7 @@
       }
     },
     "affiliate": {
-      "eyebrow": "For affiliates",
+      "eyebrow": "For Affiliates",
       "headline": "Get paid for the products you already recommend",
       "subhead": "Join affiliate programs from real Nigerian businesses, share your link on WhatsApp or social, and earn commissions automatically — including from people you bring in.",
       "primaryCta": "Start earning",

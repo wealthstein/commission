@@ -3,15 +3,11 @@
 import Link from "next/link";
 import { AppBar, Toolbar, Box, CardMedia, Typography, Button, ToggleButtonGroup, ToggleButton, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
-import { urls } from "@/lib/urls";
 
 const NAV_LINKS = [
   { anchor: "benefits", label: "Benefits" },
   { anchor: "how-it-works", label: "How it works" },
   { anchor: "pricing", label: "Pricing", businessOnly: true },
-  { href: urls.calculator("business"), label: "What You Save", businessOnly: true },
-  { href: urls.calculator("affiliate"), label: "What You Earn", affiliateOnly: true },
-  { anchor: "faq", label: "FAQ" },
 ];
 
 
@@ -46,7 +42,7 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
 
         <Stack
           direction="row"
-          spacing={3}
+          spacing={2.25}
           sx={{ display: { xs: "none", md: "flex" }, flexGrow: 1 }}
         >
           {links.map((link) => (
@@ -55,7 +51,7 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
               component={Link}
               href={link.href || hrefFor(link.anchor)}
               variant="body2"
-              sx={{ color: tokens.muted, fontWeight: 600, "&:hover": { color: tokens.ink } }}
+              sx={{ color: tokens.muted, fontWeight: 600, whiteSpace: "nowrap", "&:hover": { color: tokens.ink } }}
             >
               {link.label}
             </Typography>
@@ -89,8 +85,8 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
             },
           }}
         >
-          <ToggleButton value="business">Business</ToggleButton>
-          <ToggleButton value="affiliate">Affiliate</ToggleButton>
+          <ToggleButton value="business">Businesses</ToggleButton>
+          <ToggleButton value="affiliate">Affiliates</ToggleButton>
         </ToggleButtonGroup>
 
         {/* Routes to the sign-in page - if this Google account has no

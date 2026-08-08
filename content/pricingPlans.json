@@ -14,6 +14,7 @@
       "tagline": "For businesses just getting started with affiliate sales.",
       "cta": "Start on Small",
       "features": [
+        "Up to 5 affiliates",
         "Unlimited products and campaigns",
         "Up to 3 commission tiers",
         "Referral link tracking",
@@ -32,6 +33,7 @@
       "highlighted": true,
       "includesFrom": "pro",
       "features": [
+        "Unlimited affiliates",
         "Lowest 10% platform fee on every top-up",
         "3 additional custom fields (8 total per campaign)",
         "Unlimited lead export to CSV",
@@ -48,6 +50,7 @@
       "cta": "Upgrade to Medium",
       "includesFrom": "free",
       "features": [
+        "Up to 25 affiliates",
         "Lower 15% platform fee on every top-up",
         "2 additional custom fields (5 total per campaign)",
         "Lead management - view and organize your leads (export not included)"
