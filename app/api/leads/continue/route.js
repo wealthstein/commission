@@ -8,10 +8,10 @@ import { forwardLeadToBusiness } from "@/lib/leadForwarding";
  * body: { whatsappRef, fullName, phone, email?, details?, customFieldAnswers? }
  * customFieldAnswers: [{ fieldId, label, value }]
  *
- * The "Long Form" step of the funnel: Short Form -> WhatsApp handoff ->
- * Long Form (this) -> Thank You. Submitting this is what makes a lead
+ * The "Intent Form" step of the funnel: Interest Form -> WhatsApp handoff ->
+ * Intent Form (this) -> Thank You. Submitting this is what makes a lead
  * billable - the prospect is providing NEW information here (Commission
- * only had the Short Form's name/phone in a WhatsApp message, never stored),
+ * only had the Interest Form's name/phone in a WhatsApp message, never stored),
  * so it gets forwarded straight to the business (their email or CRM webhook)
  * and then discarded - never written to Commission's own database. Custom
  * field ANSWERS get the identical treatment - only the business's own

@@ -123,7 +123,7 @@ export default function AuthPage({ mode }) {
               © {new Date().getFullYear()} {siteConfig.name}
             </Typography>
             <Typography sx={{ color: tokens.muted, fontSize: 11 }}>
-              Built with ❤️ in Chicago, Illinois
+              Built with ❤️ in Wilmington, Delaware
             </Typography>
           </Breadcrumbs>
 

@@ -7,7 +7,7 @@ import { qualifyLead } from "@/lib/leadQualification";
  * body: { approve?: boolean, postbackToken?: string }
  *
  * For a business that qualifies leads on its own terms rather than sending
- * the prospect through Commission's hosted Long Form (see app/api/leads/continue
+ * the prospect through Commission's hosted Intent Form (see app/api/leads/continue
  * for that public path instead). Two ways to call this, both ending at the
  * same place:
  *   1. A business user, signed in, confirming a lead from their dashboard

@@ -57,7 +57,6 @@ async function runOutreachBatch(req) {
       await sendColdOutreachEmail(nextStep, {
         to: contact.email_address,
         firstName: contact.first_name || "there",
-        companyName: contact.company_name || "there",
         audience: contact.audience,
       });
 

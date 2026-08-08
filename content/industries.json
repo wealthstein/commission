@@ -31,7 +31,7 @@
       "slug": "real-estate",
       "industryName": "Real Estate",
       "ppqlNaira": 20000,
-      "headline": "Turn every referral into a qualified viewing request",
+      "headline": "Turn every referral into a qualified physical inspection request",
       "painPoints": [
         "Property listings sit unseen without the right audience finding them",
         "Cold ad spend on platforms that were never built for high-consideration purchases",
@@ -39,19 +39,23 @@
       ],
       "whyCommission": [
         {
-          "title": "Pay for a qualified viewing request, not a click",
+          "title": "Pay for a qualified physical inspection request, not a click",
           "body": "Set what a genuine, Intent Qualified Lead is worth to you, and only pay when one actually happens."
         },
         {
-          "title": "Your own agents and partners can be affiliates too",
-          "body": "Anyone with an audience - from a sales agent to a satisfied past client - can share a unique link and earn for referrals that convert."
+          "title": "Build your own army of affiliates, not a reliance on a handful of realtors",
+          "body": "Instead of depending on the same traditional realtors for every deal, put your listings in front of hundreds of people with real audiences - past clients, community leaders, anyone with reach - each sharing their own tracked link and earning when it converts."
+        },
+        {
+          "title": "Stop paying for ad campaigns that never actually convert",
+          "body": "Google and Meta ads charge you for clicks and impressions regardless of whether a single one turns into a real buyer. Commission only charges when a genuine, qualified inspection request happens - the risk of paying for nothing disappears."
         },
         {
           "title": "WhatsApp-first, matching how property deals actually happen in Nigeria",
           "body": "A prospect goes straight from an affiliate's link into a WhatsApp conversation with your team."
         }
       ],
-      "exampleUseCase": "A property developer lists a new estate on Commission, sets a cost per qualified viewing request, and lets referral agents across the city share the link - paying only for genuine, qualified interest.",
+      "exampleUseCase": "A property developer lists a new estate on Commission, sets a cost per qualified physical inspection request, and lets referral agents across the city share the link - paying only for genuine, qualified interest.",
       "payoutModel": {
         "title": "How affiliates get paid on real estate campaigns",
         "stages": [
@@ -61,7 +65,7 @@
           },
           {
             "title": "Stage 2 - Sale closed (manual, primary affiliate only)",
-            "description": "Real estate deals close in person - a physical viewing, funds paid directly to the business. Commission cannot process or observe that transaction, so this stage is confirmed manually by the business once the sale closes, and paid entirely to the primary affiliate who referred that client. Tier 2 and tier 3 already earned their share at Stage 1 for their role in the referral chain - Stage 2 rewards the person who did the work of closing."
+            "description": "Real estate deals close in person - a physical inspection, funds paid directly to the business. Commission cannot process or observe that transaction, so this stage is confirmed manually by the business once the sale closes, and paid entirely to the primary affiliate who referred that client. Tier 2 and tier 3 already earned their share at Stage 1 for their role in the referral chain - Stage 2 rewards the person who did the work of closing."
           }
         ]
       }
@@ -139,7 +143,7 @@
         },
         {
           "title": "Full funnel, hosted for you",
-          "body": "Commission hosts the short-form and follow-up pages, so you do not need to build a landing page yourself."
+          "body": "Commission hosts the interest-form and follow-up pages, so you do not need to build a landing page yourself."
         }
       ],
       "exampleUseCase": "An online course provider lists a program on Commission, and tutors who already recommend it to their own students earn a commission for every qualified enrollment inquiry."

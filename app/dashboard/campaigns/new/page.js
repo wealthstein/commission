@@ -208,7 +208,7 @@ export default function NewCampaignPage() {
 
       // 4. Custom Questions (Medium/Large only) - the business's own Long
       // Form fields for this specific campaign. Only meaningful for
-      // lead-goal campaigns, which are the only ones with a Long Form at all.
+      // lead-goal campaigns, which are the only ones with a Intent Form at all.
       if (isLead && customFields.length > 0) {
         const { error: fieldsError } = await supabase.from("campaign_custom_fields").insert(
           customFields.map((f, i) => ({
@@ -303,7 +303,7 @@ export default function NewCampaignPage() {
                 <Typography fontWeight={700}>Leads</Typography>
               </Stack>
               <Typography variant="caption" sx={{ color: isLead ? tokens.brandInk : tokens.muted, textAlign: "left" }}>
-                Visitor fills a short form, gets a WhatsApp link, you qualify them when ready. You pay a flat amount per
+                Visitor fills a interest form, gets a WhatsApp link, you qualify them when ready. You pay a flat amount per
                 Intent Qualified Lead — deducted from your campaign wallet.
               </Typography>
             </ToggleButton>
@@ -439,7 +439,7 @@ export default function NewCampaignPage() {
                   placeholder="+234..."
                   value={form.whatsapp_number}
                   onChange={(e) => update("whatsapp_number", e.target.value)}
-                  helperText="Leads get a unique link to this number after the short form. Leave blank to use your business default."
+                  helperText="Leads get a unique link to this number after the interest form. Leave blank to use your business default."
                 />
               </Grid>
             </Grid>
@@ -457,7 +457,7 @@ export default function NewCampaignPage() {
               Custom questions
             </Typography>
             <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-              Add your own questions to this campaign&apos;s Long Form - answers get forwarded straight to you, the
+              Add your own questions to this campaign&apos;s Intent Form - answers get forwarded straight to you, the
               same as name and phone. Commission never stores the answers, only these question definitions.
             </Typography>
 

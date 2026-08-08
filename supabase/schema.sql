@@ -181,7 +181,11 @@ create table if not exists cold_outreach_contacts (
   id             uuid primary key default gen_random_uuid(),
   email_address  text not null unique,
   first_name     text,
-  company_name   text,
+  last_name      text,
+  -- Free text for segmentation - e.g. "Real Estate Developer",
+  -- "Real Estate Consultant". Not an enum on purpose - the set of contact
+  -- types will likely grow as more industries/roles get added to the list.
+  contact_type   text,
   -- 'business' -> coldOutreach1-5 templates. 'affiliate' -> affiliateOutreach1-5.
   -- Same table, same cron, same cadence - just a different template family.
   audience       text not null default 'business' check (audience in ('business', 'affiliate')),
@@ -403,6 +407,65 @@ drop trigger if exists trg_set_enrollment_tier on affiliate_enrollments;
 create trigger trg_set_enrollment_tier
   before insert on affiliate_enrollments
   for each row execute function fn_set_enrollment_tier();
+
+-- Trigger: enforce a plan-based cap on how many DISTINCT affiliates a
+-- business can have across all their programs combined. Small: 5,
+-- Medium: 25, Large: unlimited. An affiliate already enrolled in one of
+-- this business's other programs never counts against the cap again when
+-- joining a second one - the cap is about unique affiliates, not
+-- enrollment rows. Enforced here (not just client-side in Discover's
+-- handleJoin) since the insert happens directly from the browser and a
+-- client-side check alone could be bypassed.
+create or replace function fn_enforce_affiliate_cap()
+returns trigger as $$
+declare
+  v_business_id uuid;
+  v_plan text;
+  v_cap int;
+  v_current_count int;
+  v_already_counted boolean;
+begin
+  select b.id, b.plan into v_business_id, v_plan
+  from affiliate_programs ap
+  join products p on p.id = ap.product_id
+  join businesses b on b.id = p.business_id
+  where ap.id = new.program_id;
+
+  v_cap := case v_plan
+    when 'free' then 5
+    when 'pro' then 25
+    else null -- 'plus' (Large) = unlimited
+  end;
+
+  if v_cap is not null then
+    select exists (
+      select 1 from affiliate_enrollments ae
+      join affiliate_programs ap2 on ap2.id = ae.program_id
+      join products p2 on p2.id = ap2.product_id
+      where p2.business_id = v_business_id and ae.affiliate_id = new.affiliate_id
+    ) into v_already_counted;
+
+    if not v_already_counted then
+      select count(distinct ae.affiliate_id) into v_current_count
+      from affiliate_enrollments ae
+      join affiliate_programs ap2 on ap2.id = ae.program_id
+      join products p2 on p2.id = ap2.product_id
+      where p2.business_id = v_business_id;
+
+      if v_current_count >= v_cap then
+        raise exception 'This business has reached its plan''s affiliate limit (%). Upgrade to add more affiliates.', v_cap;
+      end if;
+    end if;
+  end if;
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists trg_enforce_affiliate_cap on affiliate_enrollments;
+create trigger trg_enforce_affiliate_cap
+  before insert on affiliate_enrollments
+  for each row execute function fn_enforce_affiliate_cap();
 
 -- ----------------------------------------------------------------------------
 -- REFERRAL CLICKS  (top-of-funnel tracking before a purchase happens)

@@ -14,12 +14,28 @@
       "tagline": "For businesses just getting started with affiliate sales.",
       "cta": "Start on Small",
       "features": [
-        "No monthly fee",
         "Unlimited products and campaigns",
         "Up to 3 commission tiers",
         "Referral link tracking",
         "Automatic affiliate payouts",
-        "Custom fields - up to 3 questions of your own on the Long Form"
+        "Custom fields - up to 3 questions of your own on the Intent Form"
+      ]
+    },
+    {
+      "id": "plus",
+      "name": "Large",
+      "priceNaira": 140000,
+      "priceSuffix": "/mo",
+      "feePercent": 10,
+      "tagline": "For businesses running serious volume through their Campaign Wallet.",
+      "cta": "Upgrade to Large",
+      "highlighted": true,
+      "includesFrom": "pro",
+      "features": [
+        "Lowest 10% platform fee on every top-up",
+        "3 additional custom fields (8 total per campaign)",
+        "Unlimited lead export to CSV",
+        "Priority support"
       ]
     },
     {
@@ -35,23 +51,6 @@
         "Lower 15% platform fee on every top-up",
         "2 additional custom fields (5 total per campaign)",
         "Lead management - view and organize your leads (export not included)"
-      ]
-    },
-    {
-      "id": "plus",
-      "name": "Large",
-      "priceNaira": 140000,
-      "priceSuffix": "/mo",
-      "feePercent": 10,
-      "tagline": "For businesses running serious volume through their Campaign Wallet.",
-      "cta": "Upgrade to Large",
-      "highlighted": true,
-      "includesFrom": "free",
-      "features": [
-        "Lowest 10% platform fee on every top-up",
-        "3 additional custom fields (8 total per campaign)",
-        "Unlimited lead export to CSV",
-        "Priority support"
       ]
     }
   ]

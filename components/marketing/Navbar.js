@@ -39,6 +39,9 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
               alt="detail"
             />
           </Box>
+          <Typography fontWeight={700} sx={{ color: tokens.ink }}>
+            Commission
+          </Typography>
         </Stack>
 
         <Stack

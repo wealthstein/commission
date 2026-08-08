@@ -8,7 +8,7 @@ import { buildLeadWhatsAppLink, generateWhatsAppRef } from "@/lib/whatsapp";
  * cookies: cmn_ref (referral code), cmn_visitor (anonymous visitor id) — both
  *          set by app/r/[code]/route.js when the visitor first clicked a link
  *
- * This is the "Short Form" step: Visitor -> Campaign Page -> Short Form ->
+ * This is the "Interest Form" step: Visitor -> Campaign Page -> Interest Form ->
  * Lead. Nothing is charged here — a captured lead only becomes billable once
  * it is qualified (see app/api/leads/[leadId]/qualify).
  *
@@ -83,7 +83,7 @@ export async function POST(req) {
       enrollment_id: enrollment.id,
       whatsapp_ref: whatsappRef,
       status: "captured",
-      forwarded_to: "none", // nothing to forward yet — the Long Form step is what involves new information
+      forwarded_to: "none", // nothing to forward yet — the Intent Form step is what involves new information
     })
     .select()
     .single();

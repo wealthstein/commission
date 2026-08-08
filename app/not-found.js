@@ -68,7 +68,7 @@ export default function NotFound() {
           <Typography sx={{ color: tokens.muted, fontSize: 11 }}>
             © {new Date().getFullYear()} {siteConfig.name}
           </Typography>
-          <Typography sx={{ color: tokens.muted, fontSize: 11 }}>Built with ❤️ in Chicago, Illinois</Typography>
+          <Typography sx={{ color: tokens.muted, fontSize: 11 }}>Built with ❤️ in Wilmington, Delaware</Typography>
         </Breadcrumbs>
       </Container>
     </Box>

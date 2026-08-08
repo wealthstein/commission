@@ -86,7 +86,7 @@ export function Footer() {
             © {new Date().getFullYear()} Commission
           </Typography>
           <Typography sx={{ color: tokens.muted, fontSize: 11 }}>
-            Built with ❤️ in Chicago, Illinois
+            Built with ❤️ in Wilmington, Delaware
           </Typography>
         </Breadcrumbs>
 
