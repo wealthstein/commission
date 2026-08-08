@@ -40,9 +40,7 @@ export default function LocationPageContent({ item }) {
         ))}
       </Stack>
 
-      <Box sx={{ mb: 5 }}>
-        <SignUpButton role="business" sourcePage={urls.location(item.slug)} />
-      </Box>
+      <SignUpButton role="business" sourcePage={urls.location(item.slug)} />
 
     </Container>
   );

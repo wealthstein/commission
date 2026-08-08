@@ -21,6 +21,7 @@ import {
   DialogActions,
   Alert,
   CircularProgress,
+  TextField,
 } from "@mui/material";
 import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
 import PageHeader from "@/components/dashboard/PageHeader";
@@ -37,9 +38,10 @@ import { createClient } from "@/lib/supabaseClient";
 //     business's own email or webhook the moment the lead qualified (see lib/leadForwarding.js).
 
 const sampleLeads = [
-  { id: "l1", whatsapp_ref: "LD-7F3K9Q", status: "captured", product: "CareLink HMO Plan", created_at: "2026-07-28" },
-  { id: "l2", whatsapp_ref: "LD-2M8XJZ", status: "qualified", product: "CareLink HMO Plan", created_at: "2026-07-26", charge_amount_naira: 5000 },
-  { id: "l3", whatsapp_ref: "LD-9RT4WP", status: "rejected", product: "SwiftHR Payroll", created_at: "2026-07-24" },
+  { id: "l1", whatsapp_ref: "LD-7F3K9Q", status: "captured", product: "CareLink HMO Plan", industry: "Healthcare", created_at: "2026-07-28" },
+  { id: "l2", whatsapp_ref: "LD-2M8XJZ", status: "qualified", product: "CareLink HMO Plan", industry: "Healthcare", created_at: "2026-07-26", charge_amount_naira: 5000 },
+  { id: "l3", whatsapp_ref: "LD-9RT4WP", status: "rejected", product: "SwiftHR Payroll", industry: "Fintech", created_at: "2026-07-24" },
+  { id: "l4", whatsapp_ref: "LD-3QX7MK", status: "qualified", product: "Lekki Waterfront Villas", industry: "Real Estate", created_at: "2026-07-27", charge_amount_naira: 20000 },
 ];
 
 const STATUS_STYLE = {
@@ -212,9 +214,78 @@ function QualifyDialog({ lead, open, onClose, onDone }) {
   );
 }
 
-function LeadsTab() {
+function ConfirmSaleDialog({ lead, open, onClose, onDone }) {
+  const [saleAmount, setSaleAmount] = useState("");
+  const [commission, setCommission] = useState("");
+  const [notes, setNotes] = useState("");
+  const [state, setState] = useState({ loading: false, error: null });
+
+  async function handleConfirm() {
+    setState({ loading: true, error: null });
+    try {
+      const res = await fetch(`/api/leads/${lead.id}/confirm-sale`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reportedSaleAmountNaira: saleAmount ? Number(saleAmount) : null,
+          reportedCommissionNaira: Number(commission),
+          notes: notes || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to confirm sale");
+      setState({ loading: false, error: null });
+      onDone();
+      onClose();
+    } catch (err) {
+      setState({ loading: false, error: err.message });
+    }
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>Confirm sale closed - {lead?.whatsapp_ref}</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+          This does not move any money through Commission - the client paid you directly, and you pay the
+          referring affiliate directly. This just creates a record of what was paid, for both of you to have on
+          file.
+        </Typography>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          <TextField
+            label="Sale amount (₦, optional)"
+            type="number"
+            value={saleAmount}
+            onChange={(e) => setSaleAmount(e.target.value)}
+          />
+          <TextField
+            label="Commission paid to affiliate (₦)"
+            type="number"
+            required
+            value={commission}
+            onChange={(e) => setCommission(e.target.value)}
+          />
+          <TextField label="Notes (optional)" multiline minRows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        </Stack>
+        {state.error && <Alert severity="error" sx={{ mt: 2 }}>{state.error}</Alert>}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button onClick={onClose} disabled={state.loading} color="inherit">
+          Cancel
+        </Button>
+        <Button onClick={handleConfirm} disabled={state.loading || !commission} variant="contained">
+          {state.loading ? "Confirming…" : "Confirm sale"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function LeadsTab({ plan }) {
   const [leads, setLeads] = useState(sampleLeads);
   const [activeLead, setActiveLead] = useState(null);
+  const [saleLead, setSaleLead] = useState(null);
+  const canExport = plan === "plus";
 
   function handleDone(lead, result) {
     setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, status: result.status, charge_amount_naira: result.chargeAmount } : l)));
@@ -222,16 +293,19 @@ function LeadsTab() {
 
   return (
     <>
-      <Stack direction="row" justifyContent="flex-end" sx={{ mb: 2 }}>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<FileDownloadRoundedIcon />}
-          onClick={() => exportLeadsToCsv(leads)}
-        >
-          Export CSV
-        </Button>
-      </Stack>
+      {plan !== "free" && (
+        <Stack direction="row" justifyContent="flex-end" sx={{ mb: 2 }}>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<FileDownloadRoundedIcon />}
+            disabled={!canExport}
+            onClick={() => exportLeadsToCsv(leads)}
+          >
+            {canExport ? "Export CSV" : "Export CSV (Large only)"}
+          </Button>
+        </Stack>
+      )}
 
       <Paper variant="outlined" sx={{ borderColor: tokens.border, borderRadius: 3, overflow: "hidden" }}>
         {leads.map((lead, i) => {
@@ -268,6 +342,11 @@ function LeadsTab() {
                     Qualify manually
                   </Button>
                 )}
+                {lead.status === "qualified" && lead.industry === "Real Estate" && (
+                  <Button size="small" variant="outlined" onClick={() => setSaleLead(lead)}>
+                    Confirm sale closed
+                  </Button>
+                )}
               </Stack>
             </Box>
           );
@@ -285,6 +364,17 @@ function LeadsTab() {
         onClose={() => setActiveLead(null)}
         onDone={(result) => handleDone(activeLead, result)}
       />
+
+      <ConfirmSaleDialog
+        lead={saleLead}
+        open={!!saleLead}
+        onClose={() => setSaleLead(null)}
+        onDone={() => {
+          /* Confirmation succeeded - no local status change needed, the
+             lead stays 'qualified'; this is a separate, additional record,
+             not a lead-status transition. */
+        }}
+      />
     </>
   );
 }
@@ -292,6 +382,7 @@ function LeadsTab() {
 export default function TransactionsPage() {
   const [tab, setTab] = useState(0);
   const [userRowId, setUserRowId] = useState(null);
+  const [plan, setPlan] = useState(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -300,6 +391,8 @@ export default function TransactionsPage() {
       const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
       if (!userRow) return;
       setUserRowId(userRow.id);
+      const { data: biz } = await supabase.from("businesses").select("plan").eq("owner_id", userRow.id).maybeSingle();
+      setPlan(biz?.plan || "free");
     });
   }, []);
 
@@ -312,7 +405,7 @@ export default function TransactionsPage() {
         <Tab label="Leads" sx={{ textTransform: "none", fontWeight: 600 }} />
       </Tabs>
 
-      {tab === 0 ? <PayoutsTab userRowId={userRowId} /> : <LeadsTab />}
+      {tab === 0 ? <PayoutsTab userRowId={userRowId} /> : <LeadsTab plan={plan} />}
     </>
   );
 }

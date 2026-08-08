@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Paper, Box, Typography, Stack, IconButton, Tooltip, Tabs, Tab, Chip, CircularProgress } from "@mui/material";
+import { Paper, Box, Typography, Stack, IconButton, Tooltip, Tabs, Tab, Chip, CircularProgress, Alert } from "@mui/material";
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
 import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
@@ -128,6 +128,101 @@ function PromotingTab({ userRowId }) {
         </Box>
       )}
     </Paper>
+  );
+}
+
+function RealEstateSalesTab({ userRowId }) {
+  const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState([]);
+
+  useEffect(() => {
+    if (!userRowId) {
+      setLoading(false);
+      return;
+    }
+    const supabase = createClient();
+
+    async function load() {
+      const { data } = await supabase
+        .from("manual_sale_confirmations")
+        .select("id, reported_sale_amount_naira, reported_commission_naira, notes, created_at, leads(whatsapp_ref, affiliate_programs(products(name)))")
+        .eq("affiliate_id", userRowId)
+        .order("created_at", { ascending: false });
+
+      setRows(data || []);
+      setLoading(false);
+    }
+    load();
+  }, [userRowId]);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "grid", placeItems: "center", py: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <>
+      <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
+        These are sales the business confirmed closed off-platform - the client paid the business directly, and the
+        business paid you directly. Commission does not process or hold this money; this is a record only.
+      </Alert>
+      <Paper variant="outlined" sx={{ borderColor: tokens.border, borderRadius: 3, overflow: "hidden" }}>
+        {rows.map((r, i) => (
+          <Box
+            key={r.id}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              px: 2.5,
+              py: 2,
+              borderTop: i === 0 ? "none" : `1px solid ${tokens.border}`,
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
+            <Box sx={{ minWidth: 200 }}>
+              <Typography fontWeight={700}>{r.leads?.affiliate_programs?.products?.name || "Campaign"}</Typography>
+              <Typography variant="caption" sx={{ color: tokens.muted }}>
+                {r.leads?.whatsapp_ref} · Confirmed {new Date(r.created_at).toLocaleDateString()}
+                {r.notes ? ` · ${r.notes}` : ""}
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={3}>
+              {r.reported_sale_amount_naira && (
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
+                    Sale amount
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    ₦{Number(r.reported_sale_amount_naira).toLocaleString()}
+                  </Typography>
+                </Box>
+              )}
+              <Box sx={{ textAlign: "right" }}>
+                <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
+                  Commission paid to you
+                </Typography>
+                <Typography variant="body2" fontWeight={700}>
+                  ₦{Number(r.reported_commission_naira).toLocaleString()}
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
+        ))}
+        {rows.length === 0 && (
+          <Box sx={{ p: 5, textAlign: "center" }}>
+            <Typography sx={{ color: tokens.muted }}>
+              No confirmed real estate sales yet - this fills in once a business you referred a client to confirms
+              a closed deal.
+            </Typography>
+          </Box>
+        )}
+      </Paper>
+    </>
   );
 }
 
@@ -289,9 +384,12 @@ export default function PromotionsPage() {
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: `1px solid ${tokens.border}` }}>
         <Tab label="Promoting" sx={{ textTransform: "none", fontWeight: 600 }} />
         <Tab label="Network" sx={{ textTransform: "none", fontWeight: 600 }} />
+        <Tab label="Real Estate Sales" sx={{ textTransform: "none", fontWeight: 600 }} />
       </Tabs>
 
-      {tab === 0 ? <PromotingTab userRowId={userRowId} /> : <NetworkTab userRowId={userRowId} />}
+      {tab === 0 && <PromotingTab userRowId={userRowId} />}
+      {tab === 1 && <NetworkTab userRowId={userRowId} />}
+      {tab === 2 && <RealEstateSalesTab userRowId={userRowId} />}
     </>
   );
 }

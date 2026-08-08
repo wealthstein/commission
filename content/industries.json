@@ -51,7 +51,20 @@
           "body": "A prospect goes straight from an affiliate's link into a WhatsApp conversation with your team."
         }
       ],
-      "exampleUseCase": "A property developer lists a new estate on Commission, sets a cost per qualified viewing request, and lets referral agents across the city share the link - paying only for genuine, qualified interest."
+      "exampleUseCase": "A property developer lists a new estate on Commission, sets a cost per qualified viewing request, and lets referral agents across the city share the link - paying only for genuine, qualified interest.",
+      "payoutModel": {
+        "title": "How affiliates get paid on real estate campaigns",
+        "stages": [
+          {
+            "title": "Stage 1 - Intent Qualified Lead (automatic)",
+            "description": "The moment a prospect qualifies through WhatsApp, Commission pays out automatically - split 50% / 30% / 20% across all 3 tiers of the referral chain, same as every other campaign on the platform."
+          },
+          {
+            "title": "Stage 2 - Sale closed (manual, primary affiliate only)",
+            "description": "Real estate deals close in person - a physical viewing, funds paid directly to the business. Commission cannot process or observe that transaction, so this stage is confirmed manually by the business once the sale closes, and paid entirely to the primary affiliate who referred that client. Tier 2 and tier 3 already earned their share at Stage 1 for their role in the referral chain - Stage 2 rewards the person who did the work of closing."
+          }
+        ]
+      }
     },
     {
       "slug": "healthcare",

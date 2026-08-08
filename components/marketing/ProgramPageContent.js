@@ -53,9 +53,7 @@ export default function ProgramPageContent({ target, industry, liveProducts }) {
           promote it and start earning from day one.
         </Typography>
 
-        <Box sx={{ maxWidth: 440, mx: "auto", mb: 6 }}>
-          <SignUpButton role="affiliate" sourcePage={urls.program(target.routeSlug)} />
-        </Box>
+        <SignUpButton role="affiliate" sourcePage={urls.program(target.routeSlug)} />
 
         {liveProducts.length > 0 ? (
           <>

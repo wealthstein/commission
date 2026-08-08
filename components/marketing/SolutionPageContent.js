@@ -48,9 +48,7 @@ export default function SolutionPageContent({ item }) {
         ))}
       </Stack>
 
-      <Box sx={{ mb: 5 }}>
-        <SignUpButton role="business" sourcePage={urls.solution(item.slug)} />
-      </Box>
+      <SignUpButton role="business" sourcePage={urls.solution(item.slug)} />
 
     </Container>
   );

@@ -28,9 +28,7 @@ export default function CampaignPageContent({ item }) {
         ))}
       </Box>
 
-      <Box sx={{ mb: 5 }}>
-        <SignUpButton role="business" sourcePage={urls.campaign(item.slug)} />
-      </Box>
+      <SignUpButton role="business" sourcePage={urls.campaign(item.slug)} />
 
     </Container>
   );

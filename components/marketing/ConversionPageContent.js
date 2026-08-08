@@ -34,9 +34,7 @@ export default function ConversionPageContent({ item }) {
         ))}
       </Stack>
 
-      <Box sx={{ mb: 5 }}>
-        <SignUpButton sourcePage={urls.conversion(item.slug)} />
-      </Box>
+      <SignUpButton sourcePage={urls.conversion(item.slug)} />
 
     </Container>
   );

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Paper, Box, Typography, TextField, Button, Stack, Alert, MenuItem } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
-export default function LeadLongForm({ whatsappRef, productName, customFields = [] }) {
+export default function LeadLongForm({ whatsappRef, productName, customFields = [], sharesContactWithAffiliate = false }) {
   const router = useRouter();
   const [form, setForm] = useState({ fullName: "", phone: "", email: "", details: "" });
   const [customAnswers, setCustomAnswers] = useState({});
@@ -49,9 +49,14 @@ export default function LeadLongForm({ whatsappRef, productName, customFields = 
       <Typography fontWeight={700} sx={{ mb: 0.5 }}>
         A few more details for {productName}
       </Typography>
-      <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+      <Typography variant="body2" sx={{ color: tokens.muted, mb: sharesContactWithAffiliate ? 1 : 2 }}>
         This goes straight to the business so they can follow up properly.
       </Typography>
+      {sharesContactWithAffiliate && (
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+          Your details will also be shared with the person who referred you, so they can help coordinate your visit.
+        </Typography>
+      )}
 
       {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
 

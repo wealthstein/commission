@@ -75,6 +75,21 @@ export async function POST(req) {
   const { data: businessOwner } = await admin.from("businesses").select("owner_id").eq("id", business.id).single();
   const { data: ownerRow } = await admin.from("users").select("email").eq("id", businessOwner?.owner_id).maybeSingle();
 
+  // Real estate only (see requiresAffiliateContactSharing) - the referring
+  // affiliate gets the same contact details as the business, so they can
+  // track their own deal through to close. Fetched regardless of industry;
+  // forwardLeadToBusiness itself decides whether to actually use it.
+  const { data: enrollment } = await admin
+    .from("affiliate_enrollments")
+    .select("affiliate_id")
+    .eq("id", lead.enrollment_id)
+    .single();
+  const { data: affiliateUser } = await admin
+    .from("users")
+    .select("email, full_name")
+    .eq("id", enrollment?.affiliate_id)
+    .maybeSingle();
+
   const forwardedTo = await forwardLeadToBusiness(admin, {
     business,
     ownerEmail: ownerRow?.email,
@@ -84,6 +99,8 @@ export async function POST(req) {
     email,
     details,
     customFieldAnswers,
+    affiliateEmail: affiliateUser?.email,
+    affiliateName: affiliateUser?.full_name,
   });
 
   // 3. Mark the lead qualified now that everything above succeeded.

@@ -55,8 +55,10 @@ async function runOutreachBatch(req) {
 
     try {
       await sendColdOutreachEmail(nextStep, {
-        to: contact.email,
+        to: contact.email_address,
+        firstName: contact.first_name || "there",
         companyName: contact.company_name || "there",
+        audience: contact.audience,
       });
 
       const isLastStep = nextStep >= TOTAL_STEPS;
@@ -72,7 +74,7 @@ async function runOutreachBatch(req) {
       summary.sent += 1;
       if (isLastStep) summary.completed += 1;
     } catch (err) {
-      summary.errors.push({ email: contact.email, message: err.message });
+      summary.errors.push({ email: contact.email_address, message: err.message });
     }
   }
 

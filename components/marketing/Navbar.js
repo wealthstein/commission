@@ -7,7 +7,8 @@ import { urls } from "@/lib/urls";
 
 const NAV_LINKS = [
   { anchor: "benefits", label: "Benefits" },
-  { anchor: "how-it-works", label: "How It works" },
+  { anchor: "how-it-works", label: "How it works" },
+  { anchor: "pricing", label: "Pricing", businessOnly: true },
   { href: urls.calculator("business"), label: "What You Save", businessOnly: true },
   { href: urls.calculator("affiliate"), label: "What You Earn", affiliateOnly: true },
   { anchor: "faq", label: "FAQ" },

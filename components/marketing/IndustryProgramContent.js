@@ -55,9 +55,7 @@ export default function IndustryProgramContent({ industry, liveProducts }) {
           </Box>
         </Stack>
 
-        <Box sx={{ maxWidth: 480, mb: 6 }}>
-          <SignUpButton role="affiliate" sourcePage={urls.programIndustry(industry.keywordSlug)} />
-        </Box>
+        <SignUpButton role="affiliate" sourcePage={urls.programIndustry(industry.keywordSlug)} />
 
         {liveProducts.length > 0 ? (
           <>

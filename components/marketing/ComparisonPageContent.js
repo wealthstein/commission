@@ -29,9 +29,7 @@ export default function ComparisonPageContent({ comparison }) {
         ))}
       </Grid>
 
-      <Box sx={{ mb: 5 }}>
-        <SignUpButton role="business" sourcePage={urls.comparison(comparison.slug)} />
-      </Box>
+      <SignUpButton role="business" sourcePage={urls.comparison(comparison.slug)} />
 
     </Container>
   );

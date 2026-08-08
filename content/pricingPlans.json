@@ -8,55 +8,50 @@
     {
       "id": "free",
       "name": "Small",
-      "priceNaira": 25000,
+      "priceNaira": 0,
       "priceSuffix": "/mo",
       "feePercent": 20,
-      "tagline": "For small businesses just getting started with affiliate sales.",
+      "tagline": "For businesses just getting started with affiliate sales.",
       "cta": "Start on Small",
       "features": [
-        "1 active product",
-        "1 affiliate campaign",
+        "No monthly fee",
+        "Unlimited products and campaigns",
         "Up to 3 commission tiers",
         "Referral link tracking",
-        "Automatic affiliate payouts"
+        "Automatic affiliate payouts",
+        "Custom fields - up to 3 questions of your own on the Long Form"
       ]
     },
     {
       "id": "pro",
       "name": "Medium",
-      "priceNaira": 50000,
+      "priceNaira": 110000,
       "priceSuffix": "/mo",
       "feePercent": 15,
-      "tagline": "For mid-sized businesses running an active affiliate campaign.",
+      "tagline": "For businesses topping up often enough that a lower fee pays for itself.",
       "cta": "Upgrade to Medium",
-      "highlighted": true,
       "includesFrom": "free",
       "features": [
-        "Up to 10 active products",
-        "Unlimited affiliate campaigns",
-        "Marketing asset uploads",
-        "Priority affiliate recruiting placement",
-        "Custom logo on your campaign pages",
-        "API access - route Intent Qualified Leads anywhere",
-        "Lead management - filter, search, and export your leads",
-        "Team management - invite teammates with their own access roles",
-        "Custom fields - up to 5 questions of your own on the Long Form"
+        "Lower 15% platform fee on every top-up",
+        "2 additional custom fields (5 total per campaign)",
+        "Lead management - view and organize your leads (export not included)"
       ]
     },
     {
       "id": "plus",
       "name": "Large",
-      "priceNaira": 75000,
+      "priceNaira": 140000,
       "priceSuffix": "/mo",
       "feePercent": 10,
-      "tagline": "For large businesses scaling a serious affiliate channel.",
+      "tagline": "For businesses running serious volume through their Campaign Wallet.",
       "cta": "Upgrade to Large",
-      "includesFrom": "pro",
+      "highlighted": true,
+      "includesFrom": "free",
       "features": [
-        "Unlimited active products",
-        "Priority support",
-        "Brand color on your campaign pages too, on top of your logo",
-        "Custom fields - unlimited questions on the Long Form"
+        "Lowest 10% platform fee on every top-up",
+        "3 additional custom fields (8 total per campaign)",
+        "Unlimited lead export to CSV",
+        "Priority support"
       ]
     }
   ]

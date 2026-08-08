@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Box, Container, Typography } from "@mui/material";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { resolveLandingBranding } from "@/lib/branding";
+import { requiresAffiliateContactSharing } from "@/lib/leadForwarding";
 import { tokens } from "@/lib/theme";
 import LeadLongForm from "@/components/marketing/LeadLongForm";
 
@@ -9,7 +10,7 @@ async function getLeadContext(whatsappRef) {
   const supabase = createAdminSupabaseClient();
   const { data: lead } = await supabase
     .from("leads")
-    .select("status, program_id, affiliate_programs(products(name, businesses(plan, landing_logo_url, landing_primary_color)))")
+    .select("status, program_id, affiliate_programs(products(name, businesses(plan, industry, landing_logo_url, landing_primary_color)))")
     .eq("whatsapp_ref", whatsappRef)
     .maybeSingle();
   if (!lead) return null;
@@ -43,6 +44,7 @@ export default async function LeadContinuePage({ params }) {
 
   const product = lead.affiliate_programs.products;
   const branding = resolveLandingBranding(product.businesses);
+  const sharesContactWithAffiliate = requiresAffiliateContactSharing(product.businesses);
 
   return (
     <Box sx={{ py: { xs: 8, md: 12 }, borderTop: branding.primaryColor ? `4px solid ${branding.primaryColor}` : "none" }}>
@@ -51,7 +53,12 @@ export default async function LeadContinuePage({ params }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={branding.logoUrl} alt="" style={{ height: 40, marginBottom: 24 }} />
         )}
-        <LeadLongForm whatsappRef={params.whatsappRef} productName={product.name} customFields={lead.customFields} />
+        <LeadLongForm
+          whatsappRef={params.whatsappRef}
+          productName={product.name}
+          customFields={lead.customFields}
+          sharesContactWithAffiliate={sharesContactWithAffiliate}
+        />
       </Container>
     </Box>
   );

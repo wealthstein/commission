@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Paper,
   Box,
@@ -30,9 +30,11 @@ import { createClient } from "@/lib/supabaseClient";
 import { categoriesForType } from "@/lib/categories";
 import { TIER_RATIOS } from "@/lib/commissionEngine";
 
-// Custom Questions - now free for every business, flat cap of 5 per
-// campaign. No more plan-based tiering since subscriptions were removed.
-const CUSTOM_FIELD_CAP = 5;
+// Custom Questions cap, plan-based (subscriptions are back). Cumulative:
+// Small gets 3, Medium gets 2 more on top (5 total), Large gets 3 more on
+// top of that (8 total) - see content/pricingPlans.json for the same
+// numbers stated to the person.
+const CUSTOM_FIELD_CAP = { free: 3, pro: 5, plus: 8 };
 
 const BILLING = [
   { value: "one_time", label: "One-time" },
@@ -64,8 +66,20 @@ export default function NewCampaignPage() {
   const [form, setForm] = useState(DEFAULTS);
   const [status, setStatus] = useState({ loading: false, error: null, success: false });
   const [customFields, setCustomFields] = useState([]);
+  const [plan, setPlan] = useState(null);
 
-  const fieldCap = CUSTOM_FIELD_CAP;
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", user.id).single();
+      if (!userRow) return;
+      const { data: biz } = await supabase.from("businesses").select("plan").eq("owner_id", userRow.id).maybeSingle();
+      setPlan(biz?.plan || "free");
+    });
+  }, []);
+
+  const fieldCap = CUSTOM_FIELD_CAP[plan] ?? CUSTOM_FIELD_CAP.free;
 
   function addCustomField() {
     if (customFields.length >= fieldCap) return;

@@ -14,6 +14,7 @@ drop table if exists payouts cascade;
 drop table if exists wallet_transactions cascade;
 drop table if exists commissions cascade;
 drop table if exists leads cascade;
+drop table if exists manual_sale_confirmations cascade;
 drop table if exists transactions cascade;
 drop table if exists customers cascade;
 drop table if exists referral_clicks cascade;
@@ -177,17 +178,22 @@ alter table wallet_funding_nudges enable row level security;
 -- data from CSV) - no custom upload endpoint needed for a one-time list.
 -- ----------------------------------------------------------------------------
 create table if not exists cold_outreach_contacts (
-  id            uuid primary key default gen_random_uuid(),
-  email         text not null unique,
-  company_name  text,
+  id             uuid primary key default gen_random_uuid(),
+  email_address  text not null unique,
+  first_name     text,
+  company_name   text,
+  -- 'business' -> coldOutreach1-5 templates. 'affiliate' -> affiliateOutreach1-5.
+  -- Same table, same cron, same cadence - just a different template family.
+  audience       text not null default 'business' check (audience in ('business', 'affiliate')),
   -- 0 = nothing sent yet. Set to N after email N sends successfully.
-  sequence_step int not null default 0,
-  status        text not null default 'active' check (status in ('active', 'replied', 'completed', 'bounced')),
-  last_sent_at  timestamptz,
-  created_at    timestamptz not null default now()
+  sequence_step  int not null default 0,
+  status         text not null default 'active' check (status in ('active', 'replied', 'completed', 'bounced')),
+  last_sent_at   timestamptz,
+  created_at     timestamptz not null default now()
 );
 
 create index if not exists idx_outreach_status on cold_outreach_contacts(status);
+create index if not exists idx_outreach_audience on cold_outreach_contacts(audience);
 
 alter table cold_outreach_contacts enable row level security;
 -- No public policies at all - this table is only ever touched by the admin
@@ -521,6 +527,68 @@ create index if not exists idx_leads_program on leads(program_id);
 create index if not exists idx_leads_enrollment on leads(enrollment_id);
 create index if not exists idx_leads_click on leads(click_id);
 create index if not exists idx_leads_whatsapp_ref on leads(whatsapp_ref);
+
+-- ----------------------------------------------------------------------------
+-- MANUAL SALE CONFIRMATIONS — the second, manual payout stage for
+-- physical-closing industries (real estate for now, see
+-- requiresAffiliateContactSharing in lib/leadForwarding.js for the same
+-- industry check). A lead's IQL payout is automatic and already split
+-- 50/30/20 across the referral chain. This record is DIFFERENT: it
+-- represents a sale that closed off-platform (client paid the business
+-- directly, business paid the affiliate directly), which Commission
+-- cannot observe or control. Commission does NOT disburse this payout and
+-- earns NO platform fee on it - the whole point is this money never
+-- passes through Commission at all. This row exists purely as the
+-- auditable record backing the anti-circumvention clause in Terms.
+--
+-- Only the tier-1 affiliate on the originating lead is credited here
+-- (business decision - see conversation history) - tier 2/3 already
+-- earned their share at the automatic IQL stage and are not owed anything
+-- further from this manual stage.
+-- ----------------------------------------------------------------------------
+create table if not exists manual_sale_confirmations (
+  id                        uuid primary key default gen_random_uuid(),
+  lead_id                   uuid not null references leads(id) on delete cascade,
+  business_id               uuid not null references businesses(id),
+  -- The tier-1 affiliate on the lead's enrollment - snapshotted at
+  -- confirmation time so a later change never rewrites who was credited.
+  affiliate_id              uuid not null references users(id),
+  reported_sale_amount_naira  numeric(14,2),
+  reported_commission_naira   numeric(14,2) not null,
+  confirmed_by              uuid not null references users(id),
+  notes                     text,
+  created_at                timestamptz not null default now()
+);
+
+create index if not exists idx_sale_confirmations_lead on manual_sale_confirmations(lead_id);
+create index if not exists idx_sale_confirmations_affiliate on manual_sale_confirmations(affiliate_id);
+
+alter table manual_sale_confirmations enable row level security;
+
+drop policy if exists sale_confirmations_select on manual_sale_confirmations;
+create policy sale_confirmations_select on manual_sale_confirmations for select
+  using (
+    affiliate_id in (select id from users where auth_user_id = auth.uid())
+    or business_id in (
+      select id from businesses where owner_id in (select id from users where auth_user_id = auth.uid())
+      union
+      select business_id from business_team_members
+      where user_id in (select id from users where auth_user_id = auth.uid()) and status = 'active'
+    )
+  );
+
+-- Only the business (or an active team admin) can create a confirmation -
+-- an affiliate can see it, never create or edit it themselves.
+drop policy if exists sale_confirmations_insert on manual_sale_confirmations;
+create policy sale_confirmations_insert on manual_sale_confirmations for insert
+  with check (
+    business_id in (
+      select id from businesses where owner_id in (select id from users where auth_user_id = auth.uid())
+      union
+      select business_id from business_team_members
+      where user_id in (select id from users where auth_user_id = auth.uid()) and status = 'active'
+    )
+  );
 
 -- ----------------------------------------------------------------------------
 -- TRANSACTIONS  (a self-reported SALE, for 'sale'-goal campaigns only)

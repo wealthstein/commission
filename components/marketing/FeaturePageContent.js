@@ -35,9 +35,7 @@ export default function FeaturePageContent({ item }) {
         ))}
       </Stack>
 
-      <Box sx={{ mb: 5 }}>
-        <SignUpButton role="business" sourcePage={urls.feature(item.slug)} />
-      </Box>
+      <SignUpButton role="business" sourcePage={urls.feature(item.slug)} />
 
     </Container>
   );

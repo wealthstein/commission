@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Container, Typography, Grid, Paper, Stack, Chip, Box } from "@mui/material";
+import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
+import HandshakeRoundedIcon from "@mui/icons-material/HandshakeRounded";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
 import SignUpButton from "@/components/marketing/SignUpButton";
@@ -78,6 +80,44 @@ export default function IndustryLandingContent({ industryPage }) {
         ))}
       </Grid>
 
+      {industryPage.payoutModel && (
+        <Box sx={{ mb: 5 }}>
+          <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
+            {industryPage.payoutModel.title}
+          </Typography>
+          <Stack spacing={2}>
+            {industryPage.payoutModel.stages.map((stage, i) => {
+              const StageIcon = i === 0 ? BoltRoundedIcon : HandshakeRoundedIcon;
+              return (
+                <Paper key={stage.title} variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, display: "flex", gap: 2, alignItems: "flex-start" }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      bgcolor: tokens.brand,
+                      display: "grid",
+                      placeItems: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <StageIcon sx={{ color: tokens.brandInk, fontSize: 20 }} />
+                  </Box>
+                  <Box>
+                    <Typography fontWeight={700} sx={{ mb: 0.5 }}>
+                      {stage.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: tokens.muted }}>
+                      {stage.description}
+                    </Typography>
+                  </Box>
+                </Paper>
+              );
+            })}
+          </Stack>
+        </Box>
+      )}
+
       <Paper sx={{ bgcolor: tokens.ink, color: "#fff", borderRadius: 4, p: { xs: 3, md: 4 }, mb: 5 }}>
         <Typography variant="overline" sx={{ color: tokens.brand, letterSpacing: 1.2 }}>
           In practice
@@ -87,9 +127,7 @@ export default function IndustryLandingContent({ industryPage }) {
         </Typography>
       </Paper>
 
-      <Box sx={{ mb: 5 }}>
-        <SignUpButton role="business" sourcePage={urls.industry(industryPage.slug)} />
-      </Box>
+      <SignUpButton role="business" sourcePage={urls.industry(industryPage.slug)} />
 
     </Container>
   );
