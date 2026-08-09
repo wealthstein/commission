@@ -7,6 +7,17 @@ import { tokens } from "@/lib/theme";
 import Link from "next/link";
 import LeadShortForm from "@/components/marketing/LeadShortForm";
 
+// Deterministic color from a string - same business/product always gets
+// the same color, without needing a real uploaded image. Palette pulled
+// from the brand's existing supplement colors so it never looks random or
+// off-brand.
+const LETTER_COLORS = ["#FFE280", "#C7E8D8", "#F3C6C6", "#C9D9F2", "#F2DCC9", "#D9C9F2"];
+function colorForString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  return LETTER_COLORS[Math.abs(hash) % LETTER_COLORS.length];
+}
+
 // This page used to be ISR-cached (revalidate = 3600) since business/product
 // slugs rarely change. That's no longer possible: detecting a customer vs.
 // affiliate visit reads searchParams.ref, which differs on every single
@@ -50,10 +61,10 @@ async function getProductAndBusiness(businessSlug, productSlug) {
   return { business, product, program };
 }
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { business, product } = await getProductAndBusiness(params.businessSlug, params.productSlug);
   if (!business || !product) return { title: "Product not found • Commission" };
-  return buildProductMetadata({ product, business });
+  return buildProductMetadata({ product, business, isCustomerVisit: !!searchParams?.ref });
 }
 
 export default async function ProductPage({ params, searchParams }) {
@@ -105,7 +116,7 @@ export default async function ProductPage({ params, searchParams }) {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={branding.logoUrl} alt={business.name} style={{ height: 32, width: 32, borderRadius: 6, objectFit: "cover" }} />
                 ) : (
-                  <Avatar sx={{ width: 32, height: 32, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700, fontSize: 14 }}>
+                  <Avatar sx={{ width: 32, height: 32, bgcolor: colorForString(business.name || business.id), color: tokens.ink, fontWeight: 700, fontSize: 14 }}>
                     {(business.name || "?").charAt(0).toUpperCase()}
                   </Avatar>
                 )}
@@ -126,7 +137,7 @@ export default async function ProductPage({ params, searchParams }) {
                       width: 44,
                       height: 44,
                       borderRadius: 2,
-                      bgcolor: "#EDEBE3",
+                      bgcolor: branding.logoUrl ? "#EDEBE3" : colorForString(product.name || product.id),
                       flexShrink: 0,
                       display: "grid",
                       placeItems: "center",
@@ -137,7 +148,7 @@ export default async function ProductPage({ params, searchParams }) {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={branding.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
-                      <Typography variant="caption" sx={{ color: tokens.muted, fontWeight: 700 }}>
+                      <Typography variant="body2" sx={{ color: tokens.ink, fontWeight: 700 }}>
                         {(product.name || "?").charAt(0).toUpperCase()}
                       </Typography>
                     )}
@@ -163,7 +174,11 @@ export default async function ProductPage({ params, searchParams }) {
                 </Typography>
               )}
 
-              {product.offline_payment_instructions && (
+              {/* Only meaningful for sale-goal campaigns - a lead-goal
+                  campaign has nothing being purchased on this page at
+                  all, the whole point is the WhatsApp handoff, so payment
+                  instructions here would be confusing, not helpful. */}
+              {program?.conversion_goal !== "lead" && product.offline_payment_instructions && (
                 <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, borderColor: tokens.border, bgcolor: "#fff" }}>
                   <Typography variant="caption" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 0.5 }}>
                     HOW TO BUY

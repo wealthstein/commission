@@ -18,8 +18,8 @@ import { buildLeadWhatsAppLink, generateWhatsAppRef } from "@/lib/whatsapp";
  */
 export async function POST(req) {
   const { programId, fullName, phone, email } = await req.json();
-  if (!programId || !fullName || !phone) {
-    return NextResponse.json({ error: "programId, fullName, and phone are required" }, { status: 400 });
+  if (!programId || !fullName || !phone || !email) {
+    return NextResponse.json({ error: "programId, fullName, phone, and email are required" }, { status: 400 });
   }
 
   const referralCode = req.cookies.get("cmn_ref")?.value;

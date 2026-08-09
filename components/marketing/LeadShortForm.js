@@ -35,6 +35,7 @@ export default function LeadShortForm({ programId, productName, checkoutStyle = 
   const containerSx = checkoutStyle
     ? { p: 4, borderRadius: 3, border: "none", boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }
     : { p: 3, borderRadius: 3, borderColor: tokens.border };
+  const centeredFieldSx = checkoutStyle ? { "& input": { textAlign: "center" } } : undefined;
 
   if (state.whatsappRef) {
     return (
@@ -80,7 +81,7 @@ export default function LeadShortForm({ programId, productName, checkoutStyle = 
         </>
       )}
       {checkoutStyle && (
-        <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 2 }}>
+        <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 2, textAlign: "center" }}>
           Your details
         </Typography>
       )}
@@ -89,17 +90,39 @@ export default function LeadShortForm({ programId, productName, checkoutStyle = 
 
       <Box component="form" onSubmit={handleSubmit}>
         <Stack spacing={checkoutStyle ? 2 : 1.5}>
-          <TextField label="Full name" required value={form.fullName} onChange={(e) => update("fullName", e.target.value)} />
-          <TextField label="Phone number" required value={form.phone} onChange={(e) => update("phone", e.target.value)} />
-          <TextField label="Email (optional)" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
+          <TextField
+            placeholder={checkoutStyle ? "Full name" : undefined}
+            label={checkoutStyle ? undefined : "Full name"}
+            required
+            value={form.fullName}
+            onChange={(e) => update("fullName", e.target.value)}
+            sx={centeredFieldSx}
+          />
+          <TextField
+            placeholder={checkoutStyle ? "Phone number" : undefined}
+            label={checkoutStyle ? undefined : "Phone number"}
+            required
+            value={form.phone}
+            onChange={(e) => update("phone", e.target.value)}
+            sx={centeredFieldSx}
+          />
+          <TextField
+            placeholder={checkoutStyle ? "Email address" : undefined}
+            label={checkoutStyle ? undefined : "Email address"}
+            type="email"
+            required
+            value={form.email}
+            onChange={(e) => update("email", e.target.value)}
+            sx={centeredFieldSx}
+          />
           <Button
             type="submit"
             variant="contained"
             size="large"
             disabled={state.loading}
-            sx={checkoutStyle ? { py: 1.5, bgcolor: tokens.ink, "&:hover": { bgcolor: tokens.ink } } : undefined}
+            sx={checkoutStyle ? { py: 1.5 } : undefined}
           >
-            {state.loading ? "Submitting…" : "Get connected on WhatsApp"}
+            {state.loading ? "Submitting…" : "Continue on WhatsApp"}
           </Button>
         </Stack>
       </Box>
