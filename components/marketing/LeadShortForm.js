@@ -88,7 +88,7 @@ export default function LeadShortForm({ programId, productName, businessName, ch
       )}
       {checkoutStyle && (
         <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 2, textAlign: "center" }}>
-          Your details
+          Get started with {businessName || "us"}
         </Typography>
       )}
 
@@ -126,7 +126,7 @@ export default function LeadShortForm({ programId, productName, businessName, ch
             variant="contained"
             size="large"
             disabled={state.loading}
-            sx={checkoutStyle ? { py: 1.5 } : undefined}
+            sx={checkoutStyle ? { py: 1.5, borderRadius: "12px" } : undefined}
           >
             {state.loading ? "Submitting…" : "Continue on WhatsApp"}
           </Button>
