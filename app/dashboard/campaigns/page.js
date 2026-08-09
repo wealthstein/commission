@@ -44,8 +44,9 @@ export default function CampaignsPage() {
 
       const { data: rows } = await supabase
         .from("products")
-        .select("id, name, category, product_type, price_naira, billing_frequency, status, affiliate_programs(id)")
-        .eq("business_id", business.id);
+        .select("id, name, category, product_type, price_naira, billing_frequency, status, created_at, affiliate_programs(id)")
+        .eq("business_id", business.id)
+        .order("created_at", { ascending: false });
 
       const programIds = (rows || []).flatMap((p) => p.affiliate_programs?.map((ap) => ap.id) || []);
       let countsByProgram = {};

@@ -111,7 +111,7 @@ export default async function ProductPage({ params, searchParams }) {
         {jsonLdScripts}
         <Grid container sx={{ minHeight: "100vh" }}>
           <Grid item xs={12} md={6} sx={{ bgcolor: "#FAFAF8", borderRight: { md: `1px solid ${tokens.border}` } }}>
-            <Box sx={{ p: { xs: 4, md: 8 }, maxWidth: 480, ml: { md: "auto" } }}>
+            <Box sx={{ px: { xs: 4, md: "200px" }, py: { xs: 4, md: 8 } }}>
               <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 5 }}>
                 <Box
                   component={Link}
@@ -214,10 +214,10 @@ export default async function ProductPage({ params, searchParams }) {
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <Box sx={{ p: { xs: 4, md: 8 }, maxWidth: 480, mr: { md: "auto" }, display: "flex", flexDirection: "column", minHeight: "100%" }}>
+            <Box sx={{ px: { xs: 4, md: "200px" }, py: { xs: 4, md: 8 }, display: "flex", flexDirection: "column", minHeight: "100%" }}>
               <Box sx={{ flexGrow: 1 }}>
                 {program?.conversion_goal === "lead" ? (
-                  <LeadShortForm programId={program.id} productName={product.name} checkoutStyle />
+                  <LeadShortForm programId={program.id} productName={product.name} businessName={business.name} checkoutStyle />
                 ) : (
                   // Sale-goal customers normally never see this page at all -
                   // /r/[code] redirects them straight to Paystack checkout.

@@ -7,7 +7,7 @@ import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { tokens } from "@/lib/theme";
 
-export default function LeadShortForm({ programId, productName, checkoutStyle = false }) {
+export default function LeadShortForm({ programId, productName, businessName, checkoutStyle = false }) {
   const [form, setForm] = useState({ fullName: "", phone: "", email: "" });
   const [state, setState] = useState({ loading: false, error: null, whatsappLink: null, whatsappRef: null });
 
@@ -138,7 +138,7 @@ export default function LeadShortForm({ programId, productName, checkoutStyle = 
           {[
             "Submit your details above",
             "You'll be taken straight to WhatsApp",
-            "Chat with the business directly to get your questions answered",
+            `Chat with ${businessName || "the business"} directly to get your questions answered`,
           ].map((step, i) => (
             <Stack key={step} direction="row" spacing={1.5} alignItems="flex-start">
               <Box
