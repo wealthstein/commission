@@ -138,7 +138,7 @@ export default function LeadShortForm({ programId, productName, businessName, ch
           {[
             "Submit your details above",
             "You'll be taken straight to WhatsApp",
-            `Chat with ${businessName || "the business"} directly to get your questions answered`,
+            `Chat with ${businessName || "the business"} directly`,
           ].map((step, i) => (
             <Stack key={step} direction="row" spacing={1.5} alignItems="flex-start">
               <Box
