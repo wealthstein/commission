@@ -71,7 +71,7 @@ export default async function LeadContinuePage({ params }) {
     <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
       <Grid container sx={{ minHeight: "100vh" }}>
         <Grid item xs={12} md={6} sx={{ bgcolor: "#FAFAF8", borderRight: { md: `1px solid ${tokens.border}` } }}>
-          <Box sx={{ px: { xs: 4, md: "150px" }, py: { xs: 4, md: "150px" } }}>
+          <Box sx={{ px: { xs: 4, md: "150px" }, py: { xs: 4, md: 8 } }}>
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 5 }}>
               <Box component={Link} href="/" sx={{ color: tokens.muted, display: "flex", alignItems: "center", mr: 0.5 }} aria-label="Back">
                 <ArrowBackRoundedIcon fontSize="small" />
@@ -150,7 +150,7 @@ export default async function LeadContinuePage({ params }) {
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <Box sx={{ px: { xs: 4, md: "150px" }, py: { xs: 4, md: "150px" }, display: "flex", flexDirection: "column", minHeight: "100%" }}>
+          <Box sx={{ px: { xs: 4, md: "150px" }, py: { xs: 4, md: 8 }, display: "flex", flexDirection: "column", minHeight: "100%" }}>
             <Box sx={{ flexGrow: 1 }}>
               <LeadLongForm
                 whatsappRef={params.whatsappRef}
