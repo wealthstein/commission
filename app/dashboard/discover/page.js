@@ -7,6 +7,10 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
 
+// Matches the affiliate-cap trigger in supabase/schema.sql
+// (fn_enforce_affiliate_cap) exactly - null means unlimited.
+const AFFILIATE_CAP = { free: 5, pro: 25, plus: null };
+
 export default function DiscoverPage() {
   const [loading, setLoading] = useState(true);
   const [userRowId, setUserRowId] = useState(null);
@@ -24,17 +28,60 @@ export default function DiscoverPage() {
         data: { user: authUser },
       } = await supabase.auth.getUser();
       let myUserId = null;
+      let myBusinessId = null;
       if (authUser) {
         const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
         myUserId = userRow?.id || null;
         setUserRowId(myUserId);
+
+        if (myUserId) {
+          const { data: myBusiness } = await supabase.from("businesses").select("id").eq("owner_id", myUserId).maybeSingle();
+          myBusinessId = myBusiness?.id || null;
+        }
       }
 
       const { data } = await supabase
         .from("products")
-        .select("id, name, category, price_naira, businesses(name), affiliate_programs!inner(id, tier1_percent, tier2_percent, tier3_percent, status)")
+        .select(
+          "id, name, category, price_naira, business_id, businesses(id, name, plan), affiliate_programs!inner(id, tier1_percent, tier2_percent, tier3_percent, status)"
+        )
         .eq("affiliate_programs.status", "active");
-      setPrograms(data || []);
+
+      let visible = data || [];
+
+      // Never show a business's own campaigns to themselves in Discover -
+      // joining your own program as an affiliate doesn't make sense.
+      if (myBusinessId) {
+        visible = visible.filter((p) => p.business_id !== myBusinessId);
+      }
+
+      // Hide campaigns from businesses that have already hit their plan's
+      // affiliate cap - nothing to join if they're full. Computed by
+      // counting DISTINCT affiliates already enrolled across each
+      // business's programs, same logic as the enforcement trigger.
+      const businessIds = [...new Set(visible.map((p) => p.business_id))];
+      if (businessIds.length > 0) {
+        const { data: allEnrollments } = await supabase
+          .from("affiliate_enrollments")
+          .select("affiliate_id, affiliate_programs(products(business_id))");
+
+        const affiliatesByBusiness = new Map();
+        for (const e of allEnrollments || []) {
+          const bizId = e.affiliate_programs?.products?.business_id;
+          if (!bizId || !businessIds.includes(bizId)) continue;
+          if (!affiliatesByBusiness.has(bizId)) affiliatesByBusiness.set(bizId, new Set());
+          affiliatesByBusiness.get(bizId).add(e.affiliate_id);
+        }
+
+        visible = visible.filter((p) => {
+          const cap = AFFILIATE_CAP[p.businesses?.plan] ?? AFFILIATE_CAP.free;
+          if (cap === null) return true; // unlimited (Large)
+          const currentCount = affiliatesByBusiness.get(p.business_id)?.size || 0;
+          return currentCount < cap;
+        });
+      }
+
+      setPrograms(visible);
 
       if (myUserId) {
         const { data: enrolled } = await supabase.from("affiliate_enrollments").select("program_id").eq("affiliate_id", myUserId);

@@ -78,18 +78,26 @@ const DEFAULTS = {
 // the preview always matches what the person is actually about to build.
 const SAMPLE_CAMPAIGNS = {
   lead: {
+    product_type: "Digital",
     name: "CareLink HMO Plan",
     category: "Insurance",
     price: "85,000",
+    billing_frequency: "Monthly",
     description: "Individual HMO plan covering outpatient, inpatient, and maternity care across 200+ hospitals in Nigeria.",
+    product_url: "https://carelink.ng/plans/individual",
+    offline_payment_instructions: "Bank transfer to Zenith Bank 0123456789. We will ask for a receipt when confirming a sale.",
     cost_per_qualified_lead: "5,000",
-    whatsapp_number: "+234 801 234 5678",
+    whatsapp_number: "08012345678",
+    custom_field_example: { label: "Do you currently have health insurance?", type: "Dropdown", options: ["Yes", "No"] },
   },
   sale: {
+    product_type: "Physical",
     name: "3-Bedroom Duplex, Lekki Phase 1",
     category: "Real Estate",
     price: "45,000,000",
     description: "Newly built 3-bedroom duplex with BQ, secure estate, 24-hour power - ready for immediate inspection.",
+    product_url: "https://wa.me/2348012345678",
+    offline_payment_instructions: "Bank transfer to GTBank 0198765432. A signed offer letter is issued once payment clears.",
     total_commission_percent: 12,
   },
 };
@@ -102,6 +110,11 @@ function formatNaira(rawDigits) {
 }
 function stripToDigits(value) {
   return value.replace(/[^0-9]/g, "");
+}
+// Local Nigerian format only - 11 digits, e.g. 08012345678. No +234 typed
+// here; that gets prepended wherever the number is actually used.
+function formatPhoneDigits(value) {
+  return stripToDigits(value).slice(0, 11);
 }
 
 // Small reusable label - every field gets one of these instead of a plain
@@ -120,51 +133,96 @@ function FieldLabel({ text, tooltip }) {
   );
 }
 
+function SampleField({ label, value }) {
+  return (
+    <Box>
+      <Typography variant="caption" sx={{ color: tokens.muted }}>{label}</Typography>
+      <Typography fontWeight={700}>{value}</Typography>
+    </Box>
+  );
+}
+
 function SampleCampaignDialog({ open, onClose, isLead }) {
   const sample = isLead ? SAMPLE_CAMPAIGNS.lead : SAMPLE_CAMPAIGNS.sale;
+  const totalPercent = isLead ? 100 : sample.total_commission_percent;
+  const tier1 = (totalPercent * TIER_RATIOS.tier1) / 100;
+  const tier2 = (totalPercent * TIER_RATIOS.tier2) / 100;
+  const tier3 = (totalPercent * TIER_RATIOS.tier3) / 100;
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
         Sample {isLead ? "lead" : "sale"} campaign
         <Typography variant="body2" sx={{ color: tokens.muted, fontWeight: 400, mt: 0.5 }}>
-          A realistic example, filled in exactly how a real campaign would look.
+          A complete, realistic example - every field filled in exactly how a real campaign would look.
         </Typography>
       </DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          <Box>
-            <Typography variant="caption" sx={{ color: tokens.muted }}>Campaign name</Typography>
-            <Typography fontWeight={700}>{sample.name}</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" sx={{ color: tokens.muted }}>Category</Typography>
-            <Typography fontWeight={700}>{sample.category}</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" sx={{ color: tokens.muted }}>Price</Typography>
-            <Typography fontWeight={700}>₦{sample.price}</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" sx={{ color: tokens.muted }}>Description</Typography>
-            <Typography variant="body2">{sample.description}</Typography>
-          </Box>
+      <DialogContent dividers>
+        <Stack spacing={2}>
+          <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700 }}>
+            Campaign details
+          </Typography>
+          <SampleField label="Campaign type" value={sample.product_type} />
+          <SampleField label="Campaign name" value={sample.name} />
+          <SampleField label="Category" value={sample.category} />
+          <SampleField label="Description" value={sample.description} />
+          <SampleField label="Price" value={`₦${sample.price}`} />
+          {isLead && <SampleField label="Billing frequency" value={sample.billing_frequency} />}
+          <SampleField label="Where customers buy" value={sample.product_url} />
+          <SampleField label="Payment & sale verification instructions" value={sample.offline_payment_instructions} />
+
+          <Divider />
+          <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700 }}>
+            {isLead ? "Lead pricing" : "Sale commission"}
+          </Typography>
           {isLead ? (
             <>
-              <Box>
-                <Typography variant="caption" sx={{ color: tokens.muted }}>Cost per Intent Qualified Lead</Typography>
-                <Typography fontWeight={700}>₦{sample.cost_per_qualified_lead}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: tokens.muted }}>WhatsApp number</Typography>
-                <Typography fontWeight={700}>{sample.whatsapp_number}</Typography>
-              </Box>
+              <SampleField label="Cost per Intent Qualified Lead" value={`₦${sample.cost_per_qualified_lead}`} />
+              <SampleField label="WhatsApp number" value={sample.whatsapp_number} />
             </>
           ) : (
-            <Box>
-              <Typography variant="caption" sx={{ color: tokens.muted }}>Total commission</Typography>
-              <Typography fontWeight={700}>{sample.total_commission_percent}%</Typography>
-            </Box>
+            <SampleField label="Total commission" value={`${sample.total_commission_percent}%`} />
           )}
+
+          {isLead && (
+            <>
+              <Divider />
+              <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700 }}>
+                Custom question example
+              </Typography>
+              <Box>
+                <Typography variant="caption" sx={{ color: tokens.muted }}>Question</Typography>
+                <Typography fontWeight={700}>{sample.custom_field_example.label}</Typography>
+                <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 0.5 }}>
+                  Type: {sample.custom_field_example.type} · Options: {sample.custom_field_example.options.join(", ")}
+                </Typography>
+              </Box>
+            </>
+          )}
+
+          <Divider />
+          <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700 }}>
+            How the affiliate payout splits, on this example
+          </Typography>
+          <Stack direction="row" spacing={2}>
+            {[
+              { tier: 1, percent: tier1 },
+              { tier: 2, percent: tier2 },
+              { tier: 3, percent: tier3 },
+            ].map((t) => (
+              <Box key={t.tier} sx={{ flex: 1, p: 1.5, borderRadius: 2, bgcolor: "#F7F6F2", textAlign: "center" }}>
+                <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
+                  Tier {t.tier}
+                </Typography>
+                <Typography fontWeight={800}>{t.percent}%</Typography>
+              </Box>
+            ))}
+          </Stack>
+          <Typography variant="caption" sx={{ color: tokens.muted }}>
+            {isLead
+              ? `That's ₦${Math.round((tier1 / 100) * Number(sample.cost_per_qualified_lead.replace(/,/g, ""))).toLocaleString()} paid to the tier-1 affiliate per qualified lead, before Commission's plan fee.`
+              : `On a ₦${sample.price} sale, tier 1 earns ₦${Math.round((tier1 / 100) * Number(sample.price.replace(/,/g, ""))).toLocaleString()}, before Commission's plan fee.`}
+          </Typography>
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
@@ -367,7 +425,12 @@ export default function NewCampaignPage() {
             affiliate_program_id: program.id,
             label: f.label,
             field_type: f.field_type,
-            options: f.field_type === "select" ? f.options.map((o) => o.trim()).filter(Boolean) : null,
+            options:
+              f.field_type === "select"
+                ? f.options
+                    .filter((o) => o.trim())
+                    .map((o) => (f.option_format === "text" || !f.option_format ? o.trim() : f.option_format === "price" ? `₦${formatNaira(o)}` : formatNaira(o)))
+                : null,
             required: f.required,
             display_order: i,
           }))
@@ -549,6 +612,7 @@ export default function NewCampaignPage() {
                 required
                 value={formatNaira(form.price)}
                 onChange={(e) => updateNairaField("price", e.target.value)}
+                inputMode="numeric"
                 InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
                 helperText={
                   Number(form.price) > MAX_PRICE_NAIRA
@@ -626,7 +690,8 @@ export default function NewCampaignPage() {
                   required
                   value={formatNaira(form.cost_per_qualified_lead)}
                   onChange={(e) => updateNairaField("cost_per_qualified_lead", e.target.value)}
-                  InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
+                  inputMode="numeric"
+                InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
                   helperText={
                     Number(form.cost_per_qualified_lead) > MAX_COST_PER_LEAD_NAIRA
                       ? `Maximum ₦${MAX_COST_PER_LEAD_NAIRA.toLocaleString()} per lead`
@@ -638,14 +703,19 @@ export default function NewCampaignPage() {
               <Grid item xs={12} sm={6}>
                 <FieldLabel
                   text="WhatsApp number for this campaign"
-                  tooltip='The number leads message after the interest form - leave blank to use your business default. Example: "+234 801 234 5678".'
+                  tooltip='The number leads message after the interest form - leave blank to use your business default. 11 digits, local format, no +234 needed. Example: "08012345678".'
                 />
                 <TextField
                   fullWidth
-                  placeholder="+234..."
+                  placeholder="08012345678"
                   value={form.whatsapp_number}
-                  onChange={(e) => update("whatsapp_number", e.target.value)}
-                  helperText="Leads get a unique link to this number after the interest form. Leave blank to use your business default."
+                  onChange={(e) => update("whatsapp_number", formatPhoneDigits(e.target.value))}
+                  helperText={
+                    form.whatsapp_number && form.whatsapp_number.length !== 11
+                      ? `${form.whatsapp_number.length}/11 digits`
+                      : "11 digits, no +234 - that's added automatically. Leave blank to use your business default."
+                  }
+                  error={form.whatsapp_number.length > 0 && form.whatsapp_number.length !== 11}
                 />
               </Grid>
             </Grid>
@@ -687,6 +757,7 @@ export default function NewCampaignPage() {
                       onChange={(e) => updateCustomField(i, { field_type: e.target.value })}
                     >
                       <MenuItem value="text">Text</MenuItem>
+                      <MenuItem value="number">Number</MenuItem>
                       <MenuItem value="price">Price</MenuItem>
                       <MenuItem value="select">Dropdown</MenuItem>
                     </TextField>
@@ -711,27 +782,57 @@ export default function NewCampaignPage() {
                       Shown to the prospect with a ₦ sign and thousand separators, e.g. ₦2,500,000.
                     </Typography>
                   )}
+                  {f.field_type === "number" && (
+                    <Typography variant="caption" sx={{ color: tokens.muted, display: "block", ml: 0.5 }}>
+                      Shown to the prospect with thousand separators, no ₦ sign, e.g. 2,500,000.
+                    </Typography>
+                  )}
 
                   {f.field_type === "select" && (
                     <Box sx={{ pl: 0.5 }}>
-                      <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mb: 1 }}>
-                        Dropdown options - each one its own field, not comma-separated.
-                      </Typography>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                        <Typography variant="caption" sx={{ color: tokens.muted }}>
+                          Dropdown options - each one its own field, not comma-separated. Option format:
+                        </Typography>
+                        <TextField
+                          select
+                          size="small"
+                          value={f.option_format || "text"}
+                          onChange={(e) => updateCustomField(i, { option_format: e.target.value })}
+                          sx={{ minWidth: 100 }}
+                        >
+                          <MenuItem value="text">Text</MenuItem>
+                          <MenuItem value="number">Number</MenuItem>
+                          <MenuItem value="price">Price</MenuItem>
+                        </TextField>
+                      </Stack>
                       <Stack spacing={1}>
-                        {f.options.map((opt, oi) => (
-                          <Stack key={oi} direction="row" spacing={1} alignItems="center">
-                            <TextField
-                              size="small"
-                              fullWidth
-                              placeholder={`Option ${oi + 1}`}
-                              value={opt}
-                              onChange={(e) => updateDropdownOption(i, oi, e.target.value)}
-                            />
-                            <IconButton size="small" onClick={() => removeDropdownOption(i, oi)} disabled={f.options.length <= 1}>
-                              <DeleteOutlineRoundedIcon fontSize="small" sx={{ color: tokens.muted }} />
-                            </IconButton>
-                          </Stack>
-                        ))}
+                        {f.options.map((opt, oi) => {
+                          const optFormat = f.option_format || "text";
+                          const displayValue = optFormat === "text" ? opt : formatNaira(opt);
+                          return (
+                            <Stack key={oi} direction="row" spacing={1} alignItems="center">
+                              <TextField
+                                size="small"
+                                fullWidth
+                                placeholder={`Option ${oi + 1}`}
+                                value={displayValue}
+                                inputMode={optFormat === "text" ? "text" : "numeric"}
+                                InputProps={optFormat === "price" ? { startAdornment: <InputAdornment position="start">₦</InputAdornment> } : undefined}
+                                onChange={(e) =>
+                                  updateDropdownOption(
+                                    i,
+                                    oi,
+                                    optFormat === "text" ? e.target.value : stripToDigits(e.target.value)
+                                  )
+                                }
+                              />
+                              <IconButton size="small" onClick={() => removeDropdownOption(i, oi)} disabled={f.options.length <= 1}>
+                                <DeleteOutlineRoundedIcon fontSize="small" sx={{ color: tokens.muted }} />
+                              </IconButton>
+                            </Stack>
+                          );
+                        })}
                       </Stack>
                       <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => addDropdownOption(i)} sx={{ mt: 1 }}>
                         Add option

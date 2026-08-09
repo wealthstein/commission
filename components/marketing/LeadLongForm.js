@@ -15,6 +15,11 @@ function formatNaira(rawDigits) {
 function stripToDigits(value) {
   return value.replace(/[^0-9]/g, "");
 }
+// Local Nigerian format only - 11 digits, e.g. 08012345678. No +234 typed
+// here; that gets prepended wherever the number is actually used.
+function formatPhoneDigits(value) {
+  return stripToDigits(value).slice(0, 11);
+}
 
 export default function LeadLongForm({ whatsappRef, productName, customFields = [], sharesContactWithAffiliate = false }) {
   const router = useRouter();
@@ -74,7 +79,15 @@ export default function LeadLongForm({ whatsappRef, productName, customFields = 
       <Box component="form" onSubmit={handleSubmit}>
         <Stack spacing={1.5}>
           <TextField label="Full name" required value={form.fullName} onChange={(e) => update("fullName", e.target.value)} />
-          <TextField label="Phone number" required value={form.phone} onChange={(e) => update("phone", e.target.value)} />
+          <TextField
+            label="Phone number"
+            required
+            placeholder="08012345678"
+            value={form.phone}
+            onChange={(e) => update("phone", formatPhoneDigits(e.target.value))}
+            helperText={form.phone && form.phone.length !== 11 ? `${form.phone.length}/11 digits` : "11 digits, no +234 needed"}
+            error={form.phone.length > 0 && form.phone.length !== 11}
+          />
           <TextField label="Email (optional)" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
           <TextField
             label="Anything else worth sharing (optional)"
@@ -108,6 +121,14 @@ export default function LeadLongForm({ whatsappRef, productName, customFields = 
                 value={formatNaira(customAnswers[f.id] || "")}
                 onChange={(e) => updateCustom(f.id, stripToDigits(e.target.value))}
                 InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
+              />
+            ) : f.field_type === "number" ? (
+              <TextField
+                key={f.id}
+                label={f.label}
+                required={f.required}
+                value={formatNaira(customAnswers[f.id] || "")}
+                onChange={(e) => updateCustom(f.id, stripToDigits(e.target.value))}
               />
             ) : (
               <TextField

@@ -524,7 +524,7 @@ create table if not exists campaign_custom_fields (
   id                    uuid primary key default gen_random_uuid(),
   affiliate_program_id  uuid not null references affiliate_programs(id) on delete cascade,
   label                 text not null,
-  field_type            text not null default 'text' check (field_type in ('text', 'select', 'price')),
+  field_type            text not null default 'text' check (field_type in ('text', 'select', 'price', 'number')),
   -- Only used when field_type = 'select' - a JSON array of option strings.
   options               jsonb,
   required              boolean not null default false,

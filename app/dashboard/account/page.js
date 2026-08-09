@@ -260,7 +260,15 @@ export default function AccountPage() {
             <TextField label="Full name" fullWidth defaultValue={user?.user_metadata?.full_name || ""} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField label="Phone number" fullWidth value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+            <TextField
+              label="Phone number"
+              fullWidth
+              placeholder="08012345678"
+              value={form.phone}
+              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) }))}
+              helperText={form.phone && form.phone.length !== 11 ? `${form.phone.length}/11 digits` : "11 digits, no +234 needed"}
+              error={form.phone.length > 0 && form.phone.length !== 11}
+            />
           </Grid>
         </Grid>
       </Paper>
