@@ -1,161 +1,108 @@
-import { notFound } from "next/navigation";
-import { Box, Container, Typography, Chip, Stack, Button, Grid, Paper } from "@mui/material";
-import { createAdminSupabaseClient } from "@/lib/supabaseServer";
-import { buildProductMetadata, buildProductJsonLd, buildBreadcrumbJsonLd, billingLabel, SITE_URL } from "@/lib/seo";
-import { tokens } from "@/lib/theme";
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import LeadShortForm from "@/components/marketing/LeadShortForm";
+import { Paper, Box, Typography, TextField, Button, Stack, Alert } from "@mui/material";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { tokens } from "@/lib/theme";
 
-// ISR: pages regenerate in the background at most once an hour rather than
-// on every request, which is what makes hundreds of thousands of these
-// pages cheap to serve. New products call POST /api/revalidate to bust this
-// early instead of waiting out the full hour.
-export const revalidate = 3600;
+export default function LeadShortForm({ programId, productName, checkoutStyle = false }) {
+  const [form, setForm] = useState({ fullName: "", phone: "", email: "" });
+  const [state, setState] = useState({ loading: false, error: null, whatsappLink: null, whatsappRef: null });
 
-// Returning an empty array + leaving dynamicParams at its default (true)
-// means: do not try to pre-render all of them at build time (impossible at
-// this scale), but happily render+cache any slug pair on first request.
-// Swap in your highest-traffic products here if you want a handful
-// pre-built at deploy time.
-export async function generateStaticParams() {
-  return [];
-}
+  function update(field, value) {
+    setForm((f) => ({ ...f, [field]: value }));
+  }
 
-async function getProductAndBusiness(businessSlug, productSlug) {
-  const supabase = createAdminSupabaseClient();
-  const { data: business } = await supabase.from("businesses").select("*").eq("slug", businessSlug).maybeSingle();
-  if (!business) return { business: null, product: null, program: null };
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setState({ loading: true, error: null, whatsappLink: null, whatsappRef: null });
+    try {
+      const res = await fetch("/api/leads/capture", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ programId, ...form }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      setState({ loading: false, error: null, whatsappLink: data.whatsappLink, whatsappRef: data.whatsappRef });
+    } catch (err) {
+      setState({ loading: false, error: err.message, whatsappLink: null, whatsappRef: null });
+    }
+  }
 
-  const { data: product } = await supabase
-    .from("products")
-    .select("*")
-    .eq("business_id", business.id)
-    .eq("slug", productSlug)
-    .eq("status", "active")
-    .maybeSingle();
-  if (!product) return { business, product: null, program: null };
+  const containerSx = checkoutStyle
+    ? { p: 4, borderRadius: 3, border: "none", boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }
+    : { p: 3, borderRadius: 3, borderColor: tokens.border };
 
-  const { data: program } = await supabase
-    .from("affiliate_programs")
-    .select("*")
-    .eq("product_id", product.id)
-    .eq("status", "active")
-    .maybeSingle();
-
-  return { business, product, program };
-}
-
-export async function generateMetadata({ params }) {
-  const { business, product } = await getProductAndBusiness(params.businessSlug, params.productSlug);
-  if (!business || !product) return { title: "Product not found • Commission" };
-  return buildProductMetadata({ product, business });
-}
-
-export default async function ProductPage({ params }) {
-  const { business, product, program } = await getProductAndBusiness(params.businessSlug, params.productSlug);
-  if (!business || !product) notFound();
-
-  const jsonLd = buildProductJsonLd({ product, business });
-  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: "Home", url: SITE_URL },
-    { name: business.name, url: `${SITE_URL}/businesses/${business.slug}` },
-    { name: product.name, url: `${SITE_URL}/products/${business.slug}/${product.slug}` },
-  ]);
+  if (state.whatsappRef) {
+    return (
+      <Paper variant="outlined" sx={{ ...containerSx, bgcolor: "#E7F5EE" }}>
+        <Typography fontWeight={700} sx={{ mb: 1 }}>
+          You are on the list!
+        </Typography>
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+          Chat with us directly on WhatsApp, or go straight ahead and finish the quick details form below — either
+          way gets you moving.
+        </Typography>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+          {state.whatsappLink && (
+            <Button
+              variant="contained"
+              startIcon={<WhatsAppIcon />}
+              href={state.whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ bgcolor: "#25D366", color: "#fff", "&:hover": { bgcolor: "#1ebe57" } }}
+            >
+              Continue on WhatsApp
+            </Button>
+          )}
+          <Button variant="outlined" endIcon={<ArrowForwardIcon />} component={Link} href={`/leads/${state.whatsappRef}/continue`}>
+            Finish the details form
+          </Button>
+        </Stack>
+      </Paper>
+    );
+  }
 
   return (
-    <Box sx={{ py: { xs: 6, md: 9 } }}>
-      {/* eslint-disable-next-line react/no-danger */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      {/* eslint-disable-next-line react/no-danger */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-
-      <Container maxWidth="lg">
-        <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-          <Typography variant="body2" component={Link} href="/" sx={{ color: tokens.muted }}>
-            Commission
+    <Paper variant="outlined" sx={containerSx}>
+      {!checkoutStyle && (
+        <>
+          <Typography fontWeight={700} sx={{ mb: 0.5 }}>
+            Interested in {productName}?
           </Typography>
-          <Typography variant="body2" sx={{ color: tokens.muted }}>
-            /
+          <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+            Tell us a bit about you and we will connect you directly on WhatsApp.
           </Typography>
-          <Typography variant="body2" component={Link} href={`/businesses/${business.slug}`} sx={{ color: tokens.muted }}>
-            {business.name}
-          </Typography>
-        </Stack>
-
-        {product.category && <Chip label={product.category} size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2, mr: 1 }} />}
-        <Chip
-          label={product.product_type === "physical" ? "Physical Product" : "Digital Product"}
-          size="small"
-          variant="outlined"
-          sx={{ mb: 2 }}
-        />
-
-        <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 2 }}>
-          {product.name} Affiliate Program
+        </>
+      )}
+      {checkoutStyle && (
+        <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 2 }}>
+          Your details
         </Typography>
+      )}
 
-        <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 4, maxWidth: 640 }}>
-          Promote {product.name} by {business.name} on Commission and earn commission on every referred sale.
-        </Typography>
+      {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
 
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={6} sm={4}>
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, borderColor: tokens.border }}>
-              <Typography variant="caption" sx={{ color: tokens.muted }}>
-                Price
-              </Typography>
-              <Typography fontWeight={700}>
-                ₦{Number(product.price_naira).toLocaleString()} {billingLabel(product.billing_frequency)}
-              </Typography>
-            </Paper>
-          </Grid>
-          {program && (
-            <Grid item xs={6} sm={4}>
-              <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, borderColor: tokens.border }}>
-                <Typography variant="caption" sx={{ color: tokens.muted }}>
-                  Tier 1 commission
-                </Typography>
-                <Typography fontWeight={700}>{program.tier1_percent}%</Typography>
-              </Paper>
-            </Grid>
-          )}
-          {program && (
-            <Grid item xs={6} sm={4}>
-              <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, borderColor: tokens.border }}>
-                <Typography variant="caption" sx={{ color: tokens.muted }}>
-                  Commission type
-                </Typography>
-                <Typography fontWeight={700} sx={{ textTransform: "capitalize" }}>
-                  {program.commission_type.replace("_", "-")}
-                </Typography>
-              </Paper>
-            </Grid>
-          )}
-        </Grid>
-
-        {product.description && (
-          <Typography variant="body1" sx={{ color: tokens.muted, mb: 4 }}>
-            {product.description}
-          </Typography>
-        )}
-
-        {product.offline_payment_instructions && (
-          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, borderColor: tokens.border, mb: 4, bgcolor: "#F7F6F2" }}>
-            <Typography variant="caption" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 0.5 }}>
-              HOW TO BUY
-            </Typography>
-            <Typography variant="body2">{product.offline_payment_instructions}</Typography>
-          </Paper>
-        )}
-
-        {program?.conversion_goal === "lead" ? (
-          <LeadShortForm programId={program.id} productName={product.name} />
-        ) : (
-          <Button variant="contained" size="large" component={Link} href={`/?join=${product.id}`}>
-            Join this affiliate program
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack spacing={checkoutStyle ? 2 : 1.5}>
+          <TextField label="Full name" required value={form.fullName} onChange={(e) => update("fullName", e.target.value)} />
+          <TextField label="Phone number" required value={form.phone} onChange={(e) => update("phone", e.target.value)} />
+          <TextField label="Email (optional)" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            disabled={state.loading}
+            sx={checkoutStyle ? { py: 1.5, bgcolor: tokens.ink, "&:hover": { bgcolor: tokens.ink } } : undefined}
+          >
+            {state.loading ? "Submitting…" : "Get connected on WhatsApp"}
           </Button>
-        )}
-      </Container>
-    </Box>
+        </Stack>
+      </Box>
+    </Paper>
   );
 }
