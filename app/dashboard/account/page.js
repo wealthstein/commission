@@ -17,7 +17,6 @@ import {
   Tabs,
   Tab,
   Chip,
-  InputAdornment,
 } from "@mui/material";
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 import PageHeader from "@/components/dashboard/PageHeader";
@@ -29,10 +28,10 @@ import industriesContent from "@/content/industries.json";
 const INNER_WIDTH = 420;
 const INDUSTRIES = industriesContent.industries.map((i) => i.industryName);
 
-// Centers the typed/selected text inside a field - used on every field on
-// this page per request, not just the dropdowns.
-const centeredTextSx = { "& input": { textAlign: "center" } };
-// Centers a select's displayed value AND removes the dropdown chevron icon.
+// No field on this page shows a label anymore - centered placeholder text
+// instead, per request. Helper text (under the field) is centered too.
+const centeredFieldSx = { "& input": { textAlign: "center" } };
+const centeredHelperProps = { FormHelperTextProps: { sx: { textAlign: "center", width: "100%" } } };
 const centeredSelectSx = {
   "& .MuiSelect-select": { textAlign: "center" },
   "& .MuiSelect-icon": { display: "none" },
@@ -89,27 +88,36 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
 
         <Box component="form" onSubmit={handleSubmit}>
           <Stack spacing={2}>
+            {/* Business ID - Paystack subaccount identifier, 6 digits, numeric only */}
             {extraFields?.map((f) => (
               <TextField
                 key={f.name}
-                label={f.label}
+                placeholder={f.label}
                 fullWidth
                 required
                 value={extra[f.name] || ""}
-                onChange={(e) => setExtra((x) => ({ ...x, [f.name]: e.target.value }))}
-                sx={centeredTextSx}
+                onChange={(e) => setExtra((x) => ({ ...x, [f.name]: stripToDigits(e.target.value).slice(0, 6) }))}
+                helperText={
+                  extra[f.name] && extra[f.name].length !== 6 ? `${extra[f.name].length}/6 digits` : "6-digit Paystack Business ID, numbers only"
+                }
+                error={!!extra[f.name] && extra[f.name].length !== 6}
+                sx={centeredFieldSx}
+                {...centeredHelperProps}
               />
             ))}
             <TextField
               select
-              label="Bank"
+              placeholder="Bank"
               fullWidth
               required
               value={bankCode}
               onChange={(e) => setBankCode(e.target.value)}
               sx={centeredSelectSx}
-              SelectProps={{ IconComponent: () => null, ...centeredMenuProps }}
+              SelectProps={{ IconComponent: () => null, displayEmpty: true, ...centeredMenuProps }}
             >
+              <MenuItem value="" disabled>
+                Bank
+              </MenuItem>
               {banks.map((b) => (
                 <MenuItem key={b.code} value={b.code}>
                   {b.name}
@@ -117,7 +125,7 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
               ))}
             </TextField>
             <TextField
-              label="Account number"
+              placeholder="Account number"
               fullWidth
               required
               value={accountNumber}
@@ -126,7 +134,8 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
                 accountNumber && accountNumber.length !== 10 ? `${accountNumber.length}/10 digits` : "10-digit NUBAN account number"
               }
               error={accountNumber.length > 0 && accountNumber.length !== 10}
-              sx={centeredTextSx}
+              sx={centeredFieldSx}
+              {...centeredHelperProps}
             />
           </Stack>
           <Stack direction="row" justifyContent="center" sx={{ mt: 3 }}>
@@ -185,20 +194,24 @@ function WalletTab({ businessId, balanceNaira }) {
 
         <Box component="form" onSubmit={handleTopup}>
           <Stack spacing={2} alignItems="center">
+            {/* Naira sign embedded directly in the centered text itself,
+                rather than a separate left-aligned InputAdornment - that
+                looked off-center as a whole, since the adornment doesn't
+                move with the centered digits. */}
             <TextField
-              label="Amount to add (₦)"
+              placeholder="Amount to add (₦)"
               fullWidth
               required
               inputMode="numeric"
-              value={formatNaira(amount)}
+              value={amount ? `₦${formatNaira(amount)}` : ""}
               onChange={(e) => setAmount(stripToDigits(e.target.value))}
-              InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
-              sx={centeredTextSx}
+              sx={centeredFieldSx}
+              {...centeredHelperProps}
             />
             <Button type="submit" variant="contained" disabled={state.loading}>
               {state.loading ? <CircularProgress size={20} /> : "Add funds"}
             </Button>
-            <Typography variant="caption" sx={{ color: tokens.muted }}>
+            <Typography variant="caption" sx={{ color: tokens.muted, textAlign: "center" }}>
               Minimum ₦250,000
             </Typography>
           </Stack>
@@ -286,6 +299,7 @@ export default function AccountPage() {
   const [business, setBusiness] = useState(null);
   const [form, setForm] = useState({ fullName: "", phone: "", businessName: "", industry: "", website: "", logoUrl: "" });
   const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState(null);
   const [saveState, setSaveState] = useState({ loading: false, error: null, success: false });
 
   useEffect(() => {
@@ -321,7 +335,15 @@ export default function AccountPage() {
 
   async function handleLogoChange(e) {
     const file = e.target.files?.[0];
-    if (!file || !business?.id) return;
+    setLogoError(null);
+    if (!file) return;
+    // Previously failed completely silently here if no business existed
+    // yet - now shows a real, specific reason instead of just doing
+    // nothing when clicked.
+    if (!business?.id) {
+      setLogoError("Save your business name first, under the Business tab, before uploading a logo.");
+      return;
+    }
     setLogoUploading(true);
     try {
       const supabase = createClient();
@@ -331,7 +353,7 @@ export default function AccountPage() {
       const { data: publicUrlData } = supabase.storage.from("business-logos").getPublicUrl(path);
       setForm((f) => ({ ...f, logoUrl: publicUrlData.publicUrl }));
     } catch (err) {
-      setSaveState({ loading: false, error: `Logo upload failed: ${err.message}`, success: false });
+      setLogoError(err.message);
     } finally {
       setLogoUploading(false);
     }
@@ -388,21 +410,22 @@ export default function AccountPage() {
             <Divider sx={{ mb: 3 }} />
             <Stack spacing={2}>
               <TextField
-                label="Full name"
+                placeholder="Full name"
                 fullWidth
                 value={form.fullName}
                 onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
-                sx={centeredTextSx}
+                sx={centeredFieldSx}
+                {...centeredHelperProps}
               />
               <TextField
-                label="Phone number"
+                placeholder="Phone number - 08012345678"
                 fullWidth
-                placeholder="08012345678"
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) }))}
                 helperText={form.phone && form.phone.length !== 11 ? `${form.phone.length}/11 digits` : "11 digits, no +234 needed"}
                 error={form.phone.length > 0 && form.phone.length !== 11}
-                sx={centeredTextSx}
+                sx={centeredFieldSx}
+                {...centeredHelperProps}
               />
             </Stack>
           </Box>
@@ -416,6 +439,9 @@ export default function AccountPage() {
       {tab === 3 && (
         <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, borderColor: tokens.border }}>
           <Box sx={{ maxWidth: INNER_WIDTH, mx: "auto" }}>
+            {/* Mirrors the Account tab exactly: logo where the avatar was,
+                business name where the person's name was, website where
+                the email was. */}
             <Stack alignItems="center" spacing={1} sx={{ mb: 3 }}>
               <Box sx={{ position: "relative" }}>
                 <Avatar src={form.logoUrl || undefined} sx={{ width: 72, height: 72, bgcolor: "#F7F6F2", color: tokens.muted }}>
@@ -424,7 +450,7 @@ export default function AccountPage() {
                 <Button
                   component="label"
                   size="small"
-                  disabled={logoUploading || !business?.id}
+                  disabled={logoUploading}
                   sx={{
                     position: "absolute",
                     bottom: -4,
@@ -442,37 +468,50 @@ export default function AccountPage() {
                   <input type="file" accept="image/*" hidden onChange={handleLogoChange} />
                 </Button>
               </Box>
-              <Typography variant="caption" sx={{ color: tokens.muted }}>
-                Business logo
-              </Typography>
+              <Box sx={{ textAlign: "center" }}>
+                <Typography fontWeight={700}>{form.businessName || "Your business"}</Typography>
+                <Typography variant="body2" sx={{ color: tokens.muted }}>
+                  {form.website || "No website yet"}
+                </Typography>
+              </Box>
             </Stack>
+            {logoError && (
+              <Alert severity="error" sx={{ mb: 2 }} onClose={() => setLogoError(null)}>
+                {logoError}
+              </Alert>
+            )}
             <Divider sx={{ mb: 3 }} />
-            <Typography fontWeight={700} sx={{ mb: 1, textAlign: "center" }}>
-              Business profile
-            </Typography>
-            <Typography variant="body2" sx={{ color: tokens.muted, mb: 3, textAlign: "center" }}>
-              Required before you can create a campaign. Every Commission account can act as a business, an
-              affiliate, or both.
-            </Typography>
             <Stack spacing={2}>
               <TextField
-                label="Business name"
+                placeholder="Business name"
                 fullWidth
-                required
                 value={form.businessName}
                 onChange={(e) => setForm((f) => ({ ...f, businessName: e.target.value }))}
-                sx={centeredTextSx}
+                sx={centeredFieldSx}
+                {...centeredHelperProps}
               />
+              {/* Kept, not removed - industry isn't cosmetic. It's what
+                  identifies a real estate business specifically, which
+                  drives the physical-inspection PII-sharing rules,
+                  Interest/Intent Form disclosure line, and the manual
+                  sale-confirmation feature. Removing it would silently
+                  break all of that for real estate businesses. Website is
+                  the one that's purely informational - kept too, but
+                  genuinely optional. */}
               <TextField
                 select
-                label="Industry"
+                placeholder="Industry"
                 fullWidth
-                required
                 value={form.industry}
                 onChange={(e) => setForm((f) => ({ ...f, industry: e.target.value }))}
                 sx={centeredSelectSx}
-                SelectProps={{ IconComponent: () => null, ...centeredMenuProps }}
+                SelectProps={{ IconComponent: () => null, displayEmpty: true, ...centeredMenuProps }}
+                helperText="Determines real-estate-specific behavior elsewhere in the app"
+                {...centeredHelperProps}
               >
+                <MenuItem value="" disabled>
+                  Industry
+                </MenuItem>
                 {INDUSTRIES.map((i) => (
                   <MenuItem key={i} value={i}>
                     {i}
@@ -480,12 +519,13 @@ export default function AccountPage() {
                 ))}
               </TextField>
               <TextField
-                label="Website"
+                placeholder="Website"
                 fullWidth
                 value={form.website}
                 onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
                 helperText="Optional"
-                sx={centeredTextSx}
+                sx={centeredFieldSx}
+                {...centeredHelperProps}
               />
             </Stack>
           </Box>
