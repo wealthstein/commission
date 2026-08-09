@@ -41,7 +41,7 @@ export default function LeadShortForm({ programId, productName, businessName, lo
     }
   }
 
-  const centeredFieldSx = checkoutStyle ? { "& input": { textAlign: "center" } } : undefined;
+  const centeredFieldSx = checkoutStyle ? { "& input": { textAlign: "center", fontSize: 14 } } : undefined;
 
   if (state.whatsappRef) {
     return (
@@ -103,7 +103,7 @@ export default function LeadShortForm({ programId, productName, businessName, lo
       {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
 
       <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={checkoutStyle ? 2 : 1.5}>
+        <Stack spacing={checkoutStyle ? 1.25 : 1.5}>
           <TextField
             placeholder={checkoutStyle ? "Full name" : undefined}
             label={checkoutStyle ? undefined : "Full name"}
@@ -136,7 +136,7 @@ export default function LeadShortForm({ programId, productName, businessName, lo
             variant="contained"
             size="large"
             disabled={state.loading}
-            sx={checkoutStyle ? { py: 1.5, borderRadius: "12px" } : undefined}
+            sx={checkoutStyle ? { py: 1.5, mt: 0.5, borderRadius: "12px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 } : undefined}
           >
             {state.loading ? "Submitting…" : "Continue on WhatsApp"}
           </Button>
