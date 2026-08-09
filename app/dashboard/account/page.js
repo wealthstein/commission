@@ -17,12 +17,17 @@ import {
   Tabs,
   Tab,
   Chip,
-  Container,
 } from "@mui/material";
 import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
 import pricingPlans from "@/content/pricingPlans.json";
+
+// Every tab's card spans the page's real content width (matching the tab
+// bar above it) instead of being its own narrow island - the actual form
+// fields are centered inside a narrower inner column, which is different
+// from shrinking the whole card down.
+const INNER_WIDTH = 420;
 
 function BankConnectForm({ title, description, onSubmit, extraFields, submitLabel }) {
   const [banks, setBanks] = useState([]);
@@ -50,47 +55,37 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
   }
 
   return (
-    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
-      <Typography fontWeight={700} sx={{ mb: 0.5, textAlign: "center" }}>
-        {title}
-      </Typography>
-      <Typography variant="body2" sx={{ color: tokens.muted, mb: 2, textAlign: "center" }}>
-        {description}
-      </Typography>
+    <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
+      <Box sx={{ maxWidth: INNER_WIDTH, mx: "auto" }}>
+        <Typography fontWeight={700} sx={{ mb: 0.5, textAlign: "center" }}>
+          {title}
+        </Typography>
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 3, textAlign: "center" }}>
+          {description}
+        </Typography>
 
-      {state.success && <Alert severity="success" sx={{ mb: 2 }}>Verified: {state.success}</Alert>}
-      {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
+        {state.success && <Alert severity="success" sx={{ mb: 2 }}>Verified: {state.success}</Alert>}
+        {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
 
-      <Box component="form" onSubmit={handleSubmit}>
-        <Grid container spacing={2} justifyContent="center">
-          {extraFields?.map((f) => (
-            <Grid item xs={12} sm={6} key={f.name}>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Stack spacing={2}>
+            {extraFields?.map((f) => (
               <TextField
+                key={f.name}
                 label={f.label}
                 fullWidth
                 required
                 value={extra[f.name] || ""}
                 onChange={(e) => setExtra((x) => ({ ...x, [f.name]: e.target.value }))}
               />
-            </Grid>
-          ))}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              select
-              label="Bank"
-              fullWidth
-              required
-              value={bankCode}
-              onChange={(e) => setBankCode(e.target.value)}
-            >
+            ))}
+            <TextField select label="Bank" fullWidth required value={bankCode} onChange={(e) => setBankCode(e.target.value)}>
               {banks.map((b) => (
                 <MenuItem key={b.code} value={b.code}>
                   {b.name}
                 </MenuItem>
               ))}
             </TextField>
-          </Grid>
-          <Grid item xs={12} sm={6}>
             <TextField
               label="Account number"
               fullWidth
@@ -98,13 +93,13 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
               value={accountNumber}
               onChange={(e) => setAccountNumber(e.target.value)}
             />
-          </Grid>
-        </Grid>
-        <Stack direction="row" justifyContent="center" sx={{ mt: 2 }}>
-          <Button type="submit" variant="contained" disabled={state.loading || !bankCode || !accountNumber}>
-            {state.loading ? <CircularProgress size={20} /> : submitLabel}
-          </Button>
-        </Stack>
+          </Stack>
+          <Stack direction="row" justifyContent="center" sx={{ mt: 3 }}>
+            <Button type="submit" variant="contained" disabled={state.loading || !bankCode || !accountNumber}>
+              {state.loading ? <CircularProgress size={20} /> : submitLabel}
+            </Button>
+          </Stack>
+        </Box>
       </Box>
     </Paper>
   );
@@ -132,42 +127,45 @@ function WalletTab({ businessId, balanceNaira }) {
   }
 
   return (
-    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, maxWidth: 560, mx: "auto" }}>
-      <Typography fontWeight={700} sx={{ mb: 0.5, textAlign: "center" }}>
-        Campaign wallet
-      </Typography>
-      <Typography variant="body2" sx={{ color: tokens.muted, mb: 2, textAlign: "center" }}>
-        Commission deducts from this balance automatically whenever a lead is qualified or a sale is verified — top it up
-        anytime via Paystack.
-      </Typography>
-
-      <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: "#F7F6F2", mb: 2.5, textAlign: "center" }}>
-        <Typography variant="caption" sx={{ color: tokens.muted }}>
-          Current balance
+    <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, borderColor: tokens.border }}>
+      <Box sx={{ maxWidth: INNER_WIDTH, mx: "auto", textAlign: "center" }}>
+        <Typography fontWeight={700} sx={{ mb: 0.5 }}>
+          Campaign wallet
         </Typography>
-        <Typography variant="h4" sx={{ fontSize: 30 }}>
-          ₦{balanceNaira.toLocaleString()}
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 3 }}>
+          Commission deducts from this balance automatically whenever a lead is qualified or a sale is verified — top
+          it up anytime via Paystack.
         </Typography>
-      </Box>
 
-      {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
+        <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: "#F7F6F2", mb: 3 }}>
+          <Typography variant="caption" sx={{ color: tokens.muted }}>
+            Current balance
+          </Typography>
+          <Typography variant="h4" sx={{ fontSize: 30 }}>
+            ₦{balanceNaira.toLocaleString()}
+          </Typography>
+        </Box>
 
-      <Box component="form" onSubmit={handleTopup}>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} justifyContent="center">
-          <TextField
-            label="Amount to add (₦)"
-            type="number"
-            size="small"
-            fullWidth
-            required
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            helperText="Minimum ₦250,000"
-          />
-          <Button type="submit" variant="contained" disabled={state.loading} sx={{ flexShrink: 0 }}>
-            {state.loading ? <CircularProgress size={20} /> : "Add funds"}
-          </Button>
-        </Stack>
+        {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
+
+        <Box component="form" onSubmit={handleTopup}>
+          <Stack spacing={2} alignItems="center">
+            <TextField
+              label="Amount to add (₦)"
+              type="number"
+              fullWidth
+              required
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+            <Button type="submit" variant="contained" disabled={state.loading}>
+              {state.loading ? <CircularProgress size={20} /> : "Add funds"}
+            </Button>
+            <Typography variant="caption" sx={{ color: tokens.muted }}>
+              Minimum ₦250,000
+            </Typography>
+          </Stack>
+        </Box>
       </Box>
     </Paper>
   );
@@ -175,14 +173,14 @@ function WalletTab({ businessId, balanceNaira }) {
 
 function SubscriptionsTab({ currentPlanId }) {
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto" }}>
+    <Box>
       <Typography fontWeight={700} sx={{ mb: 0.5, textAlign: "center" }}>
         Your plan
       </Typography>
       <Typography variant="body2" sx={{ color: tokens.muted, mb: 3, textAlign: "center" }}>
         Your platform fee and campaign limits are based on this plan.
       </Typography>
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         {pricingPlans.plans.map((plan) => {
           const isCurrent = plan.id === (currentPlanId || "free");
           return (
@@ -190,7 +188,7 @@ function SubscriptionsTab({ currentPlanId }) {
               <Paper
                 variant="outlined"
                 sx={{
-                  p: 2.5,
+                  p: 3,
                   borderRadius: 3,
                   height: "100%",
                   textAlign: "center",
@@ -265,9 +263,6 @@ export default function AccountPage() {
       if (!uRow) return;
       setUserRow(uRow);
 
-      // Explicitly scoped to this user's own business - unlike the earlier
-      // .limit(1) in campaigns/new, which grabbed whichever business
-      // happened to be first in the table.
       const { data: biz } = await supabase
         .from("businesses")
         .select("id, plan, name, industry, website, wallet_balance_naira")
@@ -275,11 +270,9 @@ export default function AccountPage() {
         .maybeSingle();
       setBusiness(biz || null);
 
-      // fullName is a real controlled field now - it used to be an
-      // uncontrolled defaultValue, which is exactly why the floating
-      // label could end up overlapping the typed text: MUI's label-shrink
-      // detection tracks a controlled value's presence, and defaultValue
-      // bypasses that entirely.
+      // fullName is a real controlled field - it used to be an uncontrolled
+      // defaultValue, which is exactly why the floating label could end up
+      // overlapping the typed text.
       setForm({
         fullName: uRow.full_name || authUser.user_metadata?.full_name || "",
         phone: uRow.phone || "",
@@ -325,13 +318,13 @@ export default function AccountPage() {
       </Tabs>
 
       {tab === 0 && (
-        <Container maxWidth="sm" disableGutters>
-          <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border }}>
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="center" sx={{ mb: 3 }}>
-              <Avatar src={user?.user_metadata?.avatar_url} sx={{ width: 56, height: 56, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700 }}>
+        <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, borderColor: tokens.border }}>
+          <Box sx={{ maxWidth: INNER_WIDTH, mx: "auto" }}>
+            <Stack alignItems="center" spacing={1} sx={{ mb: 3 }}>
+              <Avatar src={user?.user_metadata?.avatar_url} sx={{ width: 72, height: 72, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700, fontSize: 28 }}>
                 {(form.fullName || user?.email || "?").charAt(0).toUpperCase()}
               </Avatar>
-              <Box>
+              <Box sx={{ textAlign: "center" }}>
                 <Typography fontWeight={700}>Signed in with Google</Typography>
                 <Typography variant="body2" sx={{ color: tokens.muted }}>
                   {user?.email || "…"}
@@ -339,7 +332,7 @@ export default function AccountPage() {
               </Box>
             </Stack>
             <Divider sx={{ mb: 3 }} />
-            <Stack spacing={2} alignItems="center">
+            <Stack spacing={2}>
               <TextField
                 label="Full name"
                 fullWidth
@@ -356,29 +349,25 @@ export default function AccountPage() {
                 error={form.phone.length > 0 && form.phone.length !== 11}
               />
             </Stack>
-          </Paper>
-        </Container>
+          </Box>
+        </Paper>
       )}
 
-      {tab === 1 && (
-        <Container maxWidth="sm" disableGutters>
-          <WalletTab businessId={business?.id} balanceNaira={business?.wallet_balance_naira || 0} />
-        </Container>
-      )}
+      {tab === 1 && <WalletTab businessId={business?.id} balanceNaira={business?.wallet_balance_naira || 0} />}
 
       {tab === 2 && <SubscriptionsTab currentPlanId={business?.plan} />}
 
       {tab === 3 && (
-        <Container maxWidth="sm" disableGutters>
-          <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border }}>
+        <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, borderColor: tokens.border }}>
+          <Box sx={{ maxWidth: INNER_WIDTH, mx: "auto" }}>
             <Typography fontWeight={700} sx={{ mb: 1, textAlign: "center" }}>
               Business profile
             </Typography>
-            <Typography variant="body2" sx={{ color: tokens.muted, mb: 2, textAlign: "center" }}>
+            <Typography variant="body2" sx={{ color: tokens.muted, mb: 3, textAlign: "center" }}>
               Required before you can create a campaign. Every Commission account can act as a business, an
               affiliate, or both.
             </Typography>
-            <Stack spacing={2} alignItems="center">
+            <Stack spacing={2}>
               <TextField
                 label="Business name"
                 fullWidth
@@ -401,12 +390,12 @@ export default function AccountPage() {
                 helperText="Optional"
               />
             </Stack>
-          </Paper>
-        </Container>
+          </Box>
+        </Paper>
       )}
 
       {tab === 4 && (
-        <Container maxWidth="sm" disableGutters>
+        <>
           <BankConnectForm
             title="Affiliate payout bank account"
             description="Where Paystack sends your affiliate commission payouts."
@@ -443,10 +432,10 @@ export default function AccountPage() {
               return data;
             }}
           />
-        </Container>
+        </>
       )}
 
-      <Box sx={{ maxWidth: 560, mx: "auto", mt: 2 }}>
+      <Box sx={{ maxWidth: INNER_WIDTH, mx: "auto", mt: 3 }}>
         {saveState.error && <Alert severity="error" sx={{ mb: 2 }}>{saveState.error}</Alert>}
         {saveState.success && <Alert severity="success" sx={{ mb: 2 }}>Saved</Alert>}
       </Box>
