@@ -7,7 +7,7 @@ import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { tokens } from "@/lib/theme";
 
-export default function LeadShortForm({ programId, productName, businessName, checkoutStyle = false }) {
+export default function LeadShortForm({ programId, productName, businessName, logoUrl, checkoutStyle = false }) {
   const [form, setForm] = useState({ fullName: "", phone: "", email: "" });
   const [state, setState] = useState({ loading: false, error: null, whatsappLink: null, whatsappRef: null });
 
@@ -87,9 +87,17 @@ export default function LeadShortForm({ programId, productName, businessName, ch
         </>
       )}
       {checkoutStyle && (
-        <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 2, textAlign: "center" }}>
-          Get started with {businessName || "us"}
-        </Typography>
+        <>
+          {logoUrl && (
+            <Box sx={{ textAlign: "center", mb: 1.5 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={logoUrl} alt="" style={{ height: 32, width: 32, borderRadius: 6, objectFit: "cover" }} />
+            </Box>
+          )}
+          <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 2, textAlign: "center" }}>
+            Get started with {businessName || "Commission"}
+          </Typography>
+        </>
       )}
 
       {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
@@ -109,7 +117,9 @@ export default function LeadShortForm({ programId, productName, businessName, ch
             label={checkoutStyle ? undefined : "Phone number"}
             required
             value={form.phone}
-            onChange={(e) => update("phone", e.target.value)}
+            onChange={(e) => update("phone", e.target.value.replace(/[^0-9]/g, "").slice(0, 11))}
+            helperText={form.phone && form.phone.length !== 11 ? `${form.phone.length}/11 digits` : checkoutStyle ? "11 digits, no +234 needed" : undefined}
+            error={form.phone.length > 0 && form.phone.length !== 11}
             sx={centeredFieldSx}
           />
           <TextField
