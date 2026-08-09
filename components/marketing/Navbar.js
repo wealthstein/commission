@@ -91,11 +91,15 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
 
         {/* Routes to the sign-in page - if this Google account has no
             existing row, the callback bounces to /signup instead (see
-            app/api/auth/callback). No more scroll-to-form behavior. */}
+            app/api/auth/callback). No more scroll-to-form behavior. Role
+            passed through as the currently selected audience, so
+            intended_role is never left null for someone using this
+            generic navbar button instead of an audience-specific
+            SignUpButton elsewhere on the page. */}
         <Button
           variant="contained"
           component={Link}
-          href="/signin"
+          href={`/signin?role=${audience}`}
           sx={{ display: { xs: "none", sm: "inline-flex" } }}
         >
           Get started

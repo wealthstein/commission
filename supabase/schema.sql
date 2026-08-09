@@ -524,7 +524,7 @@ create table if not exists campaign_custom_fields (
   id                    uuid primary key default gen_random_uuid(),
   affiliate_program_id  uuid not null references affiliate_programs(id) on delete cascade,
   label                 text not null,
-  field_type            text not null default 'text' check (field_type in ('text', 'select')),
+  field_type            text not null default 'text' check (field_type in ('text', 'select', 'price')),
   -- Only used when field_type = 'select' - a JSON array of option strings.
   options               jsonb,
   required              boolean not null default false,
@@ -910,6 +910,28 @@ create policy products_owner_manage on products for all
   using (business_id in (
     select id from businesses where owner_id in (select id from users where auth_user_id = auth.uid())
   ));
+
+-- Affiliate programs: publicly readable when active (Discover needs this),
+-- owner (or an active team admin) can manage. RLS was enabled on this
+-- table but these policies were never added - every insert was silently
+-- blocked by Postgres's default-deny behavior until this was added.
+drop policy if exists affiliate_programs_public_read on affiliate_programs;
+create policy affiliate_programs_public_read on affiliate_programs for select using (status = 'active');
+drop policy if exists affiliate_programs_owner_manage on affiliate_programs;
+create policy affiliate_programs_owner_manage on affiliate_programs for all
+  using (
+    product_id in (
+      select p.id from products p
+      join businesses b on b.id = p.business_id
+      where b.owner_id in (select id from users where auth_user_id = auth.uid())
+      union
+      select p.id from products p
+      where p.business_id in (
+        select business_id from business_team_members
+        where user_id in (select id from users where auth_user_id = auth.uid()) and status = 'active'
+      )
+    )
+  );
 
 -- Affiliate enrollments: an affiliate can see their own; program owner can see all enrollments in their program
 drop policy if exists enrollments_self_select on affiliate_enrollments;

@@ -2,8 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Paper, Box, Typography, TextField, Button, Stack, Alert, MenuItem } from "@mui/material";
+import { Paper, Box, Typography, TextField, Button, Stack, Alert, MenuItem, InputAdornment } from "@mui/material";
 import { tokens } from "@/lib/theme";
+
+// Same thousand-separator treatment as the campaign builder's naira
+// fields - the answer stored/submitted is the raw digit string, this is
+// display formatting only.
+function formatNaira(rawDigits) {
+  if (!rawDigits) return "";
+  return Number(rawDigits).toLocaleString("en-US");
+}
+function stripToDigits(value) {
+  return value.replace(/[^0-9]/g, "");
+}
 
 export default function LeadLongForm({ whatsappRef, productName, customFields = [], sharesContactWithAffiliate = false }) {
   const router = useRouter();
@@ -89,6 +100,15 @@ export default function LeadLongForm({ whatsappRef, productName, customFields = 
                   </MenuItem>
                 ))}
               </TextField>
+            ) : f.field_type === "price" ? (
+              <TextField
+                key={f.id}
+                label={f.label}
+                required={f.required}
+                value={formatNaira(customAnswers[f.id] || "")}
+                onChange={(e) => updateCustom(f.id, stripToDigits(e.target.value))}
+                InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
+              />
             ) : (
               <TextField
                 key={f.id}

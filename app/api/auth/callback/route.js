@@ -62,7 +62,16 @@ export async function GET(req) {
       // This Google account has never been through Commission before -
       // /signin should not silently create one. Send them to /signup,
       // which will create it properly on the next Google click.
-      return NextResponse.redirect(new URL("/signup", url.origin));
+      //
+      // role/sourcePage preserved here - this redirect used to drop them
+      // entirely, which is the confirmed cause of intended_role coming
+      // back null for anyone routed through /signin first (e.g. the
+      // navbar's generic "Get started" button) rather than landing on
+      // /signup directly.
+      const signupUrl = new URL("/signup", url.origin);
+      if (role) signupUrl.searchParams.set("role", role);
+      if (sourcePage) signupUrl.searchParams.set("source_page", sourcePage);
+      return NextResponse.redirect(signupUrl);
     }
     return NextResponse.redirect(new URL(alwaysHonorNext || existing.access_granted ? next : "/welcome", url.origin));
   }

@@ -19,6 +19,14 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
 
+// Matches content/pricingPlans.json exactly - kept here as a small local
+// lookup since this page just needs the name/fee, not the full feature list.
+const PLAN_LABELS = {
+  free: { name: "Small", feePercent: 20 },
+  pro: { name: "Medium", feePercent: 15 },
+  plus: { name: "Large", feePercent: 10 },
+};
+
 function BankConnectForm({ title, description, onSubmit, extraFields, submitLabel }) {
   const [banks, setBanks] = useState([]);
   const [bankCode, setBankCode] = useState("");
@@ -255,6 +263,28 @@ export default function AccountPage() {
             <TextField label="Phone number" fullWidth value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
           </Grid>
         </Grid>
+      </Paper>
+
+      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
+        <Typography fontWeight={700} sx={{ mb: 0.5 }}>
+          Your plan
+        </Typography>
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+          Your platform fee and campaign limits are based on this plan.
+        </Typography>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" spacing={2}>
+          <Box>
+            <Typography variant="h5" fontWeight={800}>
+              {PLAN_LABELS[business?.plan]?.name || "Small"}
+            </Typography>
+            <Typography variant="body2" sx={{ color: tokens.muted }}>
+              {PLAN_LABELS[business?.plan]?.feePercent ?? 20}% platform fee on every wallet top-up
+            </Typography>
+          </Box>
+          <Button variant="outlined" href="/#pricing" target="_blank">
+            View or change plan
+          </Button>
+        </Stack>
       </Paper>
 
       <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>

@@ -17,6 +17,12 @@ import {
   IconButton,
   Checkbox,
   FormControlLabel,
+  Tooltip,
+  InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import LaptopMacRoundedIcon from "@mui/icons-material/LaptopMacRounded";
@@ -24,17 +30,22 @@ import PersonSearchRoundedIcon from "@mui/icons-material/PersonSearchRounded";
 import ShoppingBagRoundedIcon from "@mui/icons-material/ShoppingBagRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
 import { categoriesForType } from "@/lib/categories";
 import { TIER_RATIOS } from "@/lib/commissionEngine";
 
-// Custom Questions cap, plan-based (subscriptions are back). Cumulative:
-// Small gets 3, Medium gets 2 more on top (5 total), Large gets 3 more on
-// top of that (8 total) - see content/pricingPlans.json for the same
-// numbers stated to the person.
-const CUSTOM_FIELD_CAP = { free: 3, pro: 5, plus: 8 };
+// Custom Questions cap, plan-based. Small: 1, Medium: 3, Large: 5.
+const CUSTOM_FIELD_CAP = { free: 1, pro: 3, plus: 5 };
+
+// Sane ceilings on naira fields, to prevent obviously abusive values (not
+// a business-logic limit, just a guard rail). Generous enough that no
+// legitimate real estate or high-ticket listing should ever hit them.
+const MAX_PRICE_NAIRA = 500_000_000;
+const MAX_COST_PER_LEAD_NAIRA = 1_000_000;
 
 const BILLING = [
   { value: "one_time", label: "One-time" },
@@ -62,11 +73,115 @@ const DEFAULTS = {
   total_commission_percent: 10,
 };
 
+// Realistic worked examples for the "View sample campaign" preview -
+// different content depending on which conversion goal is selected, so
+// the preview always matches what the person is actually about to build.
+const SAMPLE_CAMPAIGNS = {
+  lead: {
+    name: "CareLink HMO Plan",
+    category: "Insurance",
+    price: "85,000",
+    description: "Individual HMO plan covering outpatient, inpatient, and maternity care across 200+ hospitals in Nigeria.",
+    cost_per_qualified_lead: "5,000",
+    whatsapp_number: "+234 801 234 5678",
+  },
+  sale: {
+    name: "3-Bedroom Duplex, Lekki Phase 1",
+    category: "Real Estate",
+    price: "45,000,000",
+    description: "Newly built 3-bedroom duplex with BQ, secure estate, 24-hour power - ready for immediate inspection.",
+    total_commission_percent: 12,
+  },
+};
+
+// Formats a raw digit string for display with thousand separators - the
+// actual form state stores only the raw digits, this is display-only.
+function formatNaira(rawDigits) {
+  if (!rawDigits) return "";
+  return Number(rawDigits).toLocaleString("en-US");
+}
+function stripToDigits(value) {
+  return value.replace(/[^0-9]/g, "");
+}
+
+// Small reusable label - every field gets one of these instead of a plain
+// MUI label, so there is always a hoverable info icon with a real example,
+// not just a bare field name.
+function FieldLabel({ text, tooltip }) {
+  return (
+    <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mb: 0.75 }}>
+      <Typography variant="body2" fontWeight={600}>
+        {text}
+      </Typography>
+      <Tooltip title={tooltip} arrow placement="top">
+        <InfoOutlinedIcon sx={{ fontSize: 15, color: tokens.muted, cursor: "help" }} />
+      </Tooltip>
+    </Stack>
+  );
+}
+
+function SampleCampaignDialog({ open, onClose, isLead }) {
+  const sample = isLead ? SAMPLE_CAMPAIGNS.lead : SAMPLE_CAMPAIGNS.sale;
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>
+        Sample {isLead ? "lead" : "sale"} campaign
+        <Typography variant="body2" sx={{ color: tokens.muted, fontWeight: 400, mt: 0.5 }}>
+          A realistic example, filled in exactly how a real campaign would look.
+        </Typography>
+      </DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          <Box>
+            <Typography variant="caption" sx={{ color: tokens.muted }}>Campaign name</Typography>
+            <Typography fontWeight={700}>{sample.name}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: tokens.muted }}>Category</Typography>
+            <Typography fontWeight={700}>{sample.category}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: tokens.muted }}>Price</Typography>
+            <Typography fontWeight={700}>₦{sample.price}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: tokens.muted }}>Description</Typography>
+            <Typography variant="body2">{sample.description}</Typography>
+          </Box>
+          {isLead ? (
+            <>
+              <Box>
+                <Typography variant="caption" sx={{ color: tokens.muted }}>Cost per Intent Qualified Lead</Typography>
+                <Typography fontWeight={700}>₦{sample.cost_per_qualified_lead}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: tokens.muted }}>WhatsApp number</Typography>
+                <Typography fontWeight={700}>{sample.whatsapp_number}</Typography>
+              </Box>
+            </>
+          ) : (
+            <Box>
+              <Typography variant="caption" sx={{ color: tokens.muted }}>Total commission</Typography>
+              <Typography fontWeight={700}>{sample.total_commission_percent}%</Typography>
+            </Box>
+          )}
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button onClick={onClose} variant="contained">
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 export default function NewCampaignPage() {
   const [form, setForm] = useState(DEFAULTS);
   const [status, setStatus] = useState({ loading: false, error: null, success: false });
   const [customFields, setCustomFields] = useState([]);
   const [plan, setPlan] = useState(null);
+  const [showSample, setShowSample] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -83,13 +198,34 @@ export default function NewCampaignPage() {
 
   function addCustomField() {
     if (customFields.length >= fieldCap) return;
-    setCustomFields((f) => [...f, { label: "", field_type: "text", options: "", required: false }]);
+    setCustomFields((f) => [...f, { label: "", field_type: "text", options: [""], required: false }]);
   }
   function updateCustomField(i, patch) {
     setCustomFields((f) => f.map((field, idx) => (idx === i ? { ...field, ...patch } : field)));
   }
   function removeCustomField(i) {
     setCustomFields((f) => f.filter((_, idx) => idx !== i));
+  }
+  function addDropdownOption(fieldIndex) {
+    setCustomFields((f) =>
+      f.map((field, idx) => (idx === fieldIndex ? { ...field, options: [...field.options, ""] } : field))
+    );
+  }
+  function updateDropdownOption(fieldIndex, optionIndex, value) {
+    setCustomFields((f) =>
+      f.map((field, idx) =>
+        idx === fieldIndex
+          ? { ...field, options: field.options.map((o, oi) => (oi === optionIndex ? value : o)) }
+          : field
+      )
+    );
+  }
+  function removeDropdownOption(fieldIndex, optionIndex) {
+    setCustomFields((f) =>
+      f.map((field, idx) =>
+        idx === fieldIndex ? { ...field, options: field.options.filter((_, oi) => oi !== optionIndex) } : field
+      )
+    );
   }
 
   const isPhysical = form.product_type === "physical";
@@ -98,6 +234,9 @@ export default function NewCampaignPage() {
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+  function updateNairaField(field, displayValue) {
+    update(field, stripToDigits(displayValue));
   }
 
   function selectConversionGoal(goal) {
@@ -122,6 +261,10 @@ export default function NewCampaignPage() {
     }
     if (isLead && !form.cost_per_qualified_lead) {
       setStatus({ loading: false, error: "Set a cost per Intent Qualified Lead for a lead campaign.", success: false });
+      return;
+    }
+    if (customFields.some((f) => f.field_type === "select" && f.options.filter((o) => o.trim()).length < 2)) {
+      setStatus({ loading: false, error: "Every dropdown question needs at least 2 options.", success: false });
       return;
     }
 
@@ -155,9 +298,9 @@ export default function NewCampaignPage() {
         businessId = newBusiness.id;
       }
 
-      // 2. Create the product. Customers always pay you directly (product_url,
-      // offline_payment_instructions) regardless of physical vs digital —
-      // that toggle now only affects which categories are available.
+      // 2. Create the product/campaign. Customers always pay you directly
+      // (product_url, offline_payment_instructions) regardless of physical
+      // vs digital — that toggle only affects which categories are available.
       const { data: product, error: productError } = await supabase
         .from("products")
         .insert({
@@ -175,7 +318,15 @@ export default function NewCampaignPage() {
         })
         .select()
         .single();
-      if (productError) throw productError;
+      if (productError) {
+        // Postgres's raw unique-constraint message isn't something a
+        // business user should have to parse - the field itself now also
+        // carries a warning, this is the fallback if they hit it anyway.
+        if (productError.code === "23505") {
+          throw new Error("You already have a campaign with this exact name. Choose a different name and try again.");
+        }
+        throw productError;
+      }
 
       // 3. Launch the campaign. A lead campaign has no "commission_type" —
       // there is nothing to recur, only sale-goal campaigns can be recurring.
@@ -206,16 +357,17 @@ export default function NewCampaignPage() {
         .single();
       if (programError) throw programError;
 
-      // 4. Custom Questions (Medium/Large only) - the business's own Long
-      // Form fields for this specific campaign. Only meaningful for
-      // lead-goal campaigns, which are the only ones with a Intent Form at all.
+      // 4. Custom Questions - the business's own Intent Form fields for
+      // this specific campaign. Only meaningful for lead-goal campaigns,
+      // which are the only ones with an Intent Form at all. Dropdown
+      // options are now real separate strings, not a comma-joined blob.
       if (isLead && customFields.length > 0) {
         const { error: fieldsError } = await supabase.from("campaign_custom_fields").insert(
           customFields.map((f, i) => ({
             affiliate_program_id: program.id,
             label: f.label,
             field_type: f.field_type,
-            options: f.field_type === "select" ? f.options.split(",").map((o) => o.trim()).filter(Boolean) : null,
+            options: f.field_type === "select" ? f.options.map((o) => o.trim()).filter(Boolean) : null,
             required: f.required,
             display_order: i,
           }))
@@ -228,6 +380,9 @@ export default function NewCampaignPage() {
       // In production, move this insert into a server Route Handler instead
       // of doing it client-side, and have that route call revalidatePath()
       // directly (see app/api/revalidate/route.js) right after the insert.
+      // TODO: redirect to the campaign's own detail page once it exists
+      // (see the products -> campaigns rename discussion) instead of
+      // just showing a success banner in place.
     } catch (err) {
       setStatus({ loading: false, error: err.message, success: false });
     }
@@ -235,7 +390,19 @@ export default function NewCampaignPage() {
 
   return (
     <>
-      <PageHeader title="New campaign" subtitle="List what you're selling and launch its affiliate program in one step." />
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
+        <PageHeader title="New campaign" subtitle="List what you're selling and launch its affiliate program in one step." />
+        <Button
+          variant="outlined"
+          startIcon={<VisibilityRoundedIcon />}
+          onClick={() => setShowSample(true)}
+          sx={{ flexShrink: 0, mt: { xs: 0, sm: 1 } }}
+        >
+          View sample campaign
+        </Button>
+      </Stack>
+
+      <SampleCampaignDialog open={showSample} onClose={() => setShowSample(false)} isLead={isLead} />
 
       {status.success && <Alert severity="success" sx={{ mb: 3 }}>Campaign published.</Alert>}
       {status.error && <Alert severity="error" sx={{ mb: 3 }}>{status.error}</Alert>}
@@ -303,7 +470,7 @@ export default function NewCampaignPage() {
                 <Typography fontWeight={700}>Leads</Typography>
               </Stack>
               <Typography variant="caption" sx={{ color: isLead ? tokens.brandInk : tokens.muted, textAlign: "left" }}>
-                Visitor fills a interest form, gets a WhatsApp link, you qualify them when ready. You pay a flat amount per
+                Visitor fills an interest form, gets a WhatsApp link, you qualify them when ready. You pay a flat amount per
                 Intent Qualified Lead — deducted from your campaign wallet.
               </Typography>
             </ToggleButton>
@@ -337,10 +504,21 @@ export default function NewCampaignPage() {
           </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={8}>
-              <TextField label="Campaign name" fullWidth required value={form.name} onChange={(e) => update("name", e.target.value)} />
+              <FieldLabel
+                text="Campaign name"
+                tooltip='What this campaign is called - shown to affiliates and on your campaign page. Must be unique across your own campaigns. Example: "CareLink HMO Plan" or "3-Bedroom Duplex, Lekki Phase 1".'
+              />
+              <TextField
+                fullWidth
+                required
+                value={form.name}
+                onChange={(e) => update("name", e.target.value)}
+                helperText="Must be different from any other campaign name you've already used."
+              />
             </Grid>
             <Grid item xs={12} sm={4}>
-              <TextField select label="Category" fullWidth required value={form.category} onChange={(e) => update("category", e.target.value)}>
+              <FieldLabel text="Category" tooltip="The category your campaign is listed under in Discover, so affiliates can find it. Example: Insurance, Real Estate, Fintech." />
+              <TextField select fullWidth required value={form.category} onChange={(e) => update("category", e.target.value)}>
                 {categoryOptions.map((c) => (
                   <MenuItem key={c.slug} value={c.label}>
                     {c.label}
@@ -349,8 +527,11 @@ export default function NewCampaignPage() {
               </TextField>
             </Grid>
             <Grid item xs={12}>
+              <FieldLabel
+                text="Description"
+                tooltip='A short, clear description shown to affiliates and prospects. Example: "Individual HMO plan covering outpatient, inpatient, and maternity care across 200+ hospitals in Nigeria."'
+              />
               <TextField
-                label="Description"
                 fullWidth
                 multiline
                 minRows={2}
@@ -359,22 +540,30 @@ export default function NewCampaignPage() {
               />
             </Grid>
             <Grid item xs={12} sm={4}>
+              <FieldLabel
+                text="Price (₦)"
+                tooltip='The price shown to customers on your campaign page - separate from what you pay Commission per lead or sale, which is set further below. Example: "85,000" for an HMO plan, "45,000,000" for a property.'
+              />
               <TextField
-                label="Price (₦)"
-                type="number"
                 fullWidth
                 required
-                value={form.price}
-                onChange={(e) => update("price", e.target.value)}
-                helperText={isLead ? "Shown on your Campaign Page — not what you are billed for leads" : undefined}
+                value={formatNaira(form.price)}
+                onChange={(e) => updateNairaField("price", e.target.value)}
+                InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
+                helperText={
+                  Number(form.price) > MAX_PRICE_NAIRA
+                    ? `Maximum ₦${MAX_PRICE_NAIRA.toLocaleString()}`
+                    : "The price customers see - not what Commission charges you"
+                }
+                error={Number(form.price) > MAX_PRICE_NAIRA}
               />
             </Grid>
 
             {!isPhysical && (
               <Grid item xs={12} sm={4}>
+                <FieldLabel text="Billing frequency" tooltip="How often the customer is charged for this product. Example: Monthly for a subscription, One-time for a single purchase." />
                 <TextField
                   select
-                  label="Billing frequency"
                   fullWidth
                   value={form.billing_frequency}
                   onChange={(e) => update("billing_frequency", e.target.value)}
@@ -389,8 +578,11 @@ export default function NewCampaignPage() {
             )}
 
             <Grid item xs={12} sm={isPhysical ? 8 : 4}>
+              <FieldLabel
+                text="Where customers buy"
+                tooltip='The link or number customers use to actually complete their purchase - your website, a WhatsApp number, or a store link. Example: "https://wa.me/2348012345678" or "https://yoursite.com/checkout".'
+              />
               <TextField
-                label="Where customers buy (your site, WhatsApp, store)"
                 fullWidth
                 required
                 placeholder="https://wa.me/234... or https://yoursite.com"
@@ -400,15 +592,18 @@ export default function NewCampaignPage() {
             </Grid>
 
             <Grid item xs={12}>
+              <FieldLabel
+                text="Payment & sale verification instructions"
+                tooltip='Shown on your campaign page so customers know how payment works, and used when you confirm a sale manually. Example: "Bank transfer to Zenith Bank 0123456789. We will ask for a receipt or order reference when confirming a sale."'
+              />
               <TextField
-                label="Payment & sale verification instructions"
                 fullWidth
                 multiline
                 minRows={2}
                 placeholder="e.g. Bank transfer to Zenith Bank 0123456789. We will ask for a receipt or order reference when confirming a sale."
                 value={form.offline_payment_instructions}
                 onChange={(e) => update("offline_payment_instructions", e.target.value)}
-                helperText="Shown on your Campaign Page. Customers always pay you directly — Commission never touches this money."
+                helperText="Shown on your campaign page. Customers always pay you directly — Commission never touches this money."
               />
             </Grid>
           </Grid>
@@ -422,19 +617,30 @@ export default function NewCampaignPage() {
           {isLead ? (
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
+                <FieldLabel
+                  text="Cost per Intent Qualified Lead (₦)"
+                  tooltip='What you pay, from your Campaign Wallet, every time a lead qualifies through this campaign. Example: "5,000" for an HMO plan, "20,000" for a real estate inspection request.'
+                />
                 <TextField
-                  label="Cost per Intent Qualified Lead (₦)"
-                  type="number"
                   fullWidth
                   required
-                  value={form.cost_per_qualified_lead}
-                  onChange={(e) => update("cost_per_qualified_lead", e.target.value)}
-                  helperText="Deducted from your wallet each time you mark a lead qualified"
+                  value={formatNaira(form.cost_per_qualified_lead)}
+                  onChange={(e) => updateNairaField("cost_per_qualified_lead", e.target.value)}
+                  InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
+                  helperText={
+                    Number(form.cost_per_qualified_lead) > MAX_COST_PER_LEAD_NAIRA
+                      ? `Maximum ₦${MAX_COST_PER_LEAD_NAIRA.toLocaleString()} per lead`
+                      : "Deducted from your wallet each time a lead qualifies"
+                  }
+                  error={Number(form.cost_per_qualified_lead) > MAX_COST_PER_LEAD_NAIRA}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
+                <FieldLabel
+                  text="WhatsApp number for this campaign"
+                  tooltip='The number leads message after the interest form - leave blank to use your business default. Example: "+234 801 234 5678".'
+                />
                 <TextField
-                  label="WhatsApp number for this campaign"
                   fullWidth
                   placeholder="+234..."
                   value={form.whatsapp_number}
@@ -461,65 +667,91 @@ export default function NewCampaignPage() {
               same as name and phone. Commission never stores the answers, only these question definitions.
             </Typography>
 
-            <Stack spacing={2} sx={{ mb: 2 }}>
-                  {customFields.map((f, i) => (
-                    <Stack key={i} direction="row" spacing={1.5} alignItems="flex-start">
-                      <TextField
-                        label="Question"
-                        size="small"
-                        fullWidth
-                        value={f.label}
-                        onChange={(e) => updateCustomField(i, { label: e.target.value })}
-                      />
-                      <TextField
-                        select
-                        label="Type"
-                        size="small"
-                        sx={{ minWidth: 110 }}
-                        value={f.field_type}
-                        onChange={(e) => updateCustomField(i, { field_type: e.target.value })}
-                      >
-                        <MenuItem value="text">Text</MenuItem>
-                        <MenuItem value="select">Dropdown</MenuItem>
-                      </TextField>
-                      {f.field_type === "select" && (
-                        <TextField
-                          label="Options (comma-separated)"
+            <Stack spacing={2.5} sx={{ mb: 2 }}>
+              {customFields.map((f, i) => (
+                <Paper key={i} variant="outlined" sx={{ p: 2, borderRadius: 2, borderColor: tokens.border, bgcolor: "#FAFAF8" }}>
+                  <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ mb: f.field_type === "select" ? 1.5 : 0 }}>
+                    <TextField
+                      label="Question"
+                      size="small"
+                      fullWidth
+                      value={f.label}
+                      onChange={(e) => updateCustomField(i, { label: e.target.value })}
+                    />
+                    <TextField
+                      select
+                      label="Type"
+                      size="small"
+                      sx={{ minWidth: 120 }}
+                      value={f.field_type}
+                      onChange={(e) => updateCustomField(i, { field_type: e.target.value })}
+                    >
+                      <MenuItem value="text">Text</MenuItem>
+                      <MenuItem value="price">Price</MenuItem>
+                      <MenuItem value="select">Dropdown</MenuItem>
+                    </TextField>
+                    <FormControlLabel
+                      sx={{ flexShrink: 0, ml: 0 }}
+                      control={
+                        <Checkbox
                           size="small"
-                          fullWidth
-                          value={f.options}
-                          onChange={(e) => updateCustomField(i, { options: e.target.value })}
-                          placeholder="Under ₦500k, ₦500k-2m, Above ₦2m"
+                          checked={f.required}
+                          onChange={(e) => updateCustomField(i, { required: e.target.checked })}
                         />
-                      )}
-                      <FormControlLabel
-                        sx={{ flexShrink: 0, ml: 0 }}
-                        control={
-                          <Checkbox
-                            size="small"
-                            checked={f.required}
-                            onChange={(e) => updateCustomField(i, { required: e.target.checked })}
-                          />
-                        }
-                        label="Required"
-                      />
-                      <IconButton size="small" onClick={() => removeCustomField(i)}>
-                        <DeleteOutlineRoundedIcon fontSize="small" sx={{ color: tokens.muted }} />
-                      </IconButton>
-                    </Stack>
-                  ))}
-                </Stack>
-                <Button
-                  size="small"
-                  startIcon={<AddRoundedIcon />}
-                  onClick={addCustomField}
-                  disabled={customFields.length >= fieldCap}
-                >
-                  Add question
-                </Button>
-                <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 1 }}>
-                  {customFields.length}/{fieldCap} questions used.
-                </Typography>
+                      }
+                      label="Required"
+                    />
+                    <IconButton size="small" onClick={() => removeCustomField(i)}>
+                      <DeleteOutlineRoundedIcon fontSize="small" sx={{ color: tokens.muted }} />
+                    </IconButton>
+                  </Stack>
+
+                  {f.field_type === "price" && (
+                    <Typography variant="caption" sx={{ color: tokens.muted, display: "block", ml: 0.5 }}>
+                      Shown to the prospect with a ₦ sign and thousand separators, e.g. ₦2,500,000.
+                    </Typography>
+                  )}
+
+                  {f.field_type === "select" && (
+                    <Box sx={{ pl: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mb: 1 }}>
+                        Dropdown options - each one its own field, not comma-separated.
+                      </Typography>
+                      <Stack spacing={1}>
+                        {f.options.map((opt, oi) => (
+                          <Stack key={oi} direction="row" spacing={1} alignItems="center">
+                            <TextField
+                              size="small"
+                              fullWidth
+                              placeholder={`Option ${oi + 1}`}
+                              value={opt}
+                              onChange={(e) => updateDropdownOption(i, oi, e.target.value)}
+                            />
+                            <IconButton size="small" onClick={() => removeDropdownOption(i, oi)} disabled={f.options.length <= 1}>
+                              <DeleteOutlineRoundedIcon fontSize="small" sx={{ color: tokens.muted }} />
+                            </IconButton>
+                          </Stack>
+                        ))}
+                      </Stack>
+                      <Button size="small" startIcon={<AddRoundedIcon />} onClick={() => addDropdownOption(i)} sx={{ mt: 1 }}>
+                        Add option
+                      </Button>
+                    </Box>
+                  )}
+                </Paper>
+              ))}
+            </Stack>
+            <Button
+              size="small"
+              startIcon={<AddRoundedIcon />}
+              onClick={addCustomField}
+              disabled={customFields.length >= fieldCap}
+            >
+              Add question
+            </Button>
+            <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 1 }}>
+              {customFields.length}/{fieldCap} questions used.
+            </Typography>
           </Paper>
         )}
 
@@ -563,8 +795,11 @@ export default function NewCampaignPage() {
           ) : (
             <>
               <Divider sx={{ my: 3 }} />
+              <FieldLabel
+                text="Total commission (%)"
+                tooltip='The total percentage of the sale price paid out across all 3 tiers combined - minimum 10%. Example: "12" means 12% of the sale price goes to affiliates, split 50/30/20 across tiers automatically.'
+              />
               <TextField
-                label="Total commission (%)"
                 type="number"
                 value={form.total_commission_percent}
                 onChange={(e) => update("total_commission_percent", e.target.value)}
