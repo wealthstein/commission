@@ -16,7 +16,7 @@ function formatPhoneDigits(value) {
   return stripToDigits(value).slice(0, 11);
 }
 
-const centeredFieldSx = { "& input": { textAlign: "center" } };
+const centeredFieldSx = { "& input": { textAlign: "center", fontSize: 14 } };
 const centeredSelectSx = {
   "& .MuiSelect-select": { textAlign: "center" },
   "& .MuiSelect-icon": { display: "none" },
@@ -84,7 +84,7 @@ export default function LeadLongForm({ whatsappRef, businessName, logoUrl, custo
       {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
 
       <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={2}>
+        <Stack spacing={1.25}>
           <TextField
             placeholder="Full name"
             required
@@ -162,11 +162,15 @@ export default function LeadLongForm({ whatsappRef, businessName, logoUrl, custo
             )
           )}
 
-          <Button type="submit" variant="contained" size="large" disabled={state.loading} sx={{ py: 1.5, borderRadius: "12px" }}>
+          <Button type="submit" variant="contained" size="large" disabled={state.loading} sx={{ py: 1.5, mt: 0.5, borderRadius: "12px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 }}>
             {state.loading ? "Submitting…" : "Submit"}
           </Button>
         </Stack>
       </Box>
+
+      <Typography variant="caption" sx={{ color: tokens.muted, display: "block", textAlign: "center", mt: 3 }}>
+        Submit your details and {businessName || "the business"} will follow up directly to help you close.
+      </Typography>
     </>
   );
 }
