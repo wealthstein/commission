@@ -219,7 +219,7 @@ export default async function ProductPage({ params, searchParams }) {
             <Box sx={{ px: { xs: 4, md: "150px" }, py: { xs: 4, md: 8 }, display: "flex", flexDirection: "column", minHeight: "100%" }}>
               <Box sx={{ flexGrow: 1 }}>
                 {program?.conversion_goal === "lead" ? (
-                  <LeadShortForm programId={program.id} productName={product.name} businessName={business.name} checkoutStyle />
+                  <LeadShortForm programId={program.id} productName={product.name} businessName={business.name} logoUrl={branding.logoUrl} checkoutStyle />
                 ) : (
                   // Sale-goal customers normally never see this page at all -
                   // /r/[code] redirects them straight to Paystack checkout.
