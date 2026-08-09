@@ -540,6 +540,8 @@ drop policy if exists custom_fields_select on campaign_custom_fields;
 create policy custom_fields_select on campaign_custom_fields for select
   using (true); -- public - the Long Form page needs to read these for an anonymous prospect
 
+-- Team Management is fully disabled right now - simplified to owner-only
+-- until it comes back, matching the same fix applied to affiliate_programs.
 drop policy if exists custom_fields_manage on campaign_custom_fields;
 create policy custom_fields_manage on campaign_custom_fields for all
   using (
@@ -548,13 +550,6 @@ create policy custom_fields_manage on campaign_custom_fields for all
       join products p on p.id = ap.product_id
       join businesses b on b.id = p.business_id
       where b.owner_id in (select id from users where auth_user_id = auth.uid())
-      union
-      select ap.id from affiliate_programs ap
-      join products p on p.id = ap.product_id
-      where p.business_id in (
-        select business_id from business_team_members
-        where user_id in (select id from users where auth_user_id = auth.uid()) and status = 'active'
-      )
     )
   );
 
@@ -902,6 +897,25 @@ drop policy if exists businesses_owner_all on businesses;
 create policy businesses_owner_all on businesses for all
   using (owner_id in (select id from users where auth_user_id = auth.uid()));
 
+-- Public read, scoped to only businesses actually running a live
+-- campaign - needed for Discover to show the business name/plan on a
+-- campaign card to someone who isn't the owner. This restricts which
+-- ROWS are visible, not which COLUMNS - a business's wallet_balance_naira
+-- is still technically readable by a crafted direct API query requesting
+-- it explicitly, since Postgres RLS is row-level, not column-level.
+-- app code only ever selects id/name/plan here, but a Postgres view
+-- would be the correct long-term fix for true column-level restriction -
+-- not built now, flagged for a dedicated security pass later.
+drop policy if exists businesses_public_read on businesses;
+create policy businesses_public_read on businesses for select
+  using (
+    id in (
+      select p.business_id from products p
+      join affiliate_programs ap on ap.product_id = p.id
+      where ap.status = 'active'
+    )
+  );
+
 -- Products: publicly readable when active, owner can manage
 drop policy if exists products_public_read on products;
 create policy products_public_read on products for select using (status = 'active');
@@ -917,6 +931,10 @@ create policy products_owner_manage on products for all
 -- blocked by Postgres's default-deny behavior until this was added.
 drop policy if exists affiliate_programs_public_read on affiliate_programs;
 create policy affiliate_programs_public_read on affiliate_programs for select using (status = 'active');
+-- Team Management is fully disabled right now (see
+-- app/api/team/invite/route.js) - simplified to owner-only until it
+-- comes back, since there's currently no way to have an active team
+-- admin at all.
 drop policy if exists affiliate_programs_owner_manage on affiliate_programs;
 create policy affiliate_programs_owner_manage on affiliate_programs for all
   using (
@@ -924,12 +942,6 @@ create policy affiliate_programs_owner_manage on affiliate_programs for all
       select p.id from products p
       join businesses b on b.id = p.business_id
       where b.owner_id in (select id from users where auth_user_id = auth.uid())
-      union
-      select p.id from products p
-      where p.business_id in (
-        select business_id from business_team_members
-        where user_id in (select id from users where auth_user_id = auth.uid()) and status = 'active'
-      )
     )
   );
 

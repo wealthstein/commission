@@ -97,7 +97,6 @@ const SAMPLE_CAMPAIGNS = {
     price: "45,000,000",
     description: "Newly built 3-bedroom duplex with BQ, secure estate, 24-hour power - ready for immediate inspection.",
     product_url: "https://wa.me/2348012345678",
-    offline_payment_instructions: "Bank transfer to GTBank 0198765432. A signed offer letter is issued once payment clears.",
     total_commission_percent: 12,
   },
 };
@@ -169,7 +168,7 @@ function SampleCampaignDialog({ open, onClose, isLead }) {
           <SampleField label="Price" value={`₦${sample.price}`} />
           {isLead && <SampleField label="Billing frequency" value={sample.billing_frequency} />}
           <SampleField label="Where customers buy" value={sample.product_url} />
-          <SampleField label="Payment & sale verification instructions" value={sample.offline_payment_instructions} />
+          {isLead && <SampleField label="Payment & sale verification instructions" value={sample.offline_payment_instructions} />}
 
           <Divider />
           <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700 }}>
@@ -655,21 +654,23 @@ export default function NewCampaignPage() {
               />
             </Grid>
 
-            <Grid item xs={12}>
-              <FieldLabel
-                text="Payment & sale verification instructions"
-                tooltip='Shown on your campaign page so customers know how payment works, and used when you confirm a sale manually. Example: "Bank transfer to Zenith Bank 0123456789. We will ask for a receipt or order reference when confirming a sale."'
-              />
-              <TextField
-                fullWidth
-                multiline
-                minRows={2}
-                placeholder="e.g. Bank transfer to Zenith Bank 0123456789. We will ask for a receipt or order reference when confirming a sale."
-                value={form.offline_payment_instructions}
-                onChange={(e) => update("offline_payment_instructions", e.target.value)}
-                helperText="Shown on your campaign page. Customers always pay you directly — Commission never touches this money."
-              />
-            </Grid>
+            {isLead && (
+              <Grid item xs={12}>
+                <FieldLabel
+                  text="Payment & sale verification instructions"
+                  tooltip='Only for lead campaigns - sale campaigns already route customers straight into a real Paystack checkout automatically, so there is nothing to explain manually. Example: "Bank transfer to Zenith Bank 0123456789. We will ask for a receipt or order reference when confirming a sale."'
+                />
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  placeholder="e.g. Bank transfer to Zenith Bank 0123456789. We will ask for a receipt or order reference when confirming a sale."
+                  value={form.offline_payment_instructions}
+                  onChange={(e) => update("offline_payment_instructions", e.target.value)}
+                  helperText="Shown on your campaign page. Customers always pay you directly — Commission never touches this money."
+                />
+              </Grid>
+            )}
           </Grid>
         </Paper>
 
@@ -778,14 +779,26 @@ export default function NewCampaignPage() {
                   </Stack>
 
                   {f.field_type === "price" && (
-                    <Typography variant="caption" sx={{ color: tokens.muted, display: "block", ml: 0.5 }}>
-                      Shown to the prospect with a ₦ sign and thousand separators, e.g. ₦2,500,000.
-                    </Typography>
+                    <Box sx={{ pl: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mb: 1 }}>
+                        Preview - this is how the prospect will see it, not something you fill in now:
+                      </Typography>
+                      <TextField
+                        size="small"
+                        disabled
+                        value="2,500,000"
+                        InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
+                        sx={{ maxWidth: 220 }}
+                      />
+                    </Box>
                   )}
                   {f.field_type === "number" && (
-                    <Typography variant="caption" sx={{ color: tokens.muted, display: "block", ml: 0.5 }}>
-                      Shown to the prospect with thousand separators, no ₦ sign, e.g. 2,500,000.
-                    </Typography>
+                    <Box sx={{ pl: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mb: 1 }}>
+                        Preview - this is how the prospect will see it, not something you fill in now:
+                      </Typography>
+                      <TextField size="small" disabled value="2,500,000" sx={{ maxWidth: 220 }} />
+                    </Box>
                   )}
 
                   {f.field_type === "select" && (
