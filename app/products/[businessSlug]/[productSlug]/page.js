@@ -1,108 +1,270 @@
-"use client";
-
-import { useState } from "react";
-import Link from "next/link";
-import { Paper, Box, Typography, TextField, Button, Stack, Alert } from "@mui/material";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { notFound } from "next/navigation";
+import { Box, Container, Typography, Chip, Stack, Button, Grid, Paper, Divider, Avatar } from "@mui/material";
+import { createAdminSupabaseClient } from "@/lib/supabaseServer";
+import { buildProductMetadata, buildProductJsonLd, buildBreadcrumbJsonLd, billingLabel, SITE_URL } from "@/lib/seo";
+import { resolveLandingBranding } from "@/lib/branding";
 import { tokens } from "@/lib/theme";
+import Link from "next/link";
+import LeadShortForm from "@/components/marketing/LeadShortForm";
 
-export default function LeadShortForm({ programId, productName, checkoutStyle = false }) {
-  const [form, setForm] = useState({ fullName: "", phone: "", email: "" });
-  const [state, setState] = useState({ loading: false, error: null, whatsappLink: null, whatsappRef: null });
+// ISR: pages regenerate in the background at most once an hour rather than
+// on every request, which is what makes hundreds of thousands of these
+// pages cheap to serve. New products call POST /api/revalidate to bust this
+// early instead of waiting out the full hour.
+export const revalidate = 3600;
 
-  function update(field, value) {
-    setForm((f) => ({ ...f, [field]: value }));
-  }
+// Returning an empty array + leaving dynamicParams at its default (true)
+// means: do not try to pre-render all of them at build time (impossible at
+// this scale), but happily render+cache any slug pair on first request.
+// Swap in your highest-traffic products here if you want a handful
+// pre-built at deploy time.
+export async function generateStaticParams() {
+  return [];
+}
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setState({ loading: true, error: null, whatsappLink: null, whatsappRef: null });
-    try {
-      const res = await fetch("/api/leads/capture", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ programId, ...form }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-      setState({ loading: false, error: null, whatsappLink: data.whatsappLink, whatsappRef: data.whatsappRef });
-    } catch (err) {
-      setState({ loading: false, error: err.message, whatsappLink: null, whatsappRef: null });
-    }
-  }
+async function getProductAndBusiness(businessSlug, productSlug) {
+  const supabase = createAdminSupabaseClient();
+  const { data: business } = await supabase.from("businesses").select("*").eq("slug", businessSlug).maybeSingle();
+  if (!business) return { business: null, product: null, program: null };
 
-  const containerSx = checkoutStyle
-    ? { p: 4, borderRadius: 3, border: "none", boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }
-    : { p: 3, borderRadius: 3, borderColor: tokens.border };
+  const { data: product } = await supabase
+    .from("products")
+    .select("*")
+    .eq("business_id", business.id)
+    .eq("slug", productSlug)
+    .eq("status", "active")
+    .maybeSingle();
+  if (!product) return { business, product: null, program: null };
 
-  if (state.whatsappRef) {
+  const { data: program } = await supabase
+    .from("affiliate_programs")
+    .select("*")
+    .eq("product_id", product.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  return { business, product, program };
+}
+
+export async function generateMetadata({ params }) {
+  const { business, product } = await getProductAndBusiness(params.businessSlug, params.productSlug);
+  if (!business || !product) return { title: "Product not found • Commission" };
+  return buildProductMetadata({ product, business });
+}
+
+export default async function ProductPage({ params, searchParams }) {
+  const { business, product, program } = await getProductAndBusiness(params.businessSlug, params.productSlug);
+  if (!business || !product) notFound();
+
+  // A ref param means this visitor came from an affiliate's link - they're
+  // a prospective CUSTOMER, not someone considering becoming an affiliate.
+  // Those two audiences need genuinely different copy: a customer clicking
+  // a GTBank loan link should never see "Affiliate Program" or "earn
+  // commission on every referred sale" - that's confusing at best, and
+  // reads as a scam at worst. Without a ref param, this is someone
+  // browsing the program itself (from Discover, or the business's own
+  // preview), where the affiliate-facing framing is exactly right.
+  const isCustomerVisit = !!searchParams?.ref;
+  const branding = resolveLandingBranding(business);
+
+  const jsonLd = buildProductJsonLd({ product, business });
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", url: SITE_URL },
+    { name: business.name, url: `${SITE_URL}/businesses/${business.slug}` },
+    { name: product.name, url: `${SITE_URL}/products/${business.slug}/${product.slug}` },
+  ]);
+  const jsonLdScripts = (
+    <>
+      {/* eslint-disable-next-line react/no-danger */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {/* eslint-disable-next-line react/no-danger */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+    </>
+  );
+
+  // Customers get a genuinely different layout, not just different copy -
+  // a checkout-style two-column page (business summary + price on the
+  // left, the actual form on the right) reads as a real business
+  // transaction, not as an affiliate recruitment pitch. Affiliates
+  // browsing the program itself (no ref param) keep the original
+  // single-column program-overview layout, which is the right frame for
+  // "am I going to promote this."
+  if (isCustomerVisit) {
     return (
-      <Paper variant="outlined" sx={{ ...containerSx, bgcolor: "#E7F5EE" }}>
-        <Typography fontWeight={700} sx={{ mb: 1 }}>
-          You are on the list!
-        </Typography>
-        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-          Chat with us directly on WhatsApp, or go straight ahead and finish the quick details form below — either
-          way gets you moving.
-        </Typography>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-          {state.whatsappLink && (
-            <Button
-              variant="contained"
-              startIcon={<WhatsAppIcon />}
-              href={state.whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{ bgcolor: "#25D366", color: "#fff", "&:hover": { bgcolor: "#1ebe57" } }}
-            >
-              Continue on WhatsApp
-            </Button>
-          )}
-          <Button variant="outlined" endIcon={<ArrowForwardIcon />} component={Link} href={`/leads/${state.whatsappRef}/continue`}>
-            Finish the details form
-          </Button>
-        </Stack>
-      </Paper>
+      <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
+        {jsonLdScripts}
+        <Grid container sx={{ minHeight: "100vh" }}>
+          <Grid item xs={12} md={6} sx={{ bgcolor: "#FAFAF8", borderRight: { md: `1px solid ${tokens.border}` } }}>
+            <Box sx={{ p: { xs: 4, md: 8 }, maxWidth: 480, ml: { md: "auto" } }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 5 }}>
+                {branding.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={branding.logoUrl} alt={business.name} style={{ height: 32, width: 32, borderRadius: 6, objectFit: "cover" }} />
+                ) : (
+                  <Avatar sx={{ width: 32, height: 32, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700, fontSize: 14 }}>
+                    {business.name.charAt(0).toUpperCase()}
+                  </Avatar>
+                )}
+                <Typography fontWeight={700}>{business.name}</Typography>
+              </Stack>
+
+              <Typography variant="body2" sx={{ color: tokens.muted, mb: 0.5 }}>
+                Pay {business.name}
+              </Typography>
+              <Typography variant="h3" fontWeight={800} sx={{ mb: 4 }}>
+                ₦{Number(product.price_naira).toLocaleString()}
+              </Typography>
+
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+                <Box>
+                  <Typography fontWeight={700}>{product.name}</Typography>
+                  <Typography variant="caption" sx={{ color: tokens.muted }}>
+                    {billingLabel(product.billing_frequency)}
+                  </Typography>
+                </Box>
+                <Typography fontWeight={700}>₦{Number(product.price_naira).toLocaleString()}</Typography>
+              </Stack>
+              <Divider sx={{ mb: 2 }} />
+              <Stack direction="row" justifyContent="space-between" sx={{ mb: 4 }}>
+                <Typography fontWeight={700}>Total</Typography>
+                <Typography fontWeight={700}>₦{Number(product.price_naira).toLocaleString()}</Typography>
+              </Stack>
+
+              {product.description && (
+                <Typography variant="body2" sx={{ color: tokens.muted, mb: 3 }}>
+                  {product.description}
+                </Typography>
+              )}
+
+              {product.offline_payment_instructions && (
+                <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, borderColor: tokens.border, bgcolor: "#fff" }}>
+                  <Typography variant="caption" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 0.5 }}>
+                    HOW TO BUY
+                  </Typography>
+                  <Typography variant="body2">{product.offline_payment_instructions}</Typography>
+                </Paper>
+              )}
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Box sx={{ p: { xs: 4, md: 8 }, maxWidth: 480, mr: { md: "auto" } }}>
+              {program?.conversion_goal === "lead" ? (
+                <LeadShortForm programId={program.id} productName={product.name} checkoutStyle />
+              ) : (
+                // Sale-goal customers normally never see this page at all -
+                // /r/[code] redirects them straight to Paystack checkout.
+                // Landing here with a ref param means that checkout attempt
+                // already failed once, so this retries through the same
+                // real entry point rather than linking to a dedicated
+                // checkout page that doesn't exist.
+                <Button variant="contained" size="large" fullWidth component={Link} href={`/r/${searchParams.ref}`} sx={{ py: 1.5, bgcolor: tokens.ink, "&:hover": { bgcolor: tokens.ink } }}>
+                  Buy now
+                </Button>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
+      </Box>
     );
   }
 
   return (
-    <Paper variant="outlined" sx={containerSx}>
-      {!checkoutStyle && (
-        <>
-          <Typography fontWeight={700} sx={{ mb: 0.5 }}>
-            Interested in {productName}?
-          </Typography>
-          <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-            Tell us a bit about you and we will connect you directly on WhatsApp.
-          </Typography>
-        </>
-      )}
-      {checkoutStyle && (
-        <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 2 }}>
-          Your details
-        </Typography>
-      )}
+    <Box sx={{ py: { xs: 6, md: 9 } }}>
+      {jsonLdScripts}
 
-      {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
-
-      <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={checkoutStyle ? 2 : 1.5}>
-          <TextField label="Full name" required value={form.fullName} onChange={(e) => update("fullName", e.target.value)} />
-          <TextField label="Phone number" required value={form.phone} onChange={(e) => update("phone", e.target.value)} />
-          <TextField label="Email (optional)" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
-          <Button
-            type="submit"
-            variant="contained"
-            size="large"
-            disabled={state.loading}
-            sx={checkoutStyle ? { py: 1.5, bgcolor: tokens.ink, "&:hover": { bgcolor: tokens.ink } } : undefined}
-          >
-            {state.loading ? "Submitting…" : "Get connected on WhatsApp"}
-          </Button>
+      <Container maxWidth="lg">
+        <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+          <Typography variant="body2" component={Link} href="/" sx={{ color: tokens.muted }}>
+            Commission
+          </Typography>
+          <Typography variant="body2" sx={{ color: tokens.muted }}>
+            /
+          </Typography>
+          <Typography variant="body2" component={Link} href={`/businesses/${business.slug}`} sx={{ color: tokens.muted }}>
+            {business.name}
+          </Typography>
         </Stack>
-      </Box>
-    </Paper>
+
+        {branding.logoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={branding.logoUrl} alt={business.name} style={{ height: 44, marginBottom: 20 }} />
+        )}
+
+        {product.category && <Chip label={product.category} size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2, mr: 1 }} />}
+        <Chip
+          label={product.product_type === "physical" ? "Physical Product" : "Digital Product"}
+          size="small"
+          variant="outlined"
+          sx={{ mb: 2 }}
+        />
+
+        <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 2 }}>
+          {product.name} Affiliate Program
+        </Typography>
+
+        <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 4, maxWidth: 640 }}>
+          Promote {product.name} by {business.name} on Commission and earn commission on every referred sale.
+        </Typography>
+
+        <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Grid item xs={6} sm={4}>
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, borderColor: tokens.border }}>
+              <Typography variant="caption" sx={{ color: tokens.muted }}>
+                Price
+              </Typography>
+              <Typography fontWeight={700}>
+                ₦{Number(product.price_naira).toLocaleString()} {billingLabel(product.billing_frequency)}
+              </Typography>
+            </Paper>
+          </Grid>
+          {program && (
+            <Grid item xs={6} sm={4}>
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, borderColor: tokens.border }}>
+                <Typography variant="caption" sx={{ color: tokens.muted }}>
+                  Tier 1 commission
+                </Typography>
+                <Typography fontWeight={700}>{program.tier1_percent}%</Typography>
+              </Paper>
+            </Grid>
+          )}
+          {program && (
+            <Grid item xs={6} sm={4}>
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, borderColor: tokens.border }}>
+                <Typography variant="caption" sx={{ color: tokens.muted }}>
+                  Commission type
+                </Typography>
+                <Typography fontWeight={700} sx={{ textTransform: "capitalize" }}>
+                  {program.commission_type.replace("_", "-")}
+                </Typography>
+              </Paper>
+            </Grid>
+          )}
+        </Grid>
+
+        {product.description && (
+          <Typography variant="body1" sx={{ color: tokens.muted, mb: 4 }}>
+            {product.description}
+          </Typography>
+        )}
+
+        {product.offline_payment_instructions && (
+          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, borderColor: tokens.border, mb: 4, bgcolor: "#F7F6F2" }}>
+            <Typography variant="caption" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 0.5 }}>
+              HOW TO BUY
+            </Typography>
+            <Typography variant="body2">{product.offline_payment_instructions}</Typography>
+          </Paper>
+        )}
+
+        {program?.conversion_goal === "lead" ? (
+          <LeadShortForm programId={program.id} productName={product.name} />
+        ) : (
+          <Button variant="contained" size="large" component={Link} href={`/?join=${product.id}`}>
+            Join this affiliate program
+          </Button>
+        )}
+      </Container>
+    </Box>
   );
 }
