@@ -142,7 +142,8 @@ export default function DiscoverPage() {
       ) : (
         <Grid container spacing={2.5}>
           {filtered.map((p) => {
-            const program = p.affiliate_programs;
+            const program = Array.isArray(p.affiliate_programs) ? p.affiliate_programs[0] : p.affiliate_programs;
+            if (!program) return null;
             const tierCount = [program.tier1_percent, program.tier2_percent, program.tier3_percent].filter(Boolean).length;
             const alreadyJoined = joinedIds.has(program.id);
             return (

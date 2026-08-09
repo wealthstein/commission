@@ -370,12 +370,33 @@ export default function AccountPage() {
           .eq("id", userRow.id);
         if (userError) throw userError;
       }
-      if (business) {
-        const { error: bizError } = await supabase
-          .from("businesses")
-          .update({ name: form.businessName, industry: form.industry, website_url: form.website, logo_url: form.logoUrl || null })
-          .eq("id", business.id);
-        if (bizError) throw bizError;
+      // Business row gets created here if this is the first time - it
+      // used to only ever update an EXISTING row, silently doing nothing
+      // for a brand-new user who'd never created one yet (which is
+      // exactly why the logo-upload error above was a dead end).
+      if (form.businessName.trim()) {
+        if (business) {
+          const { error: bizError } = await supabase
+            .from("businesses")
+            .update({ name: form.businessName, industry: form.industry, website_url: form.website, logo_url: form.logoUrl || null })
+            .eq("id", business.id);
+          if (bizError) throw bizError;
+        } else if (userRow) {
+          const { data: newBusiness, error: bizError } = await supabase
+            .from("businesses")
+            .insert({
+              owner_id: userRow.id,
+              name: form.businessName,
+              slug: `biz-${Date.now()}`,
+              industry: form.industry || null,
+              website_url: form.website || null,
+              logo_url: form.logoUrl || null,
+            })
+            .select()
+            .single();
+          if (bizError) throw bizError;
+          setBusiness(newBusiness);
+        }
       }
       setSaveState({ loading: false, error: null, success: true });
     } catch (err) {
