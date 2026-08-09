@@ -17,17 +17,37 @@ import {
   Tabs,
   Tab,
   Chip,
+  InputAdornment,
 } from "@mui/material";
+import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
 import pricingPlans from "@/content/pricingPlans.json";
+import industriesContent from "@/content/industries.json";
 
-// Every tab's card spans the page's real content width (matching the tab
-// bar above it) instead of being its own narrow island - the actual form
-// fields are centered inside a narrower inner column, which is different
-// from shrinking the whole card down.
 const INNER_WIDTH = 420;
+const INDUSTRIES = industriesContent.industries.map((i) => i.industryName);
+
+// Centers the typed/selected text inside a field - used on every field on
+// this page per request, not just the dropdowns.
+const centeredTextSx = { "& input": { textAlign: "center" } };
+// Centers a select's displayed value AND removes the dropdown chevron icon.
+const centeredSelectSx = {
+  "& .MuiSelect-select": { textAlign: "center" },
+  "& .MuiSelect-icon": { display: "none" },
+};
+const centeredMenuProps = {
+  MenuProps: { PaperProps: { sx: { "& .MuiMenuItem-root": { justifyContent: "center" } } } },
+};
+
+function formatNaira(rawDigits) {
+  if (!rawDigits) return "";
+  return Number(rawDigits).toLocaleString("en-US");
+}
+function stripToDigits(value) {
+  return value.replace(/[^0-9]/g, "");
+}
 
 function BankConnectForm({ title, description, onSubmit, extraFields, submitLabel }) {
   const [banks, setBanks] = useState([]);
@@ -77,9 +97,19 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
                 required
                 value={extra[f.name] || ""}
                 onChange={(e) => setExtra((x) => ({ ...x, [f.name]: e.target.value }))}
+                sx={centeredTextSx}
               />
             ))}
-            <TextField select label="Bank" fullWidth required value={bankCode} onChange={(e) => setBankCode(e.target.value)}>
+            <TextField
+              select
+              label="Bank"
+              fullWidth
+              required
+              value={bankCode}
+              onChange={(e) => setBankCode(e.target.value)}
+              sx={centeredSelectSx}
+              SelectProps={{ IconComponent: () => null, ...centeredMenuProps }}
+            >
               {banks.map((b) => (
                 <MenuItem key={b.code} value={b.code}>
                   {b.name}
@@ -91,11 +121,16 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
               fullWidth
               required
               value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
+              onChange={(e) => setAccountNumber(stripToDigits(e.target.value).slice(0, 10))}
+              helperText={
+                accountNumber && accountNumber.length !== 10 ? `${accountNumber.length}/10 digits` : "10-digit NUBAN account number"
+              }
+              error={accountNumber.length > 0 && accountNumber.length !== 10}
+              sx={centeredTextSx}
             />
           </Stack>
           <Stack direction="row" justifyContent="center" sx={{ mt: 3 }}>
-            <Button type="submit" variant="contained" disabled={state.loading || !bankCode || !accountNumber}>
+            <Button type="submit" variant="contained" disabled={state.loading || !bankCode || accountNumber.length !== 10}>
               {state.loading ? <CircularProgress size={20} /> : submitLabel}
             </Button>
           </Stack>
@@ -152,11 +187,13 @@ function WalletTab({ businessId, balanceNaira }) {
           <Stack spacing={2} alignItems="center">
             <TextField
               label="Amount to add (₦)"
-              type="number"
               fullWidth
               required
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              inputMode="numeric"
+              value={formatNaira(amount)}
+              onChange={(e) => setAmount(stripToDigits(e.target.value))}
+              InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
+              sx={centeredTextSx}
             />
             <Button type="submit" variant="contained" disabled={state.loading}>
               {state.loading ? <CircularProgress size={20} /> : "Add funds"}
@@ -247,7 +284,8 @@ export default function AccountPage() {
   const [user, setUser] = useState(null);
   const [userRow, setUserRow] = useState(null);
   const [business, setBusiness] = useState(null);
-  const [form, setForm] = useState({ fullName: "", phone: "", businessName: "", industry: "", website: "" });
+  const [form, setForm] = useState({ fullName: "", phone: "", businessName: "", industry: "", website: "", logoUrl: "" });
+  const [logoUploading, setLogoUploading] = useState(false);
   const [saveState, setSaveState] = useState({ loading: false, error: null, success: false });
 
   useEffect(() => {
@@ -265,23 +303,39 @@ export default function AccountPage() {
 
       const { data: biz } = await supabase
         .from("businesses")
-        .select("id, plan, name, industry, website, wallet_balance_naira")
+        .select("id, plan, name, industry, website_url, logo_url, wallet_balance_naira")
         .eq("owner_id", uRow.id)
         .maybeSingle();
       setBusiness(biz || null);
 
-      // fullName is a real controlled field - it used to be an uncontrolled
-      // defaultValue, which is exactly why the floating label could end up
-      // overlapping the typed text.
       setForm({
         fullName: uRow.full_name || authUser.user_metadata?.full_name || "",
         phone: uRow.phone || "",
         businessName: biz?.name || "",
         industry: biz?.industry || "",
-        website: biz?.website || "",
+        website: biz?.website_url || "",
+        logoUrl: biz?.logo_url || "",
       });
     });
   }, []);
+
+  async function handleLogoChange(e) {
+    const file = e.target.files?.[0];
+    if (!file || !business?.id) return;
+    setLogoUploading(true);
+    try {
+      const supabase = createClient();
+      const path = `${business.id}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage.from("business-logos").upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: publicUrlData } = supabase.storage.from("business-logos").getPublicUrl(path);
+      setForm((f) => ({ ...f, logoUrl: publicUrlData.publicUrl }));
+    } catch (err) {
+      setSaveState({ loading: false, error: `Logo upload failed: ${err.message}`, success: false });
+    } finally {
+      setLogoUploading(false);
+    }
+  }
 
   async function handleSave() {
     setSaveState({ loading: true, error: null, success: false });
@@ -297,7 +351,7 @@ export default function AccountPage() {
       if (business) {
         const { error: bizError } = await supabase
           .from("businesses")
-          .update({ name: form.businessName, industry: form.industry, website: form.website })
+          .update({ name: form.businessName, industry: form.industry, website_url: form.website, logo_url: form.logoUrl || null })
           .eq("id", business.id);
         if (bizError) throw bizError;
       }
@@ -325,7 +379,7 @@ export default function AccountPage() {
                 {(form.fullName || user?.email || "?").charAt(0).toUpperCase()}
               </Avatar>
               <Box sx={{ textAlign: "center" }}>
-                <Typography fontWeight={700}>Signed in with Google</Typography>
+                <Typography fontWeight={700}>{form.fullName || "Signed in with Google"}</Typography>
                 <Typography variant="body2" sx={{ color: tokens.muted }}>
                   {user?.email || "…"}
                 </Typography>
@@ -338,6 +392,7 @@ export default function AccountPage() {
                 fullWidth
                 value={form.fullName}
                 onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+                sx={centeredTextSx}
               />
               <TextField
                 label="Phone number"
@@ -347,6 +402,7 @@ export default function AccountPage() {
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) }))}
                 helperText={form.phone && form.phone.length !== 11 ? `${form.phone.length}/11 digits` : "11 digits, no +234 needed"}
                 error={form.phone.length > 0 && form.phone.length !== 11}
+                sx={centeredTextSx}
               />
             </Stack>
           </Box>
@@ -360,6 +416,37 @@ export default function AccountPage() {
       {tab === 3 && (
         <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, borderColor: tokens.border }}>
           <Box sx={{ maxWidth: INNER_WIDTH, mx: "auto" }}>
+            <Stack alignItems="center" spacing={1} sx={{ mb: 3 }}>
+              <Box sx={{ position: "relative" }}>
+                <Avatar src={form.logoUrl || undefined} sx={{ width: 72, height: 72, bgcolor: "#F7F6F2", color: tokens.muted }}>
+                  {!form.logoUrl && (form.businessName || "?").charAt(0).toUpperCase()}
+                </Avatar>
+                <Button
+                  component="label"
+                  size="small"
+                  disabled={logoUploading || !business?.id}
+                  sx={{
+                    position: "absolute",
+                    bottom: -4,
+                    right: -4,
+                    minWidth: 0,
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    bgcolor: tokens.brand,
+                    p: 0,
+                    "&:hover": { bgcolor: tokens.brand },
+                  }}
+                >
+                  {logoUploading ? <CircularProgress size={16} /> : <PhotoCameraRoundedIcon sx={{ fontSize: 16, color: tokens.brandInk }} />}
+                  <input type="file" accept="image/*" hidden onChange={handleLogoChange} />
+                </Button>
+              </Box>
+              <Typography variant="caption" sx={{ color: tokens.muted }}>
+                Business logo
+              </Typography>
+            </Stack>
+            <Divider sx={{ mb: 3 }} />
             <Typography fontWeight={700} sx={{ mb: 1, textAlign: "center" }}>
               Business profile
             </Typography>
@@ -374,20 +461,31 @@ export default function AccountPage() {
                 required
                 value={form.businessName}
                 onChange={(e) => setForm((f) => ({ ...f, businessName: e.target.value }))}
+                sx={centeredTextSx}
               />
               <TextField
+                select
                 label="Industry"
                 fullWidth
                 required
                 value={form.industry}
                 onChange={(e) => setForm((f) => ({ ...f, industry: e.target.value }))}
-              />
+                sx={centeredSelectSx}
+                SelectProps={{ IconComponent: () => null, ...centeredMenuProps }}
+              >
+                {INDUSTRIES.map((i) => (
+                  <MenuItem key={i} value={i}>
+                    {i}
+                  </MenuItem>
+                ))}
+              </TextField>
               <TextField
                 label="Website"
                 fullWidth
                 value={form.website}
                 onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
                 helperText="Optional"
+                sx={centeredTextSx}
               />
             </Stack>
           </Box>
