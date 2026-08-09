@@ -27,7 +27,7 @@ function PromotingTab({ userRowId }) {
     async function load() {
       const { data: enrollments } = await supabase
         .from("affiliate_enrollments")
-        .select("id, program_id, affiliate_programs(id, products(name))")
+        .select("id, referral_code, program_id, affiliate_programs(id, products(name))")
         .eq("affiliate_id", userRowId);
 
       const enrollmentIds = (enrollments || []).map((e) => e.id);
@@ -48,6 +48,7 @@ function PromotingTab({ userRowId }) {
       setRows(
         (enrollments || []).map((e) => ({
           id: e.id,
+          referralCode: e.referral_code,
           product: e.affiliate_programs?.products?.name || "Campaign",
           sales: commissionsByEnrollment[e.id]?.count || 0,
           earnedNaira: commissionsByEnrollment[e.id]?.total || 0,
@@ -58,8 +59,12 @@ function PromotingTab({ userRowId }) {
     load();
   }, [userRowId]);
 
-  function copyLink(enrollmentId) {
-    const url = `https://www.commission.ng/r/${enrollmentId}`;
+  function copyLink(referralCode) {
+    // Must be the real referral_code - the redirect route
+    // (app/r/[code]/route.js) looks up by that field specifically, never
+    // by the enrollment's own id. A link built from the id would 404 into
+    // a homepage redirect for every affiliate who copied it.
+    const url = `https://www.commission.ng/r/${referralCode}`;
     navigator.clipboard?.writeText(url);
   }
 
@@ -91,10 +96,10 @@ function PromotingTab({ userRowId }) {
             <Typography fontWeight={700}>{p.product}</Typography>
             <Stack direction="row" alignItems="center" spacing={0.5}>
               <Typography variant="caption" sx={{ color: tokens.muted }}>
-                commission.ng/r/{p.id.slice(0, 8)}
+                commission.ng/r/{p.referralCode}
               </Typography>
               <Tooltip title="Copy link">
-                <IconButton size="small" onClick={() => copyLink(p.id)}>
+                <IconButton size="small" onClick={() => copyLink(p.referralCode)}>
                   <ContentCopyRoundedIcon sx={{ fontSize: 14 }} />
                 </IconButton>
               </Tooltip>
