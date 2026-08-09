@@ -118,7 +118,7 @@ export default function LeadShortForm({ programId, productName, businessName, lo
             required
             value={form.phone}
             onChange={(e) => update("phone", e.target.value.replace(/[^0-9]/g, "").slice(0, 11))}
-            helperText={form.phone && form.phone.length !== 11 ? `${form.phone.length}/11 digits` : checkoutStyle ? "11 digits, no +234 needed" : undefined}
+            helperText={form.phone && form.phone.length !== 11 ? `${form.phone.length}/11 digits` : undefined}
             error={form.phone.length > 0 && form.phone.length !== 11}
             sx={centeredFieldSx}
           />
