@@ -26,6 +26,15 @@ export default function LeadShortForm({ programId, productName, checkoutStyle = 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
+
+      if (checkoutStyle) {
+        // No intermediate screen here - straight to WhatsApp the moment
+        // this succeeds. The two-option card (WhatsApp or finish the
+        // form) still exists below for the non-checkout affiliate-facing
+        // form, since that wasn't what was being redesigned.
+        window.location.href = data.whatsappLink;
+        return;
+      }
       setState({ loading: false, error: null, whatsappLink: data.whatsappLink, whatsappRef: data.whatsappRef });
     } catch (err) {
       setState({ loading: false, error: err.message, whatsappLink: null, whatsappRef: null });
