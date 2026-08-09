@@ -7,7 +7,7 @@ import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { tokens } from "@/lib/theme";
 
-export default function LeadShortForm({ programId, productName }) {
+export default function LeadShortForm({ programId, productName, checkoutStyle = false }) {
   const [form, setForm] = useState({ fullName: "", phone: "", email: "" });
   const [state, setState] = useState({ loading: false, error: null, whatsappLink: null, whatsappRef: null });
 
@@ -32,9 +32,13 @@ export default function LeadShortForm({ programId, productName }) {
     }
   }
 
+  const containerSx = checkoutStyle
+    ? { p: 4, borderRadius: 3, border: "none", boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }
+    : { p: 3, borderRadius: 3, borderColor: tokens.border };
+
   if (state.whatsappRef) {
     return (
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, bgcolor: "#E7F5EE" }}>
+      <Paper variant="outlined" sx={{ ...containerSx, bgcolor: "#E7F5EE" }}>
         <Typography fontWeight={700} sx={{ mb: 1 }}>
           You are on the list!
         </Typography>
@@ -64,22 +68,37 @@ export default function LeadShortForm({ programId, productName }) {
   }
 
   return (
-    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border }}>
-      <Typography fontWeight={700} sx={{ mb: 0.5 }}>
-        Interested in {productName}?
-      </Typography>
-      <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-        Tell us a bit about you and we will connect you directly on WhatsApp.
-      </Typography>
+    <Paper variant="outlined" sx={containerSx}>
+      {!checkoutStyle && (
+        <>
+          <Typography fontWeight={700} sx={{ mb: 0.5 }}>
+            Interested in {productName}?
+          </Typography>
+          <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+            Tell us a bit about you and we will connect you directly on WhatsApp.
+          </Typography>
+        </>
+      )}
+      {checkoutStyle && (
+        <Typography variant="overline" sx={{ color: tokens.muted, fontWeight: 700, display: "block", mb: 2 }}>
+          Your details
+        </Typography>
+      )}
 
       {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
 
       <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={1.5}>
+        <Stack spacing={checkoutStyle ? 2 : 1.5}>
           <TextField label="Full name" required value={form.fullName} onChange={(e) => update("fullName", e.target.value)} />
           <TextField label="Phone number" required value={form.phone} onChange={(e) => update("phone", e.target.value)} />
           <TextField label="Email (optional)" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
-          <Button type="submit" variant="contained" size="large" disabled={state.loading}>
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            disabled={state.loading}
+            sx={checkoutStyle ? { py: 1.5, bgcolor: tokens.ink, "&:hover": { bgcolor: tokens.ink } } : undefined}
+          >
             {state.loading ? "Submitting…" : "Get connected on WhatsApp"}
           </Button>
         </Stack>
@@ -87,4 +106,3 @@ export default function LeadShortForm({ programId, productName }) {
     </Paper>
   );
 }
-
