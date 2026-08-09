@@ -102,7 +102,7 @@ export default async function ProductPage({ params, searchParams }) {
                   <img src={branding.logoUrl} alt={business.name} style={{ height: 32, width: 32, borderRadius: 6, objectFit: "cover" }} />
                 ) : (
                   <Avatar sx={{ width: 32, height: 32, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700, fontSize: 14 }}>
-                    {business.name.charAt(0).toUpperCase()}
+                    {(business.name || "?").charAt(0).toUpperCase()}
                   </Avatar>
                 )}
                 <Typography fontWeight={700}>{business.name}</Typography>
@@ -116,12 +116,35 @@ export default async function ProductPage({ params, searchParams }) {
               </Typography>
 
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
-                <Box>
-                  <Typography fontWeight={700}>{product.name}</Typography>
-                  <Typography variant="caption" sx={{ color: tokens.muted }}>
-                    {billingLabel(product.billing_frequency)}
-                  </Typography>
-                </Box>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Box
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 2,
+                      bgcolor: "#EDEBE3",
+                      flexShrink: 0,
+                      display: "grid",
+                      placeItems: "center",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {branding.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={branding.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <Typography variant="caption" sx={{ color: tokens.muted, fontWeight: 700 }}>
+                        {(product.name || "?").charAt(0).toUpperCase()}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Box>
+                    <Typography fontWeight={700}>{product.name}</Typography>
+                    <Typography variant="caption" sx={{ color: tokens.muted }}>
+                      {billingLabel(product.billing_frequency)}
+                    </Typography>
+                  </Box>
+                </Stack>
                 <Typography fontWeight={700}>₦{Number(product.price_naira).toLocaleString()}</Typography>
               </Stack>
               <Divider sx={{ mb: 2 }} />
@@ -148,20 +171,36 @@ export default async function ProductPage({ params, searchParams }) {
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <Box sx={{ p: { xs: 4, md: 8 }, maxWidth: 480, mr: { md: "auto" } }}>
-              {program?.conversion_goal === "lead" ? (
-                <LeadShortForm programId={program.id} productName={product.name} checkoutStyle />
-              ) : (
-                // Sale-goal customers normally never see this page at all -
-                // /r/[code] redirects them straight to Paystack checkout.
-                // Landing here with a ref param means that checkout attempt
-                // already failed once, so this retries through the same
-                // real entry point rather than linking to a dedicated
-                // checkout page that doesn't exist.
-                <Button variant="contained" size="large" fullWidth component={Link} href={`/r/${searchParams.ref}`} sx={{ py: 1.5, bgcolor: tokens.ink, "&:hover": { bgcolor: tokens.ink } }}>
-                  Buy now
-                </Button>
-              )}
+            <Box sx={{ p: { xs: 4, md: 8 }, maxWidth: 480, mr: { md: "auto" }, display: "flex", flexDirection: "column", minHeight: "100%" }}>
+              <Box sx={{ flexGrow: 1 }}>
+                {program?.conversion_goal === "lead" ? (
+                  <LeadShortForm programId={program.id} productName={product.name} checkoutStyle />
+                ) : (
+                  // Sale-goal customers normally never see this page at all -
+                  // /r/[code] redirects them straight to Paystack checkout.
+                  // Landing here with a ref param means that checkout attempt
+                  // already failed once, so this retries through the same
+                  // real entry point rather than linking to a dedicated
+                  // checkout page that doesn't exist.
+                  <Button variant="contained" size="large" fullWidth component={Link} href={`/r/${searchParams.ref}`} sx={{ py: 1.5, bgcolor: tokens.ink, "&:hover": { bgcolor: tokens.ink } }}>
+                    Buy now
+                  </Button>
+                )}
+              </Box>
+              <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 6, pt: 3 }}>
+                <Typography variant="caption" sx={{ color: tokens.muted }}>
+                  Powered by{" "}
+                  <Typography component={Link} href="/" variant="caption" sx={{ color: tokens.muted, fontWeight: 700, textDecoration: "none" }}>
+                    Commission
+                  </Typography>
+                </Typography>
+                <Typography component={Link} href="/corporate/terms" variant="caption" sx={{ color: tokens.muted, textDecoration: "none" }}>
+                  Terms
+                </Typography>
+                <Typography component={Link} href="/corporate/privacy" variant="caption" sx={{ color: tokens.muted, textDecoration: "none" }}>
+                  Privacy
+                </Typography>
+              </Stack>
             </Box>
           </Grid>
         </Grid>
