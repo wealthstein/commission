@@ -7,11 +7,15 @@ import { tokens } from "@/lib/theme";
 import Link from "next/link";
 import LeadShortForm from "@/components/marketing/LeadShortForm";
 
-// ISR: pages regenerate in the background at most once an hour rather than
-// on every request, which is what makes hundreds of thousands of these
-// pages cheap to serve. New products call POST /api/revalidate to bust this
-// early instead of waiting out the full hour.
-export const revalidate = 3600;
+// This page used to be ISR-cached (revalidate = 3600) since business/product
+// slugs rarely change. That's no longer possible: detecting a customer vs.
+// affiliate visit reads searchParams.ref, which differs on every single
+// request - Next.js correctly refuses to statically cache a page that
+// depends on a per-request value (this is exactly what the
+// DYNAMIC_SERVER_USAGE error means). Forcing dynamic rendering here is the
+// real fix, not a workaround - there is no way to keep ISR caching while
+// this page needs to branch on a query param.
+export const dynamic = "force-dynamic";
 
 // Returning an empty array + leaving dynamicParams at its default (true)
 // means: do not try to pre-render all of them at build time (impossible at
