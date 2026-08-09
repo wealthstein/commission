@@ -897,6 +897,20 @@ drop policy if exists businesses_owner_all on businesses;
 create policy businesses_owner_all on businesses for all
   using (owner_id in (select id from users where auth_user_id = auth.uid()));
 
+-- SECURITY DEFINER breaks the RLS recursion: without this, the policy
+-- below queries products, whose OWN RLS policy queries businesses right
+-- back, causing "infinite recursion detected in policy for relation
+-- businesses". This function evaluates with its own privilege context
+-- instead of re-triggering the caller's RLS chain.
+create or replace function business_has_active_campaign(check_business_id uuid)
+returns boolean as $$
+  select exists (
+    select 1 from products p
+    join affiliate_programs ap on ap.product_id = p.id
+    where p.business_id = check_business_id and ap.status = 'active'
+  );
+$$ language sql security definer stable;
+
 -- Public read, scoped to only businesses actually running a live
 -- campaign - needed for Discover to show the business name/plan on a
 -- campaign card to someone who isn't the owner. This restricts which
@@ -908,13 +922,7 @@ create policy businesses_owner_all on businesses for all
 -- not built now, flagged for a dedicated security pass later.
 drop policy if exists businesses_public_read on businesses;
 create policy businesses_public_read on businesses for select
-  using (
-    id in (
-      select p.business_id from products p
-      join affiliate_programs ap on ap.product_id = p.id
-      where ap.status = 'active'
-    )
-  );
+  using (business_has_active_campaign(id));
 
 -- Products: publicly readable when active, owner can manage
 drop policy if exists products_public_read on products;

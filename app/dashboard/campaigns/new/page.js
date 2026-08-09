@@ -239,6 +239,7 @@ export default function NewCampaignPage() {
   const [customFields, setCustomFields] = useState([]);
   const [plan, setPlan] = useState(null);
   const [showSample, setShowSample] = useState(false);
+  const [profileCheck, setProfileCheck] = useState({ loading: true, complete: true });
 
   useEffect(() => {
     const supabase = createClient();
@@ -246,8 +247,11 @@ export default function NewCampaignPage() {
       if (!user) return;
       const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", user.id).single();
       if (!userRow) return;
-      const { data: biz } = await supabase.from("businesses").select("plan").eq("owner_id", userRow.id).maybeSingle();
+      const { data: biz } = await supabase.from("businesses").select("plan, name, industry").eq("owner_id", userRow.id).maybeSingle();
       setPlan(biz?.plan || "free");
+      // A campaign needs a real business identity behind it - name and
+      // industry are the minimum. Website stays optional.
+      setProfileCheck({ loading: false, complete: !!(biz?.name && biz?.industry) });
     });
   }, []);
 
@@ -448,6 +452,21 @@ export default function NewCampaignPage() {
     } catch (err) {
       setStatus({ loading: false, error: err.message, success: false });
     }
+  }
+
+  if (!profileCheck.loading && !profileCheck.complete) {
+    return (
+      <>
+        <PageHeader title="New campaign" subtitle="List what you're selling and launch its affiliate program in one step." />
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Your business profile isn't complete yet - a campaign needs a business name and industry behind it before
+          it can go live.
+        </Alert>
+        <Button variant="contained" href="/dashboard/account">
+          Complete your business profile
+        </Button>
+      </>
+    );
   }
 
   return (

@@ -14,18 +14,15 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  Tabs,
+  Tab,
+  Chip,
+  Container,
 } from "@mui/material";
 import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
-
-// Matches content/pricingPlans.json exactly - kept here as a small local
-// lookup since this page just needs the name/fee, not the full feature list.
-const PLAN_LABELS = {
-  free: { name: "Small", feePercent: 20 },
-  pro: { name: "Medium", feePercent: 15 },
-  plus: { name: "Large", feePercent: 10 },
-};
+import pricingPlans from "@/content/pricingPlans.json";
 
 function BankConnectForm({ title, description, onSubmit, extraFields, submitLabel }) {
   const [banks, setBanks] = useState([]);
@@ -54,10 +51,10 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
 
   return (
     <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
-      <Typography fontWeight={700} sx={{ mb: 0.5 }}>
+      <Typography fontWeight={700} sx={{ mb: 0.5, textAlign: "center" }}>
         {title}
       </Typography>
-      <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+      <Typography variant="body2" sx={{ color: tokens.muted, mb: 2, textAlign: "center" }}>
         {description}
       </Typography>
 
@@ -65,7 +62,7 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
       {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
 
       <Box component="form" onSubmit={handleSubmit}>
-        <Grid container spacing={2}>
+        <Grid container spacing={2} justifyContent="center">
           {extraFields?.map((f) => (
             <Grid item xs={12} sm={6} key={f.name}>
               <TextField
@@ -103,7 +100,7 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
             />
           </Grid>
         </Grid>
-        <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+        <Stack direction="row" justifyContent="center" sx={{ mt: 2 }}>
           <Button type="submit" variant="contained" disabled={state.loading || !bankCode || !accountNumber}>
             {state.loading ? <CircularProgress size={20} /> : submitLabel}
           </Button>
@@ -113,7 +110,7 @@ function BankConnectForm({ title, description, onSubmit, extraFields, submitLabe
   );
 }
 
-function WalletCard({ businessId, balanceNaira }) {
+function WalletTab({ businessId, balanceNaira }) {
   const [amount, setAmount] = useState("");
   const [state, setState] = useState({ loading: false, error: null });
 
@@ -135,16 +132,16 @@ function WalletCard({ businessId, balanceNaira }) {
   }
 
   return (
-    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
-      <Typography fontWeight={700} sx={{ mb: 0.5 }}>
+    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, maxWidth: 560, mx: "auto" }}>
+      <Typography fontWeight={700} sx={{ mb: 0.5, textAlign: "center" }}>
         Campaign wallet
       </Typography>
-      <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+      <Typography variant="body2" sx={{ color: tokens.muted, mb: 2, textAlign: "center" }}>
         Commission deducts from this balance automatically whenever a lead is qualified or a sale is verified — top it up
         anytime via Paystack.
       </Typography>
 
-      <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: "#F7F6F2", mb: 2.5 }}>
+      <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: "#F7F6F2", mb: 2.5, textAlign: "center" }}>
         <Typography variant="caption" sx={{ color: tokens.muted }}>
           Current balance
         </Typography>
@@ -156,7 +153,7 @@ function WalletCard({ businessId, balanceNaira }) {
       {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
 
       <Box component="form" onSubmit={handleTopup}>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} justifyContent="center">
           <TextField
             label="Amount to add (₦)"
             type="number"
@@ -176,11 +173,83 @@ function WalletCard({ businessId, balanceNaira }) {
   );
 }
 
+function SubscriptionsTab({ currentPlanId }) {
+  return (
+    <Box sx={{ maxWidth: 900, mx: "auto" }}>
+      <Typography fontWeight={700} sx={{ mb: 0.5, textAlign: "center" }}>
+        Your plan
+      </Typography>
+      <Typography variant="body2" sx={{ color: tokens.muted, mb: 3, textAlign: "center" }}>
+        Your platform fee and campaign limits are based on this plan.
+      </Typography>
+      <Grid container spacing={2}>
+        {pricingPlans.plans.map((plan) => {
+          const isCurrent = plan.id === (currentPlanId || "free");
+          return (
+            <Grid item xs={12} sm={4} key={plan.id}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  height: "100%",
+                  textAlign: "center",
+                  borderColor: isCurrent ? tokens.brand : tokens.border,
+                  borderWidth: isCurrent ? 2 : 1,
+                  position: "relative",
+                }}
+              >
+                {isCurrent && (
+                  <Chip
+                    label="Current plan"
+                    size="small"
+                    sx={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700 }}
+                  />
+                )}
+                <Typography variant="h6" fontWeight={800} sx={{ mt: 1 }}>
+                  {plan.name}
+                </Typography>
+                <Typography variant="h5" fontWeight={800} sx={{ my: 1 }}>
+                  {plan.priceNaira === 0 ? "₦0" : `₦${plan.priceNaira.toLocaleString()}`}
+                  <Typography component="span" variant="body2" sx={{ color: tokens.muted }}>
+                    {plan.priceSuffix}
+                  </Typography>
+                </Typography>
+                <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+                  {plan.feePercent}% platform fee
+                </Typography>
+                <Stack spacing={0.75} sx={{ textAlign: "left" }}>
+                  {plan.features.map((f) => (
+                    <Typography key={f} variant="caption" sx={{ color: tokens.muted }}>
+                      • {f}
+                    </Typography>
+                  ))}
+                </Stack>
+                {!isCurrent && (
+                  <Button variant="outlined" size="small" sx={{ mt: 2 }} disabled>
+                    {plan.cta}
+                  </Button>
+                )}
+              </Paper>
+            </Grid>
+          );
+        })}
+      </Grid>
+      <Typography variant="caption" sx={{ color: tokens.muted, display: "block", textAlign: "center", mt: 2 }}>
+        Self-service plan switching isn't available yet — reach out to change plans for now.
+      </Typography>
+    </Box>
+  );
+}
+
+const TABS = ["Account", "Wallet", "Subscriptions", "Business", "Bank"];
+
 export default function AccountPage() {
+  const [tab, setTab] = useState(0);
   const [user, setUser] = useState(null);
   const [userRow, setUserRow] = useState(null);
   const [business, setBusiness] = useState(null);
-  const [form, setForm] = useState({ phone: "", businessName: "", industry: "", website: "" });
+  const [form, setForm] = useState({ fullName: "", phone: "", businessName: "", industry: "", website: "" });
   const [saveState, setSaveState] = useState({ loading: false, error: null, success: false });
 
   useEffect(() => {
@@ -190,7 +259,7 @@ export default function AccountPage() {
       if (!authUser) return;
       const { data: uRow } = await supabase
         .from("users")
-        .select("id, phone")
+        .select("id, phone, full_name")
         .eq("auth_user_id", authUser.id)
         .single();
       if (!uRow) return;
@@ -206,7 +275,13 @@ export default function AccountPage() {
         .maybeSingle();
       setBusiness(biz || null);
 
+      // fullName is a real controlled field now - it used to be an
+      // uncontrolled defaultValue, which is exactly why the floating
+      // label could end up overlapping the typed text: MUI's label-shrink
+      // detection tracks a controlled value's presence, and defaultValue
+      // bypasses that entirely.
       setForm({
+        fullName: uRow.full_name || authUser.user_metadata?.full_name || "",
         phone: uRow.phone || "",
         businessName: biz?.name || "",
         industry: biz?.industry || "",
@@ -220,7 +295,10 @@ export default function AccountPage() {
     try {
       const supabase = createClient();
       if (userRow) {
-        const { error: userError } = await supabase.from("users").update({ phone: form.phone }).eq("id", userRow.id);
+        const { error: userError } = await supabase
+          .from("users")
+          .update({ full_name: form.fullName, phone: form.phone })
+          .eq("id", userRow.id);
         if (userError) throw userError;
       }
       if (business) {
@@ -236,128 +314,144 @@ export default function AccountPage() {
     }
   }
 
-  const firstName = user?.user_metadata?.given_name || user?.user_metadata?.full_name?.split(" ")[0];
-
   return (
     <>
       <PageHeader title="Account" subtitle="Profile, business information, payment details, and settings." />
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
-          <Avatar src={user?.user_metadata?.avatar_url} sx={{ width: 56, height: 56, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700 }}>
-            {(firstName || user?.email || "?").charAt(0).toUpperCase()}
-          </Avatar>
-          <Box>
-            <Typography fontWeight={700}>Signed in with Google</Typography>
-            <Typography variant="body2" sx={{ color: tokens.muted }}>
-              {user?.email || "…"}
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} centered sx={{ mb: 3, borderBottom: `1px solid ${tokens.border}` }}>
+        {TABS.map((t) => (
+          <Tab key={t} label={t} sx={{ textTransform: "none", fontWeight: 600 }} />
+        ))}
+      </Tabs>
+
+      {tab === 0 && (
+        <Container maxWidth="sm" disableGutters>
+          <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border }}>
+            <Stack direction="row" spacing={2} alignItems="center" justifyContent="center" sx={{ mb: 3 }}>
+              <Avatar src={user?.user_metadata?.avatar_url} sx={{ width: 56, height: 56, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700 }}>
+                {(form.fullName || user?.email || "?").charAt(0).toUpperCase()}
+              </Avatar>
+              <Box>
+                <Typography fontWeight={700}>Signed in with Google</Typography>
+                <Typography variant="body2" sx={{ color: tokens.muted }}>
+                  {user?.email || "…"}
+                </Typography>
+              </Box>
+            </Stack>
+            <Divider sx={{ mb: 3 }} />
+            <Stack spacing={2} alignItems="center">
+              <TextField
+                label="Full name"
+                fullWidth
+                value={form.fullName}
+                onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+              />
+              <TextField
+                label="Phone number"
+                fullWidth
+                placeholder="08012345678"
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) }))}
+                helperText={form.phone && form.phone.length !== 11 ? `${form.phone.length}/11 digits` : "11 digits, no +234 needed"}
+                error={form.phone.length > 0 && form.phone.length !== 11}
+              />
+            </Stack>
+          </Paper>
+        </Container>
+      )}
+
+      {tab === 1 && (
+        <Container maxWidth="sm" disableGutters>
+          <WalletTab businessId={business?.id} balanceNaira={business?.wallet_balance_naira || 0} />
+        </Container>
+      )}
+
+      {tab === 2 && <SubscriptionsTab currentPlanId={business?.plan} />}
+
+      {tab === 3 && (
+        <Container maxWidth="sm" disableGutters>
+          <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border }}>
+            <Typography fontWeight={700} sx={{ mb: 1, textAlign: "center" }}>
+              Business profile
             </Typography>
-          </Box>
-        </Stack>
-        <Divider sx={{ mb: 3 }} />
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <TextField label="Full name" fullWidth defaultValue={user?.user_metadata?.full_name || ""} />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Phone number"
-              fullWidth
-              placeholder="08012345678"
-              value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) }))}
-              helperText={form.phone && form.phone.length !== 11 ? `${form.phone.length}/11 digits` : "11 digits, no +234 needed"}
-              error={form.phone.length > 0 && form.phone.length !== 11}
-            />
-          </Grid>
-        </Grid>
-      </Paper>
-
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
-        <Typography fontWeight={700} sx={{ mb: 0.5 }}>
-          Your plan
-        </Typography>
-        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-          Your platform fee and campaign limits are based on this plan.
-        </Typography>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" spacing={2}>
-          <Box>
-            <Typography variant="h5" fontWeight={800}>
-              {PLAN_LABELS[business?.plan]?.name || "Small"}
+            <Typography variant="body2" sx={{ color: tokens.muted, mb: 2, textAlign: "center" }}>
+              Required before you can create a campaign. Every Commission account can act as a business, an
+              affiliate, or both.
             </Typography>
-            <Typography variant="body2" sx={{ color: tokens.muted }}>
-              {PLAN_LABELS[business?.plan]?.feePercent ?? 20}% platform fee on every wallet top-up
-            </Typography>
-          </Box>
-          <Button variant="outlined" href="/#pricing" target="_blank">
-            View or change plan
-          </Button>
-        </Stack>
-      </Paper>
+            <Stack spacing={2} alignItems="center">
+              <TextField
+                label="Business name"
+                fullWidth
+                required
+                value={form.businessName}
+                onChange={(e) => setForm((f) => ({ ...f, businessName: e.target.value }))}
+              />
+              <TextField
+                label="Industry"
+                fullWidth
+                required
+                value={form.industry}
+                onChange={(e) => setForm((f) => ({ ...f, industry: e.target.value }))}
+              />
+              <TextField
+                label="Website"
+                fullWidth
+                value={form.website}
+                onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
+                helperText="Optional"
+              />
+            </Stack>
+          </Paper>
+        </Container>
+      )}
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
-        <Typography fontWeight={700} sx={{ mb: 2 }}>
-          Business profile
-        </Typography>
-        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-          Only needed if you are running campaigns. Every Commission account can act as a business, an affiliate, or both.
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <TextField label="Business name" fullWidth value={form.businessName} onChange={(e) => setForm((f) => ({ ...f, businessName: e.target.value }))} />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField label="Industry" fullWidth value={form.industry} onChange={(e) => setForm((f) => ({ ...f, industry: e.target.value }))} />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField label="Website" fullWidth value={form.website} onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))} />
-          </Grid>
-        </Grid>
-      </Paper>
+      {tab === 4 && (
+        <Container maxWidth="sm" disableGutters>
+          <BankConnectForm
+            title="Affiliate payout bank account"
+            description="Where Paystack sends your affiliate commission payouts."
+            submitLabel="Connect bank account"
+            onSubmit={async ({ bankCode, accountNumber }) => {
+              const res = await fetch("/api/paystack/recipient", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ bankCode, accountNumber }),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "Failed to connect bank account");
+              return data;
+            }}
+          />
 
-      <BankConnectForm
-        title="Affiliate payout bank account"
-        description="Where Paystack sends your affiliate commission payouts."
-        submitLabel="Connect bank account"
-        onSubmit={async ({ bankCode, accountNumber }) => {
-          const res = await fetch("/api/paystack/recipient", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bankCode, accountNumber }),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || "Failed to connect bank account");
-          return data;
-        }}
-      />
+          {/* Only needed for SALE-goal campaigns — Paystack routes the
+              business's own proceeds here automatically at checkout, split
+              from the affiliate commission in the same transaction. Not used
+              for LEAD-goal campaigns, which use the Campaign Wallet instead. */}
+          <BankConnectForm
+            title="Business settlement account"
+            description="Required for direct-sale campaigns — this is where your share of each sale lands automatically, the moment a customer pays."
+            submitLabel="Connect settlement account"
+            extraFields={[{ name: "businessId", label: "Business ID" }]}
+            onSubmit={async ({ bankCode, accountNumber, businessId }) => {
+              const res = await fetch("/api/paystack/subaccount", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ bankCode, accountNumber, businessId }),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "Failed to connect settlement account");
+              return data;
+            }}
+          />
+        </Container>
+      )}
 
-      {/* Only needed for SALE-goal campaigns — Paystack routes the
-          business's own proceeds here automatically at checkout, split from
-          the affiliate commission in the same transaction. Not used at all
-          for LEAD-goal campaigns, which use the Campaign Wallet instead. */}
-      <BankConnectForm
-        title="Business settlement account"
-        description="Required for direct-sale campaigns — this is where your share of each sale lands automatically, the moment a customer pays."
-        submitLabel="Connect settlement account"
-        extraFields={[{ name: "businessId", label: "Business ID" }]}
-        onSubmit={async ({ bankCode, accountNumber, businessId }) => {
-          const res = await fetch("/api/paystack/subaccount", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bankCode, accountNumber, businessId }),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || "Failed to connect settlement account");
-          return data;
-        }}
-      />
+      <Box sx={{ maxWidth: 560, mx: "auto", mt: 2 }}>
+        {saveState.error && <Alert severity="error" sx={{ mb: 2 }}>{saveState.error}</Alert>}
+        {saveState.success && <Alert severity="success" sx={{ mb: 2 }}>Saved</Alert>}
+      </Box>
 
-      <WalletCard businessId={business?.id} balanceNaira={business?.wallet_balance_naira || 0} />
-
-      {saveState.error && <Alert severity="error" sx={{ mb: 2 }}>{saveState.error}</Alert>}
-      {saveState.success && <Alert severity="success" sx={{ mb: 2 }}>Saved</Alert>}
-
-      <Stack direction="row" justifyContent="flex-end">
+      <Stack direction="row" justifyContent="center" sx={{ mt: 1 }}>
         <Button variant="contained" size="large" onClick={handleSave} disabled={saveState.loading}>
           {saveState.loading ? <CircularProgress size={20} /> : "Save changes"}
         </Button>
