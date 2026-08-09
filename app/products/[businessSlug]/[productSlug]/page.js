@@ -13,10 +13,17 @@ import LeadShortForm from "@/components/marketing/LeadShortForm";
 // from the brand's existing supplement colors so it never looks random or
 // off-brand.
 const LETTER_COLORS = ["#FFE280", "#C7E8D8", "#F3C6C6", "#C9D9F2", "#F2DCC9", "#D9C9F2"];
+// Business identity (header) stays visually consistent across visits.
 function colorForString(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
   return LETTER_COLORS[Math.abs(hash) % LETTER_COLORS.length];
+}
+// The campaign line-item specifically gets a fresh random color on every
+// page load, not tied to the business's logo at all - a campaign has no
+// image of its own, and this shouldn't inherit the business's branding.
+function randomLetterColor() {
+  return LETTER_COLORS[Math.floor(Math.random() * LETTER_COLORS.length)];
 }
 
 // This page used to be ISR-cached (revalidate = 3600) since business/product
@@ -146,21 +153,16 @@ export default async function ProductPage({ params, searchParams }) {
                       width: 44,
                       height: 44,
                       borderRadius: 2,
-                      bgcolor: branding.logoUrl ? "#EDEBE3" : colorForString(product.name || product.id),
+                      bgcolor: randomLetterColor(),
                       flexShrink: 0,
                       display: "grid",
                       placeItems: "center",
                       overflow: "hidden",
                     }}
                   >
-                    {branding.logoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={branding.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    ) : (
-                      <Typography variant="body2" sx={{ color: tokens.ink, fontWeight: 700 }}>
-                        {(product.name || "?").charAt(0).toUpperCase()}
-                      </Typography>
-                    )}
+                    <Typography variant="body2" sx={{ color: tokens.ink, fontWeight: 700 }}>
+                      {(product.name || "?").charAt(0).toUpperCase()}
+                    </Typography>
                   </Box>
                   <Box>
                     <Typography fontWeight={700}>{product.name}</Typography>
