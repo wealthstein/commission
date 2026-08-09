@@ -134,33 +134,10 @@ export default function LeadShortForm({ programId, productName, businessName, ch
       </Box>
 
       {checkoutStyle && (
-        <Stack spacing={1} sx={{ mt: 4 }}>
-          {[
-            "Submit your details above",
-            "You'll be taken straight to WhatsApp",
-            `Chat with ${businessName || "the business"} directly`,
-          ].map((step, i) => (
-            <Stack key={step} direction="row" spacing={1.5} alignItems="flex-start">
-              <Box
-                sx={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: "50%",
-                  bgcolor: "#F7F6F2",
-                  display: "grid",
-                  placeItems: "center",
-                  flexShrink: 0,
-                  mt: 0.2,
-                }}
-              >
-                <Typography sx={{ fontSize: 10, fontWeight: 700, color: tokens.muted }}>{i + 1}</Typography>
-              </Box>
-              <Typography variant="caption" sx={{ color: tokens.muted }}>
-                {step}
-              </Typography>
-            </Stack>
-          ))}
-        </Stack>
+        <Typography variant="caption" sx={{ color: tokens.muted, display: "block", textAlign: "center", mt: 3 }}>
+          Submit your details, you&apos;ll be taken straight to WhatsApp, and you can chat with {businessName || "the business"}{" "}
+          directly.
+        </Typography>
       )}
     </>
   );
