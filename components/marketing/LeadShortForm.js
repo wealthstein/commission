@@ -41,14 +41,11 @@ export default function LeadShortForm({ programId, productName, checkoutStyle = 
     }
   }
 
-  const containerSx = checkoutStyle
-    ? { p: 4, borderRadius: 3, border: "none", boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }
-    : { p: 3, borderRadius: 3, borderColor: tokens.border };
   const centeredFieldSx = checkoutStyle ? { "& input": { textAlign: "center" } } : undefined;
 
   if (state.whatsappRef) {
     return (
-      <Paper variant="outlined" sx={{ ...containerSx, bgcolor: "#E7F5EE" }}>
+      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, bgcolor: "#E7F5EE" }}>
         <Typography fontWeight={700} sx={{ mb: 1 }}>
           You are on the list!
         </Typography>
@@ -77,8 +74,8 @@ export default function LeadShortForm({ programId, productName, checkoutStyle = 
     );
   }
 
-  return (
-    <Paper variant="outlined" sx={containerSx}>
+  const formContent = (
+    <>
       {!checkoutStyle && (
         <>
           <Typography fontWeight={700} sx={{ mb: 0.5 }}>
@@ -135,6 +132,46 @@ export default function LeadShortForm({ programId, productName, checkoutStyle = 
           </Button>
         </Stack>
       </Box>
+
+      {checkoutStyle && (
+        <Stack spacing={1} sx={{ mt: 4 }}>
+          {[
+            "Submit your details above",
+            "You'll be taken straight to WhatsApp",
+            "Chat with the business directly to get your questions answered",
+          ].map((step, i) => (
+            <Stack key={step} direction="row" spacing={1.5} alignItems="flex-start">
+              <Box
+                sx={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: "50%",
+                  bgcolor: "#F7F6F2",
+                  display: "grid",
+                  placeItems: "center",
+                  flexShrink: 0,
+                  mt: 0.2,
+                }}
+              >
+                <Typography sx={{ fontSize: 10, fontWeight: 700, color: tokens.muted }}>{i + 1}</Typography>
+              </Box>
+              <Typography variant="caption" sx={{ color: tokens.muted }}>
+                {step}
+              </Typography>
+            </Stack>
+          ))}
+        </Stack>
+      )}
+    </>
+  );
+
+  if (checkoutStyle) {
+    return formContent;
+  }
+
+  return (
+    <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border }}>
+      {formContent}
     </Paper>
   );
 }

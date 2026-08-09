@@ -126,6 +126,8 @@ export default function CampaignsPage() {
             return (
               <Box
                 key={p.id}
+                component={Link}
+                href={`/dashboard/campaigns/${p.id}/edit`}
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -135,6 +137,10 @@ export default function CampaignsPage() {
                   borderTop: i === 0 ? "none" : `1px solid ${tokens.border}`,
                   gap: 2,
                   flexWrap: "wrap",
+                  textDecoration: "none",
+                  color: "inherit",
+                  cursor: "pointer",
+                  "&:hover": { bgcolor: "#FAFAF8" },
                 }}
               >
                 <Box sx={{ minWidth: 200 }}>

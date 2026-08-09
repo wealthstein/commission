@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Box, Container, Typography, Chip, Stack, Button, Grid, Paper, Divider, Avatar } from "@mui/material";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { buildProductMetadata, buildProductJsonLd, buildBreadcrumbJsonLd, billingLabel, SITE_URL } from "@/lib/seo";
 import { resolveLandingBranding } from "@/lib/branding";
@@ -112,6 +113,14 @@ export default async function ProductPage({ params, searchParams }) {
           <Grid item xs={12} md={6} sx={{ bgcolor: "#FAFAF8", borderRight: { md: `1px solid ${tokens.border}` } }}>
             <Box sx={{ p: { xs: 4, md: 8 }, maxWidth: 480, ml: { md: "auto" } }}>
               <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 5 }}>
+                <Box
+                  component={Link}
+                  href="/"
+                  sx={{ color: tokens.muted, display: "flex", alignItems: "center", mr: 0.5 }}
+                  aria-label="Back"
+                >
+                  <ArrowBackRoundedIcon fontSize="small" />
+                </Box>
                 {branding.logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={branding.logoUrl} alt={business.name} style={{ height: 32, width: 32, borderRadius: 6, objectFit: "cover" }} />
@@ -186,6 +195,21 @@ export default async function ProductPage({ params, searchParams }) {
                   <Typography variant="body2">{product.offline_payment_instructions}</Typography>
                 </Paper>
               )}
+
+              <Stack direction="row" spacing={2} sx={{ mt: 6 }}>
+                <Typography variant="caption" sx={{ color: tokens.muted }}>
+                  Powered by{" "}
+                  <Typography component={Link} href="/" variant="caption" sx={{ color: tokens.muted, fontWeight: 700, textDecoration: "none" }}>
+                    Commission
+                  </Typography>
+                </Typography>
+                <Typography component={Link} href="/corporate/terms" variant="caption" sx={{ color: tokens.muted, textDecoration: "none" }}>
+                  Terms
+                </Typography>
+                <Typography component={Link} href="/corporate/privacy" variant="caption" sx={{ color: tokens.muted, textDecoration: "none" }}>
+                  Privacy
+                </Typography>
+              </Stack>
             </Box>
           </Grid>
 
@@ -206,20 +230,6 @@ export default async function ProductPage({ params, searchParams }) {
                   </Button>
                 )}
               </Box>
-              <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 6, pt: 3 }}>
-                <Typography variant="caption" sx={{ color: tokens.muted }}>
-                  Powered by{" "}
-                  <Typography component={Link} href="/" variant="caption" sx={{ color: tokens.muted, fontWeight: 700, textDecoration: "none" }}>
-                    Commission
-                  </Typography>
-                </Typography>
-                <Typography component={Link} href="/corporate/terms" variant="caption" sx={{ color: tokens.muted, textDecoration: "none" }}>
-                  Terms
-                </Typography>
-                <Typography component={Link} href="/corporate/privacy" variant="caption" sx={{ color: tokens.muted, textDecoration: "none" }}>
-                  Privacy
-                </Typography>
-              </Stack>
             </Box>
           </Grid>
         </Grid>
