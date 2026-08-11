@@ -170,50 +170,6 @@ function PayoutsTab({ userRowId }) {
   );
 }
 
-function QualifyDialog({ lead, open, onClose, onDone }) {
-  const [state, setState] = useState({ loading: false, error: null });
-
-  async function handleDecision(approve) {
-    setState({ loading: true, error: null });
-    try {
-      const res = await fetch(`/api/leads/${lead.id}/qualify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ approve }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update lead");
-      setState({ loading: false, error: null });
-      onDone(data);
-      onClose();
-    } catch (err) {
-      setState({ loading: false, error: err.message });
-    }
-  }
-
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Qualify lead {lead?.whatsapp_ref}</DialogTitle>
-      <DialogContent>
-        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-          Use this if you are qualifying a lead based on your own WhatsApp conversation, rather than the prospect
-          completing Commission&apos;s hosted form themselves. Confirming charges your Campaign Wallet for this
-          program&apos;s cost per Intent Qualified Lead and pays your affiliates automatically.
-        </Typography>
-        {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={() => handleDecision(false)} disabled={state.loading} color="inherit">
-          Reject
-        </Button>
-        <Button onClick={() => handleDecision(true)} disabled={state.loading} variant="contained">
-          {state.loading ? "Confirming…" : "Confirm qualified"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
 function ConfirmSaleDialog({ lead, open, onClose, onDone }) {
   const [saleAmount, setSaleAmount] = useState("");
   const [commission, setCommission] = useState("");
@@ -283,13 +239,8 @@ function ConfirmSaleDialog({ lead, open, onClose, onDone }) {
 
 function LeadsTab({ plan }) {
   const [leads, setLeads] = useState(sampleLeads);
-  const [activeLead, setActiveLead] = useState(null);
   const [saleLead, setSaleLead] = useState(null);
   const canExport = plan === "plus";
-
-  function handleDone(lead, result) {
-    setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, status: result.status, charge_amount_naira: result.chargeAmount } : l)));
-  }
 
   return (
     <>
@@ -337,11 +288,6 @@ function LeadsTab({ plan }) {
                   </Typography>
                 )}
                 <Chip size="small" label={style.label} sx={{ bgcolor: style.bg, color: style.fg, fontWeight: 700 }} />
-                {lead.status === "captured" && (
-                  <Button size="small" variant="contained" onClick={() => setActiveLead(lead)}>
-                    Qualify manually
-                  </Button>
-                )}
                 {lead.status === "qualified" && lead.industry === "Real Estate" && (
                   <Button size="small" variant="outlined" onClick={() => setSaleLead(lead)}>
                     Confirm sale closed
@@ -357,13 +303,6 @@ function LeadsTab({ plan }) {
           </Box>
         )}
       </Paper>
-
-      <QualifyDialog
-        lead={activeLead}
-        open={!!activeLead}
-        onClose={() => setActiveLead(null)}
-        onDone={(result) => handleDone(activeLead, result)}
-      />
 
       <ConfirmSaleDialog
         lead={saleLead}

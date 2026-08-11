@@ -10,7 +10,10 @@ import { buildLeadWhatsAppLink, generateWhatsAppRef } from "@/lib/whatsapp";
  *
  * This is the "Interest Form" step: Visitor -> Campaign Page -> Interest Form ->
  * Lead. Nothing is charged here — a captured lead only becomes billable once
- * it is qualified (see app/api/leads/[leadId]/qualify).
+ * the prospect completes the Intent Form themselves (see
+ * app/api/leads/continue/route.js). There is no manual qualification path
+ * anymore - a lead is only ever qualified by that objective, system-recorded
+ * action, never by a business's own say-so.
  *
  * A referral link click is required to submit this form — Commission's
  * whole model here is affiliate-driven leads, so there is no one to pay (or
