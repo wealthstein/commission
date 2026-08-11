@@ -150,7 +150,7 @@ function RealEstateSalesTab({ userRowId }) {
     async function load() {
       const { data } = await supabase
         .from("manual_sale_confirmations")
-        .select("id, reported_sale_amount_naira, reported_commission_naira, notes, created_at, leads(whatsapp_ref, affiliate_programs(products(name)))")
+        .select("id, reported_sale_amount_naira, reported_commission_naira, notes, created_at, leads(lead_ref, affiliate_programs(products(name)))")
         .eq("affiliate_id", userRowId)
         .order("created_at", { ascending: false });
 
@@ -192,7 +192,7 @@ function RealEstateSalesTab({ userRowId }) {
             <Box sx={{ minWidth: 200 }}>
               <Typography fontWeight={700}>{r.leads?.affiliate_programs?.products?.name || "Campaign"}</Typography>
               <Typography variant="caption" sx={{ color: tokens.muted }}>
-                {r.leads?.whatsapp_ref} · Confirmed {new Date(r.created_at).toLocaleDateString()}
+                {r.leads?.lead_ref} · Confirmed {new Date(r.created_at).toLocaleDateString()}
                 {r.notes ? ` · ${r.notes}` : ""}
               </Typography>
             </Box>

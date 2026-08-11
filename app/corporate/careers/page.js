@@ -11,7 +11,7 @@ export const metadata = {
 const VALUES = [
   {
     title: "Build for how Nigeria actually transacts",
-    body: "WhatsApp-native flows, Naira-first pricing, Paystack settlement - we design around real usage, not a generic template.",
+    body: "Naira-first pricing, Paystack settlement, real affiliate trust scoring - we design around real usage, not a generic template.",
   },
   {
     title: "Trust is earned through mechanics, not copy",

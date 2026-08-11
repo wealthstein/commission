@@ -38,10 +38,10 @@ import { createClient } from "@/lib/supabaseClient";
 //     business's own email or webhook the moment the lead qualified (see lib/leadForwarding.js).
 
 const sampleLeads = [
-  { id: "l1", whatsapp_ref: "LD-7F3K9Q", status: "captured", product: "CareLink HMO Plan", industry: "Healthcare", created_at: "2026-07-28" },
-  { id: "l2", whatsapp_ref: "LD-2M8XJZ", status: "qualified", product: "CareLink HMO Plan", industry: "Healthcare", created_at: "2026-07-26", charge_amount_naira: 5000 },
-  { id: "l3", whatsapp_ref: "LD-9RT4WP", status: "rejected", product: "SwiftHR Payroll", industry: "Fintech", created_at: "2026-07-24" },
-  { id: "l4", whatsapp_ref: "LD-3QX7MK", status: "qualified", product: "Lekki Waterfront Villas", industry: "Real Estate", created_at: "2026-07-27", charge_amount_naira: 20000 },
+  { id: "l1", lead_ref: "LD-7F3K9Q", status: "captured", product: "CareLink HMO Plan", industry: "Healthcare", created_at: "2026-07-28" },
+  { id: "l2", lead_ref: "LD-2M8XJZ", status: "qualified", product: "CareLink HMO Plan", industry: "Healthcare", created_at: "2026-07-26", charge_amount_naira: 5000 },
+  { id: "l3", lead_ref: "LD-9RT4WP", status: "rejected", product: "SwiftHR Payroll", industry: "Fintech", created_at: "2026-07-24" },
+  { id: "l4", lead_ref: "LD-3QX7MK", status: "qualified", product: "Lekki Waterfront Villas", industry: "Real Estate", created_at: "2026-07-27", charge_amount_naira: 20000 },
 ];
 
 const STATUS_STYLE = {
@@ -57,7 +57,7 @@ const STATUS_STYLE = {
 function exportLeadsToCsv(leads) {
   const header = ["Reference", "Campaign", "Status", "Charge (NGN)", "Date"];
   const rows = leads.map((l) => [
-    l.whatsapp_ref,
+    l.lead_ref,
     l.product,
     STATUS_STYLE[l.status]?.label || l.status,
     l.charge_amount_naira || "",
@@ -200,7 +200,7 @@ function ConfirmSaleDialog({ lead, open, onClose, onDone }) {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Confirm sale closed - {lead?.whatsapp_ref}</DialogTitle>
+      <DialogTitle>Confirm sale closed - {lead?.lead_ref}</DialogTitle>
       <DialogContent>
         <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
           This does not move any money through Commission - the client paid you directly, and you pay the
@@ -276,7 +276,7 @@ function LeadsTab({ plan }) {
               }}
             >
               <Box sx={{ minWidth: 200 }}>
-                <Typography fontWeight={700}>{lead.whatsapp_ref}</Typography>
+                <Typography fontWeight={700}>{lead.lead_ref}</Typography>
                 <Typography variant="caption" sx={{ color: tokens.muted }}>
                   {lead.product} · {lead.created_at}
                 </Typography>

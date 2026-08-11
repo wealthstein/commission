@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
-import { buildLeadWhatsAppLink, generateWhatsAppRef } from "@/lib/whatsapp";
+import { getAffiliateTrustStatus } from "@/lib/trustScore";
+import { sendOtp } from "@/lib/termii";
+import { createLeadAndGetIntentFormUrl } from "@/lib/leadCreation";
 
 /**
  * POST /api/leads/capture
@@ -18,6 +20,12 @@ import { buildLeadWhatsAppLink, generateWhatsAppRef } from "@/lib/whatsapp";
  * A referral link click is required to submit this form — Commission's
  * whole model here is affiliate-driven leads, so there is no one to pay (or
  * bill the wallet on behalf of) for a lead with no attributable referrer.
+ *
+ * Radar trust check: a lead from a Trusted affiliate (see lib/trustScore.js)
+ * is created immediately, same as always. A lead from an unproven affiliate
+ * triggers an inline OTP step instead - the lead itself is not created here
+ * at all in that case; it only gets created once the code is verified (see
+ * app/api/leads/verify-otp/route.js), using the exact same creation logic.
  */
 export async function POST(req) {
   const { programId, fullName, phone, email } = await req.json();
@@ -37,7 +45,7 @@ export async function POST(req) {
 
   const { data: enrollment } = await supabase
     .from("affiliate_enrollments")
-    .select("id")
+    .select("id, affiliate_id")
     .eq("referral_code", referralCode)
     .eq("status", "active")
     .maybeSingle();
@@ -47,7 +55,7 @@ export async function POST(req) {
 
   const { data: program } = await supabase
     .from("affiliate_programs")
-    .select("*, products(name, business_id)")
+    .select("*, products(name, business_id, businesses(name))")
     .eq("id", programId)
     .eq("status", "active")
     .maybeSingle();
@@ -71,46 +79,40 @@ export async function POST(req) {
     clickId = click?.id ?? null;
   }
 
-  const whatsappRef = generateWhatsAppRef();
+  const trust = await getAffiliateTrustStatus(supabase, enrollment.affiliate_id);
 
-  // Deliberately NOT storing fullName/phone/email here. The WhatsApp deep
-  // link below already carries the name to the business the moment they
-  // open the chat, and the business sees the phone number natively inside
-  // WhatsApp — Commission does not need to (and does not) keep a copy.
-  // This row only tracks the attribution/billing event.
-  const { data: lead, error } = await supabase
-    .from("leads")
-    .insert({
-      program_id: programId,
-      click_id: clickId,
-      enrollment_id: enrollment.id,
-      whatsapp_ref: whatsappRef,
-      status: "captured",
-      forwarded_to: "none", // nothing to forward yet — the Intent Form step is what involves new information
-    })
-    .select()
-    .single();
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (!trust.trusted) {
+    let sent;
+    try {
+      sent = await sendOtp(phone, program.products?.businesses?.name);
+    } catch (err) {
+      return NextResponse.json({ error: `Could not send verification code: ${err.message}` }, { status: 502 });
+    }
 
-  let whatsappNumber = program.whatsapp_number;
-  if (!whatsappNumber) {
-    const { data: business } = await supabase
-      .from("businesses")
-      .select("whatsapp_number")
-      .eq("id", program.products.business_id)
-      .maybeSingle();
-    whatsappNumber = business?.whatsapp_number ?? null;
-  }
-  const whatsappLink = whatsappNumber
-    ? buildLeadWhatsAppLink({
-        whatsappNumber,
-        whatsappRef,
-        productName: program.products.name,
-        leadName: fullName,
+    const { data: otpRow, error: otpError } = await supabase
+      .from("otp_verifications")
+      .insert({
+        program_id: programId,
+        enrollment_id: enrollment.id,
+        click_id: clickId,
+        termii_pin_id: sent.pinId,
+        phone,
+        full_name: fullName,
+        email,
       })
-    : null;
+      .select("id")
+      .single();
+    if (otpError) {
+      return NextResponse.json({ error: otpError.message }, { status: 500 });
+    }
 
-  return NextResponse.json({ leadId: lead.id, whatsappRef, whatsappLink });
+    return NextResponse.json({ needsOtp: true, otpId: otpRow.id });
+  }
+
+  try {
+    const result = await createLeadAndGetIntentFormUrl(supabase, { programId, enrollmentId: enrollment.id, clickId, program });
+    return NextResponse.json({ needsOtp: false, ...result });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }

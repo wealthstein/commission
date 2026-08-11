@@ -83,7 +83,7 @@ export default function IndustryProgramContent({ industry, liveProducts }) {
                     1. Per Intent Qualified Lead - paid automatically
                   </Typography>
                   <Typography variant="body2" sx={{ color: tokens.muted }}>
-                    The moment a client you referred qualifies through WhatsApp, you're paid - whether or not that
+                    The moment a client you referred completes the Intent Form, you're paid - whether or not that
                     lead ever turns into a closed sale. No chasing anyone, no waiting on a deal to close first.
                   </Typography>
                 </Box>

@@ -64,7 +64,6 @@ const DEFAULTS = {
   billing_frequency: "one_time",
   product_url: "",
   offline_payment_instructions: "",
-  whatsapp_number: "",
   cost_per_qualified_lead: "",
   commission_type: "one_time",
   // Only used for sale-goal campaigns - lead-goal always splits the whole
@@ -87,7 +86,6 @@ const SAMPLE_CAMPAIGNS = {
     product_url: "https://carelink.ng/plans/individual",
     offline_payment_instructions: "Bank transfer to Zenith Bank 0123456789. We will ask for a receipt when confirming a sale.",
     cost_per_qualified_lead: "5,000",
-    whatsapp_number: "08012345678",
     custom_field_example: { label: "Do you currently have health insurance?", type: "Dropdown", options: ["Yes", "No"] },
   },
   sale: {
@@ -96,7 +94,7 @@ const SAMPLE_CAMPAIGNS = {
     category: "Real Estate",
     price: "45,000,000",
     description: "Newly built 3-bedroom duplex with BQ, secure estate, 24-hour power - ready for immediate inspection.",
-    product_url: "https://wa.me/2348012345678",
+    product_url: "https://lekkihomes.ng/duplex-inquiry",
     total_commission_percent: 12,
   },
 };
@@ -175,10 +173,7 @@ function SampleCampaignDialog({ open, onClose, isLead }) {
             {isLead ? "Lead pricing" : "Sale commission"}
           </Typography>
           {isLead ? (
-            <>
-              <SampleField label="Cost per Intent Qualified Lead" value={`₦${sample.cost_per_qualified_lead}`} />
-              <SampleField label="WhatsApp number" value={sample.whatsapp_number} />
-            </>
+            <SampleField label="Cost per Intent Qualified Lead" value={`₦${sample.cost_per_qualified_lead}`} />
           ) : (
             <SampleField label="Total commission" value={`${sample.total_commission_percent}%`} />
           )}
@@ -408,7 +403,6 @@ export default function NewCampaignPage() {
           conversion_goal: form.conversion_goal,
           commission_type: isLead ? "one_time" : form.commission_type,
           cost_per_qualified_lead_naira: isLead ? Number(form.cost_per_qualified_lead) : null,
-          whatsapp_number: isLead ? form.whatsapp_number || null : null,
           tier1_percent: tier1Percent,
           tier2_percent: tier2Percent,
           tier3_percent: tier3Percent,
@@ -551,8 +545,8 @@ export default function NewCampaignPage() {
                 <Typography fontWeight={700}>Leads</Typography>
               </Stack>
               <Typography variant="caption" sx={{ color: isLead ? tokens.brandInk : tokens.muted, textAlign: "left" }}>
-                Visitor fills an interest form, gets a WhatsApp link, you qualify them when ready. You pay a flat amount per
-                Intent Qualified Lead — deducted from your campaign wallet.
+                Visitor fills an interest form, goes straight to a details form, you qualify them when ready. You pay
+                a flat amount per Intent Qualified Lead — deducted from your campaign wallet.
               </Typography>
             </ToggleButton>
             <ToggleButton
@@ -662,7 +656,7 @@ export default function NewCampaignPage() {
             <Grid item xs={12} sm={isPhysical ? 8 : 4}>
               <FieldLabel
                 text="Where customers buy"
-                tooltip='The link or number customers use to actually complete their purchase - your website, a WhatsApp number, or a store link. Example: "https://wa.me/2348012345678" or "https://yoursite.com/checkout".'
+                tooltip='The link or number customers use to actually complete their purchase - your website, a store link, or a booking page. Example: "https://yoursite.com/checkout" or "https://yoursite.com/book-inspection".'
               />
               <TextField
                 fullWidth
@@ -718,24 +712,6 @@ export default function NewCampaignPage() {
                       : "Deducted from your wallet each time a lead qualifies"
                   }
                   error={Number(form.cost_per_qualified_lead) > MAX_COST_PER_LEAD_NAIRA}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FieldLabel
-                  text="WhatsApp number for this campaign"
-                  tooltip='The number leads message after the interest form - leave blank to use your business default. 11 digits, local format, no +234 needed. Example: "08012345678".'
-                />
-                <TextField
-                  fullWidth
-                  placeholder="08012345678"
-                  value={form.whatsapp_number}
-                  onChange={(e) => update("whatsapp_number", formatPhoneDigits(e.target.value))}
-                  helperText={
-                    form.whatsapp_number && form.whatsapp_number.length !== 11
-                      ? `${form.whatsapp_number.length}/11 digits`
-                      : "11 digits, no +234 - that's added automatically. Leave blank to use your business default."
-                  }
-                  error={form.whatsapp_number.length > 0 && form.whatsapp_number.length !== 11}
                 />
               </Grid>
             </Grid>

@@ -507,7 +507,8 @@ export default function AccountPage() {
                 placeholder="Business name"
                 fullWidth
                 value={form.businessName}
-                onChange={(e) => setForm((f) => ({ ...f, businessName: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, businessName: e.target.value.slice(0, 30) }))}
+                helperText={form.businessName.length >= 22 ? `${form.businessName.length}/30 characters` : undefined}
                 sx={centeredFieldSx}
                 {...centeredHelperProps}
               />

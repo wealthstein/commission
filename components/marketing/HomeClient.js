@@ -7,6 +7,7 @@ import Hero from "@/components/marketing/Hero";
 import ProblemSolutionSection from "@/components/marketing/ProblemSolutionSection";
 import CardGridSection from "@/components/marketing/CardGridSection";
 import HowItWorks from "@/components/marketing/HowItWorks";
+import DemoVideoSection from "@/components/marketing/DemoVideoSection";
 import Comparison from "@/components/marketing/Comparison";
 import EarningsExample from "@/components/marketing/EarningsExample";
 import Pricing from "@/components/marketing/Pricing";
@@ -44,6 +45,8 @@ export default function HomeClient({ searchParams }) {
       <Navbar audience={audience} onAudienceChange={setAudience} onSignIn={() => router.push("/signin")} />
 
       <Hero content={content} audience={audience} onPrimaryCta={() => goToRequestForm(audience)} />
+
+      <DemoVideoSection audience={audience} videoUrl={content.demoVideoUrl} />
 
       <Container maxWidth="md" sx={{ textAlign: "center", py: { xs: 2, md: 3 } }}>
         <Typography variant="h2" sx={{ fontSize: { xs: 24, md: 32 }, mb: 1.5 }}>

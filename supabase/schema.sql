@@ -96,7 +96,6 @@ create table if not exists businesses (
   description     text,
   logo_url        text,
   website_url     text,
-  whatsapp_number text,                                 -- default WhatsApp number for lead follow-up; can be overridden per-campaign on affiliate_programs
   industry        text,                                -- e.g. HMO, HR Software, SaaS, Insurance, ISP
   plan            text not null default 'free' check (plan in ('free','pro','plus')),
   plan_renews_at  timestamptz,
@@ -271,7 +270,7 @@ create table if not exists products (
   billing_frequency text not null default 'one_time'
                       check (billing_frequency in ('one_time','monthly','quarterly','annual')),
   image_url         text,
-  product_url       text not null,                        -- where the customer completes purchase — ALWAYS the business's own site/WhatsApp/store; Commission is never the merchant of record
+  product_url       text not null,                        -- where the customer completes purchase — ALWAYS the business's own site/store; Commission is never the merchant of record
   -- How a customer pays the business directly, and/or how a sale gets
   -- verified for 'sale'-goal campaigns (e.g. bank details, invoice
   -- requirement). Shown on the product's public Campaign Page.
@@ -303,8 +302,8 @@ create table if not exists affiliate_programs (
   --     wallet involved at all.
   --   'lead' -> the customer never pays Commission anything; the business
   --     pre-funds a WALLET instead (see fn_charge_wallet() below), and the
-  --     funnel (Campaign Page -> Short Form -> unique WhatsApp link -> Long
-  --     Form -> Qualified) is what charges it. See the `leads` table below.
+  --     funnel (Campaign Page -> Interest Form -> Intent Form -> Qualified)
+  --     is what charges it. See the `leads` table below.
   conversion_goal       text not null default 'lead' check (conversion_goal in ('sale','lead')),
   -- Required when conversion_goal = 'lead'. What the business is willing to
   -- pay for ONE qualified lead — e.g. ₦5,000. The commission engine treats
@@ -312,14 +311,11 @@ create table if not exists affiliate_programs (
   -- plan-based platform fee math), and it's what gets deducted from the
   -- wallet the moment a lead is marked qualified.
   cost_per_qualified_lead_naira numeric(14,2),
-  -- Where the unique per-lead WhatsApp link points once someone submits the
-  -- Short Form. Falls back to businesses.whatsapp_number if not set here
-  -- (a business might route different campaigns to different sales teams).
-  whatsapp_number       text,
-  -- OPTIONAL advanced integration: a business with their own CRM can POST to
-  -- app/api/leads/[id]/qualify directly with this token instead of a human
-  -- filling out Commission's hosted Long Form page. Either path ends at the
-  -- same place — lead marked qualified, wallet charged.
+  -- OPTIONAL advanced integration: a business with their own CRM can POST
+  -- with this token instead of a prospect completing Commission's hosted
+  -- Intent Form page. Either path ends at the same place — lead marked
+  -- qualified, wallet charged. Not yet wired to an actual route - this
+  -- column exists ahead of that integration being built.
   postback_token        text default encode(gen_random_bytes(16), 'hex'),
   tier1_percent         numeric(5,2) not null check (tier1_percent >= 0),
   tier2_percent         numeric(5,2) not null default 0 check (tier2_percent >= 0),
@@ -500,13 +496,16 @@ create table if not exists customers (
 -- LEADS  (the trackable conversion event for a 'lead'-goal campaign)
 -- ----------------------------------------------------------------------------
 -- The funnel this table models:
---   Visitor -> Campaign Page -> Short Form -> Lead (status='captured')
---     -> unique WhatsApp link (whatsapp_ref embedded in the wa.me URL)
---     -> business chats with them, sends the Long Form when ready to qualify
---     -> Long Form submitted -> Lead (status='qualified')  <- BILLABLE MOMENT
+--   Visitor -> Campaign Page -> Interest Form -> Lead (status='captured')
+--     -> (inline OTP if the referring affiliate isn't yet Trusted - see
+--        lib/trustScore.js) -> Intent Form, identified by this lead's own
+--        lead_ref -> Intent Form submitted -> Lead (status='qualified')
+--        <- BILLABLE MOMENT
 -- Qualifying a lead is what charges the business's wallet and runs the
--- commission engine (see app/api/leads/[id]/qualify) — nothing is owed for
--- a merely-captured lead, only a qualified one.
+-- commission engine (see app/api/leads/continue/route.js) — nothing is owed
+-- for a merely-captured lead, only a qualified one. There is no manual
+-- qualification path - a lead is only ever qualified by the prospect
+-- completing the Intent Form themselves, never by a business's own say-so.
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- CAMPAIGN CUSTOM FIELDS — Medium/Large plan feature (see
@@ -558,11 +557,10 @@ create table if not exists leads (
   program_id        uuid not null references affiliate_programs(id) on delete cascade,
   click_id          uuid references referral_clicks(id),     -- which referral click this lead traces back to
   enrollment_id     uuid not null references affiliate_enrollments(id),
-  -- Unique code embedded in the WhatsApp deep link (wa.me/...?text=...REF...)
-  -- so the business can tell which WhatsApp conversation belongs to which
-  -- lead, and so the public Long Form page (app/leads/[whatsappRef]/continue)
-  -- can find the right row without exposing the raw database id.
-  whatsapp_ref      text unique not null,
+  -- Unique code identifying this lead - embedded directly in the Intent
+  -- Form URL (app/leads/[leadRef]/continue) so that page can find the
+  -- right row without exposing the raw database id.
+  lead_ref          text unique not null,
   -- ------------------------------------------------------------------------
   -- DELIBERATELY NO PII HERE. Commission owns the affiliates; each business
   -- owns their leads. Name/phone/email/qualification answers are NEVER
@@ -584,7 +582,7 @@ create table if not exists leads (
 create index if not exists idx_leads_program on leads(program_id);
 create index if not exists idx_leads_enrollment on leads(enrollment_id);
 create index if not exists idx_leads_click on leads(click_id);
-create index if not exists idx_leads_whatsapp_ref on leads(whatsapp_ref);
+create index if not exists idx_leads_lead_ref on leads(lead_ref);
 
 -- ----------------------------------------------------------------------------
 -- MANUAL SALE CONFIRMATIONS — the second, manual payout stage for

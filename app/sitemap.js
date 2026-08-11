@@ -3,7 +3,7 @@ import { SITE_URL } from "@/lib/seo";
 import { CATEGORIES } from "@/lib/categories";
 import { industryPages } from "@/lib/industryPages";
 import { comparisons } from "@/lib/comparisons";
-import { conversions, locations, campaignTypes, features, solutions, integrations } from "@/lib/siteSections";
+import { conversions, locations, challenges, campaignTypes, features, solutions, integrations } from "@/lib/siteSections";
 import { urls } from "@/lib/urls";
 import { listPrograms } from "@/lib/programs";
 
@@ -68,6 +68,7 @@ export default async function sitemap({ id }) {
       { url: `${SITE_URL}${urls.calculator()}`, changeFrequency: "weekly", priority: 0.75 },
       ...buildSectionSitemapEntries(urls.conversionsIndex(), urls.conversion, conversions),
       ...buildSectionSitemapEntries(urls.locationsIndex(), urls.location, locations),
+      ...buildSectionSitemapEntries(urls.challengesIndex(), urls.challenge, challenges),
       ...buildSectionSitemapEntries(urls.campaignsIndex(), urls.campaign, campaignTypes),
       ...buildSectionSitemapEntries(urls.featuresIndex(), urls.feature, features),
       ...buildSectionSitemapEntries(urls.solutionsIndex(), urls.solution, solutions),

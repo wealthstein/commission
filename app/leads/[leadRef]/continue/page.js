@@ -19,17 +19,15 @@ function randomLetterColor() {
   return LETTER_COLORS[Math.floor(Math.random() * LETTER_COLORS.length)];
 }
 
-async function getLeadContext(whatsappRef) {
+async function getLeadContext(leadRef) {
   const supabase = createAdminSupabaseClient();
   // Full "*" selects on product/business - same shape the product page
   // (Interest Form) already fetches, needed to replicate the identical
-  // left-panel business/price summary here. The old version only ever
-  // selected the dead landing_logo_url column, which is exactly why this
-  // page's logo never had a real chance to work.
+  // left-panel business/price summary here.
   const { data: lead } = await supabase
     .from("leads")
     .select("status, program_id, affiliate_programs(*, products(*, businesses(*)))")
-    .eq("whatsapp_ref", whatsappRef)
+    .eq("lead_ref", leadRef)
     .maybeSingle();
   if (!lead) return null;
 
@@ -43,7 +41,7 @@ async function getLeadContext(whatsappRef) {
 }
 
 export default async function LeadContinuePage({ params }) {
-  const lead = await getLeadContext(params.whatsappRef);
+  const lead = await getLeadContext(params.leadRef);
   if (!lead) notFound();
 
   const program = lead.affiliate_programs;
@@ -60,7 +58,7 @@ export default async function LeadContinuePage({ params }) {
             This link has already been used
           </Typography>
           <Typography variant="body2" sx={{ color: tokens.muted }}>
-            If you think this is a mistake, reach out to the business directly on WhatsApp.
+            If you think this is a mistake, reach out to the business directly.
           </Typography>
         </Container>
       </Box>
@@ -153,7 +151,7 @@ export default async function LeadContinuePage({ params }) {
           <Box sx={{ px: { xs: 4, md: "150px" }, py: { xs: 4, md: 8 }, display: "flex", flexDirection: "column", minHeight: "100%" }}>
             <Box sx={{ flexGrow: 1 }}>
               <LeadLongForm
-                whatsappRef={params.whatsappRef}
+                leadRef={params.leadRef}
                 businessName={business.name}
                 logoUrl={branding.logoUrl}
                 customFields={lead.customFields}

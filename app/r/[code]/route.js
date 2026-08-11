@@ -13,7 +13,7 @@ import { randomUUID } from "crypto";
  * WHERE it redirects depends on the campaign's conversion_goal:
  *   'lead' -> Commission's own Campaign Page (the product page), because
  *     that is where the Interest Form lives — Commission needs to actually
- *     capture the lead before any WhatsApp handoff happens.
+ *     capture the lead before it can go anywhere further into the funnel.
  *   'sale' -> a Commission-hosted Paystack checkout (see lib/checkout.js),
  *     where the customer pays Commission directly and Paystack splits the
  *     payment automatically between the business's own settlement account

@@ -46,6 +46,7 @@
         { "title": "Launch your affiliate program", "body": "Choose one-time or recurring commissions, and up to 3 tiers." },
         { "title": "Affiliates sell, you get paid", "body": "Every purchase is tracked, commissions calculated, and payouts sent automatically." }
       ],
+      "demoVideoUrl": "",
       "comparison": {
         "title": "Commission vs. running this yourself",
         "rows": [
@@ -98,6 +99,7 @@
         { "title": "Share your link", "body": "Get a unique referral link like commission.ng/r/ABC123 and share it anywhere." },
         { "title": "Earn automatically", "body": "When someone buys through your link, your commission is calculated and paid out." }
       ],
+      "demoVideoUrl": "",
       "earningsExample": {
         "title": "What it looks like in naira",
         "body": "A ₦50,000/month SaaS subscription with a 10% recurring commission pays you ₦5,000 every month the customer stays — for as long as they're subscribed."

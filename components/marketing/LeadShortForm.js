@@ -1,23 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Paper, Box, Typography, TextField, Button, Stack, Alert } from "@mui/material";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { tokens } from "@/lib/theme";
 
 export default function LeadShortForm({ programId, productName, businessName, logoUrl, checkoutStyle = false }) {
   const [form, setForm] = useState({ fullName: "", phone: "", email: "" });
-  const [state, setState] = useState({ loading: false, error: null, whatsappLink: null, whatsappRef: null });
+  const [state, setState] = useState({ loading: false, error: null, otpId: null });
+  const [otpCode, setOtpCode] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
+  function handleCaptureResult(data) {
+    if (data.needsOtp) {
+      // Inline, same page - no redirect, no new screen. To the customer
+      // this reads as "one form with an extra field," not a third stop
+      // in the journey.
+      setState({ loading: false, error: null, otpId: data.otpId });
+      return;
+    }
+    finishWithResult(data);
+  }
+
+  function finishWithResult(data) {
+    // Straight to the Intent Form - no WhatsApp handoff in the middle of
+    // this flow at all anymore.
+    window.location.href = data.intentFormUrl;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
-    setState({ loading: true, error: null, whatsappLink: null, whatsappRef: null });
+    setState({ loading: true, error: null, otpId: null });
     try {
       const res = await fetch("/api/leads/capture", {
         method: "POST",
@@ -26,50 +42,72 @@ export default function LeadShortForm({ programId, productName, businessName, lo
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-      if (checkoutStyle) {
-        // No intermediate screen here - straight to WhatsApp the moment
-        // this succeeds. The two-option card (WhatsApp or finish the
-        // form) still exists below for the non-checkout affiliate-facing
-        // form, since that wasn't what was being redesigned.
-        window.location.href = data.whatsappLink;
-        return;
-      }
-      setState({ loading: false, error: null, whatsappLink: data.whatsappLink, whatsappRef: data.whatsappRef });
+      handleCaptureResult(data);
     } catch (err) {
-      setState({ loading: false, error: err.message, whatsappLink: null, whatsappRef: null });
+      setState({ loading: false, error: err.message, otpId: null });
+    }
+  }
+
+  async function handleVerifyOtp(e) {
+    e.preventDefault();
+    setOtpLoading(true);
+    setState((s) => ({ ...s, error: null }));
+    try {
+      const res = await fetch("/api/leads/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otpId: state.otpId, pin: otpCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      setOtpLoading(false);
+      finishWithResult(data);
+    } catch (err) {
+      setOtpLoading(false);
+      setState((s) => ({ ...s, error: err.message }));
     }
   }
 
   const centeredFieldSx = checkoutStyle ? { "& input": { textAlign: "center", fontSize: 14 } } : undefined;
 
-  if (state.whatsappRef) {
-    return (
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, bgcolor: "#E7F5EE" }}>
-        <Typography fontWeight={700} sx={{ mb: 1 }}>
-          You are on the list!
+  if (state.otpId) {
+    const otpContent = (
+      <>
+        <Typography fontWeight={700} sx={{ mb: 0.5, textAlign: checkoutStyle ? "center" : "left" }}>
+          Enter the code we texted you
         </Typography>
-        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-          Chat with us directly on WhatsApp, or go straight ahead and finish the quick details form below — either
-          way gets you moving.
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2, textAlign: checkoutStyle ? "center" : "left" }}>
+          We sent a 6-digit code to {form.phone} to confirm this is really you.
         </Typography>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-          {state.whatsappLink && (
+        {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
+        <Box component="form" onSubmit={handleVerifyOtp}>
+          <Stack spacing={checkoutStyle ? 1.25 : 1.5}>
+            <TextField
+              placeholder={checkoutStyle ? "6-digit code" : undefined}
+              label={checkoutStyle ? undefined : "6-digit code"}
+              required
+              inputMode="numeric"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+              sx={centeredFieldSx}
+            />
             <Button
+              type="submit"
               variant="contained"
-              startIcon={<WhatsAppIcon />}
-              href={state.whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{ bgcolor: "#25D366", color: "#fff", "&:hover": { bgcolor: "#1ebe57" } }}
+              size="large"
+              disabled={otpLoading || otpCode.length !== 6}
+              sx={checkoutStyle ? { py: 1.5, mt: 0.5, borderRadius: "12px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 } : undefined}
             >
-              Continue on WhatsApp
+              {otpLoading ? "Verifying…" : "Verify code"}
             </Button>
-          )}
-          <Button variant="outlined" endIcon={<ArrowForwardIcon />} component={Link} href={`/leads/${state.whatsappRef}/continue`}>
-            Finish the details form
-          </Button>
-        </Stack>
+          </Stack>
+        </Box>
+      </>
+    );
+    if (checkoutStyle) return otpContent;
+    return (
+      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border }}>
+        {otpContent}
       </Paper>
     );
   }
@@ -82,7 +120,7 @@ export default function LeadShortForm({ programId, productName, businessName, lo
             Interested in {productName}?
           </Typography>
           <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-            Tell us a bit about you and we will connect you directly on WhatsApp.
+            Tell us a bit about you and we will connect you with the team.
           </Typography>
         </>
       )}
@@ -138,15 +176,15 @@ export default function LeadShortForm({ programId, productName, businessName, lo
             disabled={state.loading}
             sx={checkoutStyle ? { py: 1.5, mt: 0.5, borderRadius: "12px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 } : undefined}
           >
-            {state.loading ? "Submitting…" : "Continue on WhatsApp"}
+            {state.loading ? "Submitting…" : "Continue"}
           </Button>
         </Stack>
       </Box>
 
       {checkoutStyle && (
         <Typography variant="caption" sx={{ color: tokens.muted, display: "block", textAlign: "center", mt: 3 }}>
-          Submit your details, you&apos;ll be taken straight to WhatsApp, and you can chat with {businessName || "the business"}{" "}
-          directly.
+          Submit your details and you&apos;ll go straight to a quick form for {businessName || "the business"} to
+          follow up with you directly.
         </Typography>
       )}
     </>

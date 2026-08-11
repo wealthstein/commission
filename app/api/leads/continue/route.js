@@ -5,27 +5,28 @@ import { forwardLeadToBusiness } from "@/lib/leadForwarding";
 
 /**
  * POST /api/leads/continue
- * body: { whatsappRef, fullName, phone, email?, details?, customFieldAnswers? }
+ * body: { leadRef, fullName, phone, email?, details?, customFieldAnswers? }
  * customFieldAnswers: [{ fieldId, label, value }]
  *
- * The "Intent Form" step of the funnel: Interest Form -> WhatsApp handoff ->
- * Intent Form (this) -> Thank You. Submitting this is what makes a lead
- * billable - the prospect is providing NEW information here (Commission
- * only had the Interest Form's name/phone in a WhatsApp message, never stored),
- * so it gets forwarded straight to the business (their email or CRM webhook)
- * and then discarded - never written to Commission's own database. Custom
- * field ANSWERS get the identical treatment - only the business's own
- * QUESTIONS (campaign_custom_fields) are stored, never a prospect's answers.
+ * The "Intent Form" step of the funnel: Interest Form -> (inline OTP for
+ * unproven affiliates) -> Intent Form (this) -> Thank You. Submitting this
+ * is what makes a lead billable - the prospect is providing NEW
+ * information here (Commission only ever had the Interest Form's name/
+ * phone, never stored), so it gets forwarded straight to the business
+ * (their email or CRM webhook) and then discarded - never written to
+ * Commission's own database. Custom field ANSWERS get the identical
+ * treatment - only the business's own QUESTIONS (campaign_custom_fields)
+ * are stored, never a prospect's answers.
  */
 export async function POST(req) {
-  const { whatsappRef, fullName, phone, email, details, customFieldAnswers } = await req.json();
-  if (!whatsappRef || !fullName || !phone) {
-    return NextResponse.json({ error: "whatsappRef, fullName, and phone are required" }, { status: 400 });
+  const { leadRef, fullName, phone, email, details, customFieldAnswers } = await req.json();
+  if (!leadRef || !fullName || !phone) {
+    return NextResponse.json({ error: "leadRef, fullName, and phone are required" }, { status: 400 });
   }
 
   const admin = createAdminSupabaseClient();
 
-  const { data: lead } = await admin.from("leads").select("*").eq("whatsapp_ref", whatsappRef).maybeSingle();
+  const { data: lead } = await admin.from("leads").select("*").eq("lead_ref", leadRef).maybeSingle();
   if (!lead) {
     return NextResponse.json({ error: "This link is no longer valid" }, { status: 404 });
   }
