@@ -8,7 +8,7 @@ export default function HowItWorks({ steps, bgcolor = tokens.paper }) {
     <Box component="section" id="how-it-works" sx={{ py: { xs: 6, md: 9 }, bgcolor }}>
       <Container maxWidth="lg">
         <Typography variant="h3" sx={{ fontSize: { xs: 24, md: 30 }, mb: 5 }}>
-          How it works
+          How It Works
         </Typography>
         <Stack spacing={0}>
           {steps.map((step, i) => (

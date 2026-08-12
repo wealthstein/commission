@@ -7,6 +7,7 @@ import Hero from "@/components/marketing/Hero";
 import ProblemSolutionSection from "@/components/marketing/ProblemSolutionSection";
 import CardGridSection from "@/components/marketing/CardGridSection";
 import HowItWorks from "@/components/marketing/HowItWorks";
+import DemoVideoSection from "@/components/marketing/DemoVideoSection";
 import Comparison from "@/components/marketing/Comparison";
 import EarningsExample from "@/components/marketing/EarningsExample";
 import Pricing from "@/components/marketing/Pricing";
@@ -65,6 +66,8 @@ export default function HomeClient({ searchParams }) {
       <CardGridSection title="What you get" items={content.features} columns={4} />
 
       <HowItWorks steps={content.howItWorks} bgcolor={altSectionBg} />
+
+      <DemoVideoSection audience={audience} videoUrl={content.demoVideoUrl} />
 
       {audience === "business" && <Comparison data={content.comparison} />}
       {audience === "affiliate" && <EarningsExample data={content.earningsExample} bgcolor={altSectionBg} />}

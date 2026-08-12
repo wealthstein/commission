@@ -21,8 +21,8 @@
           "body": "Branch staff, agents, and satisfied customers can share a unique link and earn for referrals that convert."
         },
         {
-          "title": "WhatsApp-first follow-up",
-          "body": "A prospect moves straight from an affiliate's link into a WhatsApp conversation with your team."
+          "title": "Radar filters fake leads before they reach you",
+          "body": "Every lead is checked against the referring affiliate's real track record - unproven affiliates trigger a quick verification step, proven ones don't."
         }
       ],
       "exampleUseCase": "A bank lists a savings account product on Commission, sets a cost per qualified account-opening inquiry, and lets branch staff and partners share the link across their own networks."
@@ -51,8 +51,8 @@
           "body": "Google and Meta ads charge you for clicks and impressions regardless of whether a single one turns into a real buyer. Commission only charges when a genuine, qualified inspection request happens - the risk of paying for nothing disappears."
         },
         {
-          "title": "WhatsApp-first, matching how property deals actually happen in Nigeria",
-          "body": "A prospect goes straight from an affiliate's link into a WhatsApp conversation with your team."
+          "title": "Radar filters fake leads before they reach you",
+          "body": "Every lead is checked against the referring affiliate's real track record before it reaches your team - matching a level of scrutiny real estate deals already need."
         }
       ],
       "exampleUseCase": "A property developer lists a new estate on Commission, sets a cost per qualified physical inspection request, and lets referral agents across the city share the link - paying only for genuine, qualified interest.",
@@ -61,7 +61,7 @@
         "stages": [
           {
             "title": "Stage 1 - Intent Qualified Lead (automatic)",
-            "description": "The moment a prospect qualifies through WhatsApp, Commission pays out automatically - split 50% / 30% / 20% across all 3 tiers of the referral chain, same as every other campaign on the platform."
+            "description": "The moment a prospect completes the Intent Form, Commission pays out automatically - split 50% / 30% / 20% across all 3 tiers of the referral chain, same as every other campaign on the platform."
           },
           {
             "title": "Stage 2 - Sale closed (manual, primary affiliate only)",
@@ -194,8 +194,8 @@
           "body": "Independent agents, brokers, and everyday affiliates can all promote the same policy and earn a tracked commission."
         },
         {
-          "title": "WhatsApp-first follow-up",
-          "body": "A prospect moves straight from an affiliate's link into a WhatsApp conversation with your team, matching how insurance conversations already happen in Nigeria."
+          "title": "Radar filters fake leads before they reach you",
+          "body": "Every lead is checked against the referring affiliate's real track record - unproven affiliates trigger a quick verification step, proven ones don't."
         }
       ],
       "exampleUseCase": "An insurer lists a policy on Commission, sets a cost per qualified quote request, and independent agents across the country promote it for a tracked commission."

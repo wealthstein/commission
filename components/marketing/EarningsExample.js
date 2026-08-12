@@ -5,7 +5,7 @@ import { tokens } from "@/lib/theme";
 
 export default function EarningsExample({ data, bgcolor = tokens.paper }) {
   return (
-    <Box component="section" sx={{ py: { xs: 6, md: 9 }, bgcolor }}>
+    <Box component="section" id="what-you-earn" sx={{ py: { xs: 6, md: 9 }, bgcolor }}>
       <Container maxWidth="lg">
         <Paper
           sx={{

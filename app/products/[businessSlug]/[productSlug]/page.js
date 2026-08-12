@@ -330,7 +330,7 @@ export default async function ProductPage({ params, searchParams }) {
         {program?.conversion_goal === "lead" ? (
           <LeadShortForm programId={program.id} productName={product.name} />
         ) : (
-          <Button variant="contained" size="large" component={Link} href={`/?join=${product.id}`}>
+          <Button variant="contained" size="large" component={Link} href={`/products/${business.slug}/${product.slug}/join`}>
             Join this affiliate program
           </Button>
         )}

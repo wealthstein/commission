@@ -9,15 +9,36 @@ import { tokens } from "@/lib/theme";
 
 export default function LeadShortForm({ programId, productName, businessName, logoUrl, checkoutStyle = false }) {
   const [form, setForm] = useState({ fullName: "", phone: "", email: "" });
-  const [state, setState] = useState({ loading: false, error: null, whatsappLink: null, whatsappRef: null });
+  const [state, setState] = useState({ loading: false, error: null, whatsappLink: null, whatsappRef: null, otpId: null });
+  const [otpCode, setOtpCode] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
+  function handleCaptureResult(data) {
+    if (data.needsOtp) {
+      // Inline, same page - no redirect, no new screen. To the customer
+      // this reads as "one form with an extra field," not a third stop
+      // in the journey.
+      setState({ loading: false, error: null, whatsappLink: null, whatsappRef: null, otpId: data.otpId });
+      return;
+    }
+    finishWithResult(data);
+  }
+
+  function finishWithResult(data) {
+    if (checkoutStyle) {
+      window.location.href = data.whatsappLink;
+      return;
+    }
+    setState({ loading: false, error: null, whatsappLink: data.whatsappLink, whatsappRef: data.whatsappRef, otpId: null });
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
-    setState({ loading: true, error: null, whatsappLink: null, whatsappRef: null });
+    setState({ loading: true, error: null, whatsappLink: null, whatsappRef: null, otpId: null });
     try {
       const res = await fetch("/api/leads/capture", {
         method: "POST",
@@ -26,22 +47,75 @@ export default function LeadShortForm({ programId, productName, businessName, lo
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-      if (checkoutStyle) {
-        // No intermediate screen here - straight to WhatsApp the moment
-        // this succeeds. The two-option card (WhatsApp or finish the
-        // form) still exists below for the non-checkout affiliate-facing
-        // form, since that wasn't what was being redesigned.
-        window.location.href = data.whatsappLink;
-        return;
-      }
-      setState({ loading: false, error: null, whatsappLink: data.whatsappLink, whatsappRef: data.whatsappRef });
+      handleCaptureResult(data);
     } catch (err) {
-      setState({ loading: false, error: err.message, whatsappLink: null, whatsappRef: null });
+      setState({ loading: false, error: err.message, whatsappLink: null, whatsappRef: null, otpId: null });
+    }
+  }
+
+  async function handleVerifyOtp(e) {
+    e.preventDefault();
+    setOtpLoading(true);
+    setState((s) => ({ ...s, error: null }));
+    try {
+      const res = await fetch("/api/leads/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otpId: state.otpId, pin: otpCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      setOtpLoading(false);
+      finishWithResult(data);
+    } catch (err) {
+      setOtpLoading(false);
+      setState((s) => ({ ...s, error: err.message }));
     }
   }
 
   const centeredFieldSx = checkoutStyle ? { "& input": { textAlign: "center", fontSize: 14 } } : undefined;
+
+  if (state.otpId) {
+    const otpContent = (
+      <>
+        <Typography fontWeight={700} sx={{ mb: 0.5, textAlign: checkoutStyle ? "center" : "left" }}>
+          Enter the code we texted you
+        </Typography>
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2, textAlign: checkoutStyle ? "center" : "left" }}>
+          We sent a 6-digit code to {form.phone} to confirm this is really you.
+        </Typography>
+        {state.error && <Alert severity="error" sx={{ mb: 2 }}>{state.error}</Alert>}
+        <Box component="form" onSubmit={handleVerifyOtp}>
+          <Stack spacing={checkoutStyle ? 1.25 : 1.5}>
+            <TextField
+              placeholder={checkoutStyle ? "6-digit code" : undefined}
+              label={checkoutStyle ? undefined : "6-digit code"}
+              required
+              inputMode="numeric"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+              sx={centeredFieldSx}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={otpLoading || otpCode.length !== 6}
+              sx={checkoutStyle ? { py: 1.5, mt: 0.5, borderRadius: "12px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 } : undefined}
+            >
+              {otpLoading ? "Verifying…" : "Verify code"}
+            </Button>
+          </Stack>
+        </Box>
+      </>
+    );
+    if (checkoutStyle) return otpContent;
+    return (
+      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border }}>
+        {otpContent}
+      </Paper>
+    );
+  }
 
   if (state.whatsappRef) {
     return (
