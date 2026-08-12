@@ -38,12 +38,19 @@ export async function middleware(req) {
 
   const { data: userRow } = await supabase
     .from("users")
-    .select("access_granted")
+    .select("access_granted, phone_verified")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
   if (!userRow?.access_granted) {
     return NextResponse.redirect(new URL("/welcome", req.url));
+  }
+
+  // Phone verification gate - same shape as access_granted above. The
+  // Account page itself is exempt, otherwise there would be no way to
+  // ever reach the page that lets someone actually verify.
+  if (!userRow?.phone_verified && req.nextUrl.pathname !== "/dashboard/account") {
+    return NextResponse.redirect(new URL("/dashboard/account", req.url));
   }
 
   return response;
