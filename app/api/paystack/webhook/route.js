@@ -9,18 +9,26 @@ import { sendCommissionEarnedEmail, sendPayoutPaidEmail } from "@/lib/email";
 /**
  * POST /api/paystack/webhook
  *
- * charge.success can mean one of two different things, told apart by
- * metadata.purpose:
+ * charge.success can mean three different things:
  *   'wallet_topup' -> a LEAD-goal business funding their Campaign Wallet.
  *     Credits the wallet, taking Commission's plan-based fee off the top.
- *   'direct_sale' -> a customer paying for a SALE-goal product through
- *     Commission's checkout (see lib/checkout.js). Paystack has ALREADY
- *     split this payment at settlement (see initializeDirectSaleCheckout) -
- *     the business's share went straight to their own subaccount, and the
- *     total affiliate commission stayed in Commission's main account. This
- *     handler's job is just bookkeeping: record the sale, create the
- *     per-tier commission ledger rows so the normal payout batch job can
- *     transfer each affiliate their share.
+ *   'direct_sale' (metadata present) -> a customer's FIRST payment for a
+ *     SALE-goal product, whether that's a genuine one-time purchase or the
+ *     first charge of a new subscription. Paystack has ALREADY split this
+ *     payment at settlement (see initializeDirectSaleCheckout).
+ *   subscription RENEWAL (no metadata, but data.plan present) -> Paystack
+ *     does NOT carry our metadata forward onto renewal charges - confirmed
+ *     against Paystack's own documented sample payload, which shows
+ *     metadata as empty on renewals. Renewals only carry
+ *     data.customer.customer_code and data.plan, so attribution is looked
+ *     up from subscription_attribution (written on the first charge)
+ *     instead of trusting metadata.
+ *
+ * Both the first charge and every renewal after it run through the same
+ * processSaleTransaction() helper below - the renewal path is not a
+ * separate reimplementation, it's the identical logic fed different
+ * attribution data, so the two paths cannot silently drift apart.
+ *
  * transfer.success / transfer.failed still just updates an affiliate
  * payout's status either way, unchanged.
  */
@@ -40,6 +48,12 @@ export async function POST(req) {
       case "charge.success":
         if (event.data.metadata?.purpose === "direct_sale") {
           await handleDirectSaleSuccess(event.data, supabase);
+        } else if (event.data.plan && !event.data.metadata?.purpose) {
+          // No purpose in metadata, but a plan code is present - this is a
+          // subscription renewal, not an unrecognized wallet top-up. Must
+          // be checked BEFORE falling back to handleWalletTopupSuccess,
+          // which would otherwise silently ignore every renewal charge.
+          await handleSubscriptionRenewal(event.data, supabase);
         } else {
           await handleWalletTopupSuccess(event.data, supabase);
         }
@@ -109,7 +123,6 @@ async function handleDirectSaleSuccess(data, supabase) {
 
   const productId = data.metadata.product_id;
   const referralCode = data.metadata.referral_code;
-  const amountNaira = verified.amount / 100;
 
   // Idempotency: if this reference already produced a transaction, skip.
   const { data: existingTxn } = await supabase
@@ -122,6 +135,100 @@ async function handleDirectSaleSuccess(data, supabase) {
   const { data: product } = await supabase.from("products").select("*, businesses(*)").eq("id", productId).single();
   const business = product.businesses;
 
+  let enrollment = null;
+  if (referralCode) {
+    const { data: enr } = await supabase.from("affiliate_enrollments").select("*").eq("referral_code", referralCode).maybeSingle();
+    enrollment = enr;
+  }
+
+  await processSaleTransaction(supabase, {
+    data,
+    verified,
+    productId,
+    product,
+    business,
+    enrollment,
+  });
+
+  // If this charge carries a plan code, it's the first payment of a new
+  // subscription (not a one-time sale) - record the mapping renewals will
+  // need, since Paystack won't send this metadata again on future charges.
+  if (data.plan && verified.customer?.customer_code) {
+    await supabase.from("subscription_attribution").upsert(
+      {
+        customer_code: verified.customer.customer_code,
+        plan_code: data.plan,
+        product_id: productId,
+        enrollment_id: enrollment?.id ?? null,
+        business_id: business.id,
+      },
+      { onConflict: "customer_code,plan_code" }
+    );
+  }
+}
+
+async function handleSubscriptionRenewal(data, supabase) {
+  // Defense in depth: re-verify with Paystack directly rather than trusting the payload alone.
+  const verified = await verifyTransaction(data.reference);
+  if (verified.status !== "success") return;
+
+  // Idempotency: if this reference already produced a transaction, skip.
+  const { data: existingTxn } = await supabase
+    .from("transactions")
+    .select("id")
+    .eq("paystack_reference", data.reference)
+    .maybeSingle();
+  if (existingTxn) return;
+
+  const customerCode = verified.customer?.customer_code;
+  if (!customerCode) {
+    console.warn(`Renewal charge.success missing customer_code, cannot attribute. reference=${data.reference}`);
+    return;
+  }
+
+  const { data: attribution } = await supabase
+    .from("subscription_attribution")
+    .select("*")
+    .eq("customer_code", customerCode)
+    .eq("plan_code", data.plan)
+    .maybeSingle();
+  if (!attribution) {
+    // No attribution on file - most likely a subscription created before
+    // this table existed. Nothing safe to do here except log it; the
+    // business's own Paystack dashboard still reflects the real payment,
+    // this only affects Commission's own commission bookkeeping for it.
+    console.warn(`No subscription_attribution found for customer_code=${customerCode} plan=${data.plan}. reference=${data.reference}`);
+    return;
+  }
+
+  const { data: product } = await supabase.from("products").select("*, businesses(*)").eq("id", attribution.product_id).single();
+  const business = product.businesses;
+
+  let enrollment = null;
+  if (attribution.enrollment_id) {
+    const { data: enr } = await supabase.from("affiliate_enrollments").select("*").eq("id", attribution.enrollment_id).maybeSingle();
+    enrollment = enr;
+  }
+
+  await processSaleTransaction(supabase, {
+    data,
+    verified,
+    productId: attribution.product_id,
+    product,
+    business,
+    enrollment,
+  });
+}
+
+/**
+ * Shared by both the first charge of a sale/subscription and every
+ * renewal after it - records the transaction, then (if there's a
+ * referring affiliate) calculates and records commission exactly once,
+ * the same way regardless of which path called it.
+ */
+async function processSaleTransaction(supabase, { data, verified, productId, product, business, enrollment }) {
+  const amountNaira = verified.amount / 100;
+
   const { data: customer } = await supabase
     .from("customers")
     .upsert(
@@ -130,12 +237,6 @@ async function handleDirectSaleSuccess(data, supabase) {
     )
     .select()
     .single();
-
-  let enrollment = null;
-  if (referralCode) {
-    const { data: enr } = await supabase.from("affiliate_enrollments").select("*").eq("referral_code", referralCode).maybeSingle();
-    enrollment = enr;
-  }
 
   const { data: transaction } = await supabase
     .from("transactions")
