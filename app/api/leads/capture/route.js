@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { getAffiliateTrustStatus } from "@/lib/trustScore";
 import { sendOtp } from "@/lib/termii";
-import { createLeadAndGetIntentFormUrl } from "@/lib/leadCreation";
+import { createLeadAndWhatsAppLink } from "@/lib/leadCreation";
 
 /**
  * POST /api/leads/capture
@@ -110,7 +110,7 @@ export async function POST(req) {
   }
 
   try {
-    const result = await createLeadAndGetIntentFormUrl(supabase, { programId, enrollmentId: enrollment.id, clickId, program });
+    const result = await createLeadAndWhatsAppLink(supabase, { programId, enrollmentId: enrollment.id, clickId, fullName, program });
     return NextResponse.json({ needsOtp: false, ...result });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });

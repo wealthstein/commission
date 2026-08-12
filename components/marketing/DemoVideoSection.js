@@ -24,7 +24,7 @@ export default function DemoVideoSection({ audience, videoUrl, bgcolor }) {
 
   return (
     <Box component="section" sx={{ py: { xs: 6, md: 9 }, bgcolor }}>
-      <Container maxWidth="lg" sx={{ textAlign: "center" }}>
+      <Container maxWidth="md" sx={{ textAlign: "center" }}>
         <Typography variant="h4" sx={{ fontSize: { xs: 22, md: 30 }, fontWeight: 700, mb: 1 }}>
           {title}
         </Typography>
