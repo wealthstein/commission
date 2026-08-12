@@ -39,9 +39,6 @@ function formatNaira(rawDigits) {
 function stripToDigits(value) {
   return value.replace(/[^0-9]/g, "");
 }
-function formatPhoneDigits(value) {
-  return stripToDigits(value).slice(0, 11);
-}
 
 export default function EditCampaignPage() {
   const params = useParams();
@@ -90,7 +87,6 @@ export default function EditCampaignPage() {
         billing_frequency: product.billing_frequency || "one_time",
         product_url: product.product_url || "",
         offline_payment_instructions: product.offline_payment_instructions || "",
-        whatsapp_number: program?.whatsapp_number || "",
         cost_per_qualified_lead: program?.cost_per_qualified_lead_naira != null ? String(program.cost_per_qualified_lead_naira) : "",
         commission_type: program?.commission_type || "one_time",
         total_commission_percent: totalCommissionPercent,
@@ -157,7 +153,6 @@ export default function EditCampaignPage() {
           .update({
             commission_type: isLead ? "one_time" : form.commission_type,
             cost_per_qualified_lead_naira: isLead ? Number(form.cost_per_qualified_lead) : null,
-            whatsapp_number: isLead ? form.whatsapp_number || null : null,
             tier1_percent: tier1Percent,
             tier2_percent: tier2Percent,
             tier3_percent: tier3Percent,
@@ -317,21 +312,6 @@ export default function EditCampaignPage() {
                       : " "
                   }
                   error={Number(form.cost_per_qualified_lead) > MAX_COST_PER_LEAD_NAIRA}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="WhatsApp number for this campaign"
-                  fullWidth
-                  placeholder="08012345678"
-                  value={form.whatsapp_number}
-                  onChange={(e) => update("whatsapp_number", formatPhoneDigits(e.target.value))}
-                  helperText={
-                    form.whatsapp_number && form.whatsapp_number.length !== 11
-                      ? `${form.whatsapp_number.length}/11 digits`
-                      : "Leave blank to use your business default"
-                  }
-                  error={form.whatsapp_number.length > 0 && form.whatsapp_number.length !== 11}
                 />
               </Grid>
             </Grid>

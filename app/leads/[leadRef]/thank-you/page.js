@@ -11,7 +11,7 @@ export default function ThankYouPage() {
           Thanks - you are all set
         </Typography>
         <Typography variant="body1" sx={{ color: tokens.muted }}>
-          The business has your details and will be in touch shortly, either here or on WhatsApp.
+          The business has your details and will be in touch shortly.
         </Typography>
       </Container>
     </Box>

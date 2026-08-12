@@ -62,10 +62,10 @@ export default function AboutPage() {
             </Typography>
             <Typography variant="body1" sx={{ color: tokens.muted, lineHeight: 1.8 }}>
               Most affiliate tooling was built for global, card-first e-commerce. Nigerian businesses close a lot of
-              their real conversations on WhatsApp, and a lot of their real trust comes through referrals, not ads.
-              Commission is built around that reality - a WhatsApp-native lead funnel for businesses whose customers
-              need to talk before they buy, and a live, split checkout for businesses selling something a customer
-              can pay for immediately.
+              their real conversations through direct outreach, and a lot of their real trust comes through
+              referrals, not ads. Commission is built around that reality - a verified, trust-scored lead funnel for
+              businesses whose customers need to talk before they buy, and a live, split checkout for businesses
+              selling something a customer can pay for immediately.
             </Typography>
             <Typography variant="body1" sx={{ color: tokens.muted, lineHeight: 1.8 }}>
               Every part of how money moves on Commission is designed so a business never has to trust a promise -

@@ -25,7 +25,7 @@ const centeredMenuProps = {
   MenuProps: { PaperProps: { sx: { "& .MuiMenuItem-root": { justifyContent: "center" } } } },
 };
 
-export default function LeadLongForm({ whatsappRef, businessName, logoUrl, customFields = [], sharesContactWithAffiliate = false }) {
+export default function LeadLongForm({ leadRef, businessName, logoUrl, customFields = [], sharesContactWithAffiliate = false }) {
   const router = useRouter();
   const [form, setForm] = useState({ fullName: "", phone: "", email: "" });
   const [customAnswers, setCustomAnswers] = useState({});
@@ -46,7 +46,7 @@ export default function LeadLongForm({ whatsappRef, businessName, logoUrl, custo
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          whatsappRef,
+          leadRef,
           ...form,
           customFieldAnswers: customFields.map((f) => ({
             fieldId: f.id,
@@ -57,7 +57,7 @@ export default function LeadLongForm({ whatsappRef, businessName, logoUrl, custo
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
-      router.push(`/leads/${whatsappRef}/thank-you`);
+      router.push(`/leads/${leadRef}/thank-you`);
     } catch (err) {
       setState({ loading: false, error: err.message });
     }

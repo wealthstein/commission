@@ -187,7 +187,7 @@ export default async function ProductPage({ params, searchParams }) {
 
               {/* Only meaningful for sale-goal campaigns - a lead-goal
                   campaign has nothing being purchased on this page at
-                  all, the whole point is the WhatsApp handoff, so payment
+                  all, the whole point is capturing the lead, so payment
                   instructions here would be confusing, not helpful. */}
               {program?.conversion_goal !== "lead" && product.offline_payment_instructions && (
                 <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, borderColor: tokens.border, bgcolor: "#fff" }}>

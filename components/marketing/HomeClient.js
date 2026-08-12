@@ -46,6 +46,8 @@ export default function HomeClient({ searchParams }) {
 
       <Hero content={content} audience={audience} onPrimaryCta={() => goToRequestForm(audience)} />
 
+      <DemoVideoSection audience={audience} videoUrl={content.demoVideoUrl} />
+
       <Container maxWidth="md" sx={{ textAlign: "center", py: { xs: 2, md: 3 } }}>
         <Typography variant="h2" sx={{ fontSize: { xs: 24, md: 32 }, mb: 1.5 }}>
           We're Commission!
