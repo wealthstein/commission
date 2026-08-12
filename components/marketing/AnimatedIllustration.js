@@ -128,14 +128,14 @@ function BusinessScene({ index }) {
         <Typography variant="overline" sx={{ color: tokens.brandInk, fontWeight: 700, display: "block", mb: 1 }}>
           BUILD QUALIFICATION FLOW
         </Typography>
-        <FieldGroup label="Budget" options={["\u20a650M\u2013100M", "\u20a6100M\u2013200M", "\u20a6200M+"]} selectedIndex={1} />
+        <FieldGroup label="Budget" options={["\u20a6400,000\u2013500,000", "\u20a6500,000\u2013800,000", "\u20a6800,000+"]} selectedIndex={1} />
         <FieldGroup label="Purchase timeline" options={["Immediately", "1\u20133 months", "3\u20136 months"]} selectedIndex={1} />
         <FieldGroup label="Preferred location" options={["Lekki", "Ikoyi", "Victoria Island"]} selectedIndex={0} />
         <Box sx={{ mt: 2, p: 1.5, borderRadius: 2, bgcolor: "#FBF9F2" }}>
           <Typography variant="caption" fontWeight={700} sx={{ display: "block", mb: 0.5 }}>
             SQL criteria
           </Typography>
-          {["Budget \u2265 \u20a6100M", "Timeline \u2264 6 months", "Location = Lagos"].map((c) => (
+          {["Budget \u2265 \u20a6500,000", "Timeline \u2264 6 months", "Location = Lagos"].map((c) => (
             <Stack key={c} direction="row" spacing={0.75} alignItems="center">
               <CheckRoundedIcon sx={{ fontSize: 14, color: "#1D9E75" }} />
               <Typography variant="caption" sx={{ color: tokens.muted }}>
@@ -203,7 +203,7 @@ function BusinessScene({ index }) {
           <Typography variant="caption" fontWeight={700}>Commission</Typography>
         </Stack>
         <Stack spacing={1} sx={{ mb: 2 }}>
-          <DataRow label="Budget" value="\u20a6100M+" />
+          <DataRow label="Budget" value="\u20a6500,000+" />
           <DataRow label="When buying" value="1\u20133 months" />
           <DataRow label="Location" value="Lekki" />
           <DataRow label="Phone" value="Verified \u2713" />
@@ -222,7 +222,7 @@ function BusinessScene({ index }) {
         New Sales Qualified Lead
       </Typography>
       <Stack spacing={0.5} sx={{ mb: 2 }}>
-        <DataRow label="Budget" value="\u20a6100M+" />
+        <DataRow label="Budget" value="\u20a6500,000+" />
         <DataRow label="Location" value="Lekki" />
         <DataRow label="Timeline" value="1\u20133 months" />
         <DataRow label="Phone" value="Verified \u2713" />
@@ -385,15 +385,20 @@ export default function AnimatedIllustration({ audience }) {
   const isBusiness = audience === "business";
   const total = SCENE_COUNTS[isBusiness ? "business" : "affiliate"];
   const [scene, setScene] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     setScene(0);
+  }, [audience]);
+
+  useEffect(() => {
+    if (paused) return undefined;
     const id = setInterval(() => setScene((s) => (s + 1) % total), SCENE_MS);
     return () => clearInterval(id);
-  }, [audience, total]);
+  }, [audience, total, paused]);
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{ width: "100%" }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       <Fade in key={scene} timeout={400}>
         <Box>{isBusiness ? <BusinessScene index={scene} /> : <AffiliateScene index={scene} />}</Box>
       </Fade>
