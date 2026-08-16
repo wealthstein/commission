@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
-import { sendOtp } from "@/lib/termii";
+import { sendOtp } from "@/lib/sms";
 
 /**
  * POST /api/account/send-phone-otp
@@ -33,7 +33,21 @@ export async function POST(req) {
   try {
     sent = await sendOtp(phone, "Commission");
   } catch (err) {
-    return NextResponse.json({ error: `Could not send verification code: ${err.message}` }, { status: 502 });
+    // TEMPORARY DIAGNOSTIC - remove once the provider switch is confirmed
+    // working. This puts an unmistakable marker plus the live value of
+    // SMS_PROVIDER directly in the response, so the next test tells us
+    // definitively whether this exact code is even running at all, and
+    // whether the environment variable is actually being read as
+    // "sendchamp" - no more inferring this from dashboards or commit
+    // hashes.
+    return NextResponse.json(
+      {
+        error: `Could not send verification code: ${err.message}`,
+        _diagnostic_marker: "SMS_PROVIDER_SWITCH_BUILD_2026_08_16",
+        _diagnostic_sms_provider_env: process.env.SMS_PROVIDER || "(not set)",
+      },
+      { status: 502 }
+    );
   }
 
   const { error: updateError } = await supabase
