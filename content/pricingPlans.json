@@ -25,7 +25,7 @@
     {
       "id": "plus",
       "name": "Large",
-      "priceNaira": 140000,
+      "priceNaira": 250000,
       "priceSuffix": "/mo",
       "feePercent": 10,
       "tagline": "For businesses running serious volume through their Campaign Wallet.",
@@ -39,13 +39,13 @@
         "Unlimited lead export to CSV",
         "Priority support",
         "Branded checkout page - your logo and brand color on the customer-facing page (coming soon)",
-        "Custom integrations - connect your own site directly instead of Commission's hosted page (coming soon)"
+        "Custom integrations - connect your own site directly instead of Commission's hosted page"
       ]
     },
     {
       "id": "pro",
       "name": "Medium",
-      "priceNaira": 110000,
+      "priceNaira": 180000,
       "priceSuffix": "/mo",
       "feePercent": 15,
       "tagline": "For businesses topping up often enough that a lower fee pays for itself.",
@@ -57,7 +57,7 @@
         "2 additional custom fields (3 total per campaign)",
         "Lead management - view and organize your leads (export not included)",
         "Branded checkout page - your logo and brand color on the customer-facing page (coming soon)",
-        "Custom integrations - connect your own site directly instead of Commission's hosted page (coming soon)"
+        "Custom integrations - connect your own site directly instead of Commission's hosted page"
       ]
     }
   ]
