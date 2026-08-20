@@ -69,8 +69,6 @@ export default function HomeClient({ searchParams }) {
 
       <HowItWorks steps={content.howItWorks} bgcolor={altSectionBg} />
 
-      <DemoVideoSection audience={audience} videoUrl={content.demoVideoUrl} />
-
       {audience === "business" && <Comparison data={content.comparison} />}
       {audience === "affiliate" && <EarningsExample data={content.earningsExample} bgcolor={altSectionBg} />}
 

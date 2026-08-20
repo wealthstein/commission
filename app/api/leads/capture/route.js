@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { getAffiliateTrustStatus } from "@/lib/trustScore";
-import { sendOtp } from "@/lib/termii";
-import { createLeadAndWhatsAppLink } from "@/lib/leadCreation";
+import { sendOtp } from "@/lib/sms";
+import { createLeadAndGetIntentFormUrl } from "@/lib/leadCreation";
 
 /**
  * POST /api/leads/capture
@@ -53,6 +53,17 @@ export async function POST(req) {
     return NextResponse.json({ error: "Referral link is no longer active" }, { status: 400 });
   }
 
+  // A submitted customer phone can't match the referring affiliate's own
+  // verified phone - this doesn't catch every way someone could fake a
+  // lead (a second SIM, a cooperating friend's number still passes), but
+  // it stops the laziest version of an affiliate self-dealing their own
+  // referrals, and Nigeria's 5-SIM-per-NIN cap keeps the harder version
+  // genuinely inconvenient to scale.
+  const { data: affiliateUser } = await supabase.from("users").select("phone").eq("id", enrollment.affiliate_id).maybeSingle();
+  if (affiliateUser?.phone && affiliateUser.phone === phone) {
+    return NextResponse.json({ error: "This phone number can't be used for a lead you're referring yourself." }, { status: 400 });
+  }
+
   const { data: program } = await supabase
     .from("affiliate_programs")
     .select("*, products(name, business_id, businesses(name))")
@@ -79,7 +90,17 @@ export async function POST(req) {
     clickId = click?.id ?? null;
   }
 
-  const trust = await getAffiliateTrustStatus(supabase, enrollment.affiliate_id);
+  // TEMPORARILY DISABLED via env var, same pattern as
+  // DISABLE_PHONE_VERIFICATION_GATE - Termii's account needs country/DND
+  // activation before any OTP can actually send. This treats every lead as
+  // if it came from a Trusted affiliate, skipping OTP entirely, so the
+  // rest of the flow (Intent Form, custom fields, qualification, business
+  // notification) can still be tested. Nothing about Radar's actual
+  // trust-scoring logic changed - remove DISABLE_RADAR_OTP from the
+  // environment (or set it to anything other than "true") once Termii
+  // confirms activation.
+  const radarOtpDisabled = process.env.DISABLE_RADAR_OTP === "true";
+  const trust = radarOtpDisabled ? { trusted: true } : await getAffiliateTrustStatus(supabase, enrollment.affiliate_id);
 
   if (!trust.trusted) {
     let sent;
@@ -110,7 +131,7 @@ export async function POST(req) {
   }
 
   try {
-    const result = await createLeadAndWhatsAppLink(supabase, { programId, enrollmentId: enrollment.id, clickId, fullName, program });
+    const result = await createLeadAndGetIntentFormUrl(supabase, { programId, enrollmentId: enrollment.id, clickId, program });
     return NextResponse.json({ needsOtp: false, ...result });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });

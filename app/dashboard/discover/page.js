@@ -24,71 +24,90 @@ export default function DiscoverPage() {
     const supabase = createClient();
 
     async function load() {
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-      let myUserId = null;
-      let myBusinessId = null;
-      if (authUser) {
-        const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
-        myUserId = userRow?.id || null;
-        setUserRowId(myUserId);
+      try {
+        // The products query has zero dependency on auth state - only the
+        // LATER filtering below needs myUserId/myBusinessId. Starting it
+        // alongside the auth check instead of after it cuts a full
+        // round-trip off what was previously a strict sequential chain.
+        const [{ data: authData }, { data: productsData }] = await Promise.all([
+          supabase.auth.getUser(),
+          supabase
+            .from("products")
+            .select(
+              "id, name, category, price_naira, business_id, businesses(id, name, plan), affiliate_programs!inner(id, tier1_percent, tier2_percent, tier3_percent, status)"
+            )
+            .eq("affiliate_programs.status", "active"),
+        ]);
+        const authUser = authData?.user;
 
-        if (myUserId) {
-          const { data: myBusiness } = await supabase.from("businesses").select("id").eq("owner_id", myUserId).maybeSingle();
-          myBusinessId = myBusiness?.id || null;
-        }
-      }
+        let visible = productsData || [];
+        let myUserId = null;
+        let myBusinessId = null;
 
-      const { data } = await supabase
-        .from("products")
-        .select(
-          "id, name, category, price_naira, business_id, businesses(id, name, plan), affiliate_programs!inner(id, tier1_percent, tier2_percent, tier3_percent, status)"
-        )
-        .eq("affiliate_programs.status", "active");
+        if (authUser) {
+          const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
+          myUserId = userRow?.id || null;
+          setUserRowId(myUserId);
 
-      let visible = data || [];
-
-      // Never show a business's own campaigns to themselves in Discover -
-      // joining your own program as an affiliate doesn't make sense.
-      if (myBusinessId) {
-        visible = visible.filter((p) => p.business_id !== myBusinessId);
-      }
-
-      // Hide campaigns from businesses that have already hit their plan's
-      // affiliate cap - nothing to join if they're full. Computed by
-      // counting DISTINCT affiliates already enrolled across each
-      // business's programs, same logic as the enforcement trigger.
-      const businessIds = [...new Set(visible.map((p) => p.business_id))];
-      if (businessIds.length > 0) {
-        const { data: allEnrollments } = await supabase
-          .from("affiliate_enrollments")
-          .select("affiliate_id, affiliate_programs(products(business_id))");
-
-        const affiliatesByBusiness = new Map();
-        for (const e of allEnrollments || []) {
-          const bizId = e.affiliate_programs?.products?.business_id;
-          if (!bizId || !businessIds.includes(bizId)) continue;
-          if (!affiliatesByBusiness.has(bizId)) affiliatesByBusiness.set(bizId, new Set());
-          affiliatesByBusiness.get(bizId).add(e.affiliate_id);
+          if (myUserId) {
+            // Business lookup and "which programs have I already joined"
+            // both only depend on myUserId, not on each other or on the
+            // products data above - run them together instead of in
+            // sequence.
+            const [{ data: myBusiness }, { data: enrolled }] = await Promise.all([
+              supabase.from("businesses").select("id").eq("owner_id", myUserId).maybeSingle(),
+              supabase.from("affiliate_enrollments").select("program_id").eq("affiliate_id", myUserId),
+            ]);
+            myBusinessId = myBusiness?.id || null;
+            setJoinedIds(new Set((enrolled || []).map((e) => e.program_id)));
+          }
         }
 
-        visible = visible.filter((p) => {
-          const cap = AFFILIATE_CAP[p.businesses?.plan] ?? AFFILIATE_CAP.free;
-          if (cap === null) return true; // unlimited (Large)
-          const currentCount = affiliatesByBusiness.get(p.business_id)?.size || 0;
-          return currentCount < cap;
-        });
+        // Never show a business's own campaigns to themselves in Discover -
+        // joining your own program as an affiliate doesn't make sense.
+        if (myBusinessId) {
+          visible = visible.filter((p) => p.business_id !== myBusinessId);
+        }
+
+        // Hide campaigns from businesses that have already hit their plan's
+        // affiliate cap - nothing to join if they're full. Computed by
+        // counting DISTINCT affiliates already enrolled across each
+        // business's programs, same logic as the enforcement trigger.
+        // This genuinely can't start any earlier - it needs businessIds,
+        // which only exist once the products query above has resolved.
+        const businessIds = [...new Set(visible.map((p) => p.business_id))];
+        if (businessIds.length > 0) {
+          const { data: allEnrollments } = await supabase
+            .from("affiliate_enrollments")
+            .select("affiliate_id, affiliate_programs(products(business_id))");
+
+          const affiliatesByBusiness = new Map();
+          for (const e of allEnrollments || []) {
+            const bizId = e.affiliate_programs?.products?.business_id;
+            if (!bizId || !businessIds.includes(bizId)) continue;
+            if (!affiliatesByBusiness.has(bizId)) affiliatesByBusiness.set(bizId, new Set());
+            affiliatesByBusiness.get(bizId).add(e.affiliate_id);
+          }
+
+          visible = visible.filter((p) => {
+            const cap = AFFILIATE_CAP[p.businesses?.plan] ?? AFFILIATE_CAP.free;
+            if (cap === null) return true; // unlimited (Large)
+            const currentCount = affiliatesByBusiness.get(p.business_id)?.size || 0;
+            return currentCount < cap;
+          });
+        }
+
+        setPrograms(visible);
+      } catch (err) {
+        // Previously unhandled entirely - any failure anywhere in the
+        // sequence above left the page spinning forever with no error
+        // shown at all. Now it surfaces to the same error state the join
+        // button already uses, and the spinner always resolves via finally
+        // below regardless of whether this succeeded or failed.
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-
-      setPrograms(visible);
-
-      if (myUserId) {
-        const { data: enrolled } = await supabase.from("affiliate_enrollments").select("program_id").eq("affiliate_id", myUserId);
-        setJoinedIds(new Set((enrolled || []).map((e) => e.program_id)));
-      }
-
-      setLoading(false);
     }
     load();
   }, []);
@@ -98,11 +117,13 @@ export default function DiscoverPage() {
     setJoining(programId);
     setError(null);
     try {
-      const supabase = createClient();
-      const { error: insertError } = await supabase
-        .from("affiliate_enrollments")
-        .insert({ affiliate_id: userRowId, program_id: programId });
-      if (insertError) throw insertError;
+      const res = await fetch("/api/enrollments/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ programId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to join");
       setJoinedIds((prev) => new Set(prev).add(programId));
     } catch (err) {
       setError(err.message);

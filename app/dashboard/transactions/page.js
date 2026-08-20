@@ -28,21 +28,16 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
 
-// Production queries:
-//   Payouts tab: supabase.from("commissions").select("*, transactions(*), affiliate_enrollments(*)")
-//     .in("enrollment_id", myEnrollmentIds).order("created_at", { ascending: false })
-//   Leads tab: supabase.from("leads").select("*, affiliate_programs(*, products(name, businesses(id, owner_id)))")
-//     .in("affiliate_programs.products.business_id", myBusinessIds).order("created_at", { ascending: false })
-//     Note there is no name/phone/email field to select - Commission never stores a lead's
-//     identity (see supabase/schema.sql). Full details were already forwarded to this
-//     business's own email or webhook the moment the lead qualified (see lib/leadForwarding.js).
-
-const sampleLeads = [
-  { id: "l1", lead_ref: "LD-7F3K9Q", status: "captured", product: "CareLink HMO Plan", industry: "Healthcare", created_at: "2026-07-28" },
-  { id: "l2", lead_ref: "LD-2M8XJZ", status: "qualified", product: "CareLink HMO Plan", industry: "Healthcare", created_at: "2026-07-26", charge_amount_naira: 5000 },
-  { id: "l3", lead_ref: "LD-9RT4WP", status: "rejected", product: "SwiftHR Payroll", industry: "Fintech", created_at: "2026-07-24" },
-  { id: "l4", lead_ref: "LD-3QX7MK", status: "qualified", product: "Lekki Waterfront Villas", industry: "Real Estate", created_at: "2026-07-27", charge_amount_naira: 20000 },
-];
+// Payouts tab: real query, see PayoutsTab below.
+// Leads tab: real query, see LeadsTab below - uses a multi-step lookup
+// (business -> products -> programs -> leads) rather than a single
+// embedded-filter query, matching the same proven pattern PayoutsTab
+// already uses successfully, since nested-relation filtering with .in()
+// across multiple levels has caused real bugs elsewhere in this app.
+//   Note there is no name/phone/email field selected - Commission never
+//   stores a lead's identity (see supabase/schema.sql). Full details were
+//   already forwarded to this business's own email or webhook the moment
+//   the lead qualified (see lib/leadForwarding.js).
 
 const STATUS_STYLE = {
   captured: { bg: "#FFF3C4", fg: tokens.brandInk, label: "Awaiting qualification" },
@@ -237,10 +232,136 @@ function ConfirmSaleDialog({ lead, open, onClose, onDone }) {
   );
 }
 
-function LeadsTab({ plan }) {
-  const [leads, setLeads] = useState(sampleLeads);
+function RejectLeadDialog({ lead, open, onClose, onDone }) {
+  const [reason, setReason] = useState("");
+  const [state, setState] = useState({ loading: false, error: null });
+
+  async function handleReject() {
+    setState({ loading: true, error: null });
+    try {
+      const res = await fetch(`/api/leads/${lead.id}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reject lead");
+      setState({ loading: false, error: null });
+      onDone();
+      onClose();
+    } catch (err) {
+      setState({ loading: false, error: err.message });
+    }
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>Mark as invalid - {lead?.lead_ref}</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+          This removes the lead from your active pipeline. It doesn&apos;t affect the referring affiliate&apos;s
+          trust status - that&apos;s calculated separately from your own bookkeeping.
+        </Typography>
+        <TextField
+          label="Reason"
+          placeholder="Wrong number, spam, duplicate, etc."
+          fullWidth
+          required
+          multiline
+          minRows={2}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
+        {state.error && <Alert severity="error" sx={{ mt: 2 }}>{state.error}</Alert>}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button onClick={onClose} disabled={state.loading} color="inherit">
+          Cancel
+        </Button>
+        <Button onClick={handleReject} disabled={state.loading || !reason.trim()} variant="contained" color="error">
+          {state.loading ? "Marking…" : "Mark as invalid"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function LeadsTab({ plan, userRowId }) {
+  const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [saleLead, setSaleLead] = useState(null);
+  const [rejectLead, setRejectLead] = useState(null);
   const canExport = plan === "plus";
+
+  useEffect(() => {
+    if (!userRowId) {
+      setLoading(false);
+      return;
+    }
+    const supabase = createClient();
+
+    async function load() {
+      const { data: business } = await supabase.from("businesses").select("id").eq("owner_id", userRowId).maybeSingle();
+      if (!business) {
+        setLeads([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data: products } = await supabase.from("products").select("id, name, category").eq("business_id", business.id);
+      const productIds = (products || []).map((p) => p.id);
+      const productById = Object.fromEntries((products || []).map((p) => [p.id, p]));
+      if (productIds.length === 0) {
+        setLeads([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data: programs } = await supabase.from("affiliate_programs").select("id, product_id").in("product_id", productIds);
+      const programIds = (programs || []).map((p) => p.id);
+      const productIdByProgram = Object.fromEntries((programs || []).map((p) => [p.id, p.product_id]));
+      if (programIds.length === 0) {
+        setLeads([]);
+        setLoading(false);
+        return;
+      }
+
+      // Note there is no name/phone/email field to select - Commission
+      // never stores a lead's identity (see supabase/schema.sql). Full
+      // details were already forwarded to this business's own email or
+      // webhook the moment the lead qualified (see lib/leadForwarding.js).
+      const { data: leadRows } = await supabase
+        .from("leads")
+        .select("id, lead_ref, status, program_id, charge_amount_naira, created_at")
+        .in("program_id", programIds)
+        .order("created_at", { ascending: false });
+
+      setLeads(
+        (leadRows || []).map((l) => {
+          const product = productById[productIdByProgram[l.program_id]];
+          return {
+            id: l.id,
+            lead_ref: l.lead_ref,
+            status: l.status,
+            product: product?.name || "Campaign",
+            industry: product?.category || null,
+            charge_amount_naira: l.charge_amount_naira ? Number(l.charge_amount_naira) : null,
+            created_at: new Date(l.created_at).toLocaleDateString(),
+          };
+        })
+      );
+      setLoading(false);
+    }
+    load();
+  }, [userRowId]);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "grid", placeItems: "center", py: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <>
@@ -293,6 +414,11 @@ function LeadsTab({ plan }) {
                     Confirm sale closed
                   </Button>
                 )}
+                {lead.status === "captured" && (
+                  <Button size="small" variant="outlined" color="error" onClick={() => setRejectLead(lead)}>
+                    Mark as invalid
+                  </Button>
+                )}
               </Stack>
             </Box>
           );
@@ -312,6 +438,15 @@ function LeadsTab({ plan }) {
           /* Confirmation succeeded - no local status change needed, the
              lead stays 'qualified'; this is a separate, additional record,
              not a lead-status transition. */
+        }}
+      />
+
+      <RejectLeadDialog
+        lead={rejectLead}
+        open={!!rejectLead}
+        onClose={() => setRejectLead(null)}
+        onDone={() => {
+          setLeads((prev) => prev.map((l) => (l.id === rejectLead.id ? { ...l, status: "rejected" } : l)));
         }}
       />
     </>
@@ -344,7 +479,7 @@ export default function TransactionsPage() {
         <Tab label="Leads" sx={{ textTransform: "none", fontWeight: 600 }} />
       </Tabs>
 
-      {tab === 0 ? <PayoutsTab userRowId={userRowId} /> : <LeadsTab plan={plan} />}
+      {tab === 0 ? <PayoutsTab userRowId={userRowId} /> : <LeadsTab plan={plan} userRowId={userRowId} />}
     </>
   );
 }

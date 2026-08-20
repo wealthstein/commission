@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
-import { verifyOtp } from "@/lib/termii";
-import { createLeadAndWhatsAppLink } from "@/lib/leadCreation";
+import { verifyOtp } from "@/lib/sms";
+import { createLeadAndGetIntentFormUrl } from "@/lib/leadCreation";
 
 /**
  * POST /api/leads/verify-otp
@@ -65,11 +65,10 @@ export async function POST(req) {
   }
 
   try {
-    const result = await createLeadAndWhatsAppLink(supabase, {
+    const result = await createLeadAndGetIntentFormUrl(supabase, {
       programId: otpRow.program_id,
       enrollmentId: otpRow.enrollment_id,
       clickId: otpRow.click_id,
-      fullName: otpRow.full_name,
       program,
     });
 

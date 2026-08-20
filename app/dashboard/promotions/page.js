@@ -27,7 +27,7 @@ function PromotingTab({ userRowId }) {
     async function load() {
       const { data: enrollments } = await supabase
         .from("affiliate_enrollments")
-        .select("id, referral_code, program_id, affiliate_programs(id, products(name))")
+        .select("id, referral_code, program_id, affiliate_programs(id, products(name, slug, businesses(slug)))")
         .eq("affiliate_id", userRowId);
 
       const enrollmentIds = (enrollments || []).map((e) => e.id);
@@ -50,6 +50,8 @@ function PromotingTab({ userRowId }) {
           id: e.id,
           referralCode: e.referral_code,
           product: e.affiliate_programs?.products?.name || "Campaign",
+          businessSlug: e.affiliate_programs?.products?.businesses?.slug,
+          productSlug: e.affiliate_programs?.products?.slug,
           sales: commissionsByEnrollment[e.id]?.count || 0,
           earnedNaira: commissionsByEnrollment[e.id]?.total || 0,
         }))
@@ -65,6 +67,18 @@ function PromotingTab({ userRowId }) {
     // by the enrollment's own id. A link built from the id would 404 into
     // a homepage redirect for every affiliate who copied it.
     const url = `https://www.commission.ng/r/${referralCode}`;
+    navigator.clipboard?.writeText(url);
+  }
+
+  function copyRecruitLink(row) {
+    // A separate link from the customer referral link above - this one is
+    // for recruiting a SUB-AFFILIATE, not a customer. Points at the public
+    // join page with ?ref= set to this affiliate's own referral_code; the
+    // join API (app/api/enrollments/join) reads that code to set
+    // referrer_enrollment_id on the new enrollment, which is the entire
+    // mechanism that makes 3-tier recruitment real.
+    if (!row.businessSlug || !row.productSlug) return;
+    const url = `https://www.commission.ng/products/${row.businessSlug}/${row.productSlug}/join?ref=${row.referralCode}`;
     navigator.clipboard?.writeText(url);
   }
 
@@ -104,6 +118,25 @@ function PromotingTab({ userRowId }) {
                 </IconButton>
               </Tooltip>
             </Stack>
+            <Tooltip title="Copy a link to invite another affiliate to join under you">
+              <Box
+                component="button"
+                onClick={() => copyRecruitLink(p)}
+                sx={{
+                  border: "none",
+                  background: "none",
+                  p: 0,
+                  mt: 0.5,
+                  cursor: "pointer",
+                  color: tokens.brandInk,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  display: "block",
+                }}
+              >
+                Invite a sub-affiliate
+              </Box>
+            </Tooltip>
           </Box>
           <Stack direction="row" spacing={3}>
             <Box sx={{ textAlign: "right" }}>

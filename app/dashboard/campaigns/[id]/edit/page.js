@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Paper,
   Box,
@@ -48,6 +49,7 @@ export default function EditCampaignPage() {
   const [isLead, setIsLead] = useState(true);
   const [isPhysical, setIsPhysical] = useState(false);
   const [form, setForm] = useState(null);
+  const [businessPlan, setBusinessPlan] = useState(null);
   const [status, setStatus] = useState({ loading: false, error: null, success: false });
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export default function EditCampaignPage() {
     async function load() {
       const { data: product, error } = await supabase
         .from("products")
-        .select("*, affiliate_programs(*)")
+        .select("*, affiliate_programs(*), businesses(plan)")
         .eq("id", params.id)
         .maybeSingle();
 
@@ -72,6 +74,7 @@ export default function EditCampaignPage() {
       const program = product.affiliate_programs?.[0];
       setIsLead(program?.conversion_goal === "lead");
       setIsPhysical(product.product_type === "physical");
+      setBusinessPlan(product.businesses?.plan || "free");
 
       const totalCommissionPercent = program
         ? Math.round((program.tier1_percent / TIER_RATIOS.tier1) * 100)
@@ -332,6 +335,50 @@ export default function EditCampaignPage() {
             Editing custom questions isn't available on this page yet - the questions you already set up when
             creating this campaign are unaffected and still live.
           </Alert>
+        )}
+
+        {isLead && (
+          <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
+            <Typography fontWeight={700} sx={{ mb: 1 }}>
+              Custom integration
+            </Typography>
+            {businessPlan === "pro" || businessPlan === "plus" ? (
+              <>
+                <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+                  Capture leads directly on your own site instead of sending customers to Commission's hosted page.
+                  Add this script tag, then call <code>Commission.trackLead(...)</code> from your own form&apos;s submit
+                  handler.
+                </Typography>
+                <Box
+                  component="pre"
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: "#0B0B0C",
+                    color: "#E7E5DE",
+                    fontSize: 13,
+                    overflowX: "auto",
+                    mb: 2,
+                  }}
+                >
+                  {`<script src="https://commission.ng/commission-track.js" data-program="${form.programId}"></script>`}
+                </Box>
+                <Alert severity="warning" sx={{ mb: 0 }}>
+                  Leads captured this way skip Radar&apos;s inline verification step entirely - that step depends on
+                  rendering into Commission's own hosted page, which does not apply to a form on your own site. Every
+                  lead submitted through your own page is created directly, regardless of the referring affiliate's
+                  trust status. Worth knowing before relying on this heavily for high-volume or high-risk campaigns.
+                </Alert>
+              </>
+            ) : (
+              <Typography variant="body2" sx={{ color: tokens.muted }}>
+                Custom integrations are available on Medium and Large plans.{" "}
+                <Box component={Link} href="/dashboard/account" sx={{ color: tokens.ink, fontWeight: 600 }}>
+                  View plans
+                </Box>
+              </Typography>
+            )}
+          </Paper>
         )}
 
         <Stack direction="row" justifyContent="flex-end" spacing={2}>

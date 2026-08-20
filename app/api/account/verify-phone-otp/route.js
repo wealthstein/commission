@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
-import { verifyOtp } from "@/lib/termii";
+import { verifyOtp } from "@/lib/sms";
 
 /**
  * POST /api/account/verify-phone-otp

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Box, Grid, Typography, Stack, Button, Avatar, Divider, CircularProgress, Alert } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
@@ -10,15 +10,15 @@ import { createClient } from "@/lib/supabaseClient";
 import { resolveLandingBranding } from "@/lib/branding";
 import SignUpButton from "@/components/marketing/SignUpButton";
 
-export default function JoinProgramPage() {
+function JoinProgramInner() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [notFoundState, setNotFoundState] = useState(false);
   const [business, setBusiness] = useState(null);
   const [product, setProduct] = useState(null);
   const [program, setProgram] = useState(null);
   const [authUser, setAuthUser] = useState(null);
-  const [userRowId, setUserRowId] = useState(null);
   const [alreadyJoined, setAlreadyJoined] = useState(false);
   const [joinState, setJoinState] = useState({ loading: false, error: null, success: false });
 
@@ -51,7 +51,6 @@ export default function JoinProgramPage() {
       if (user) {
         const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", user.id).single();
         if (userRow) {
-          setUserRowId(userRow.id);
           const { data: existing } = await supabase
             .from("affiliate_enrollments")
             .select("id")
@@ -69,9 +68,13 @@ export default function JoinProgramPage() {
   async function handleJoin() {
     setJoinState({ loading: true, error: null, success: false });
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("affiliate_enrollments").insert({ affiliate_id: userRowId, program_id: program.id });
-      if (error) throw error;
+      const res = await fetch("/api/enrollments/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ programId: program.id, referrerReferralCode: searchParams.get("ref") || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to join");
       setJoinState({ loading: false, error: null, success: true });
     } catch (err) {
       setJoinState({ loading: false, error: err.message, success: false });
@@ -184,6 +187,11 @@ export default function JoinProgramPage() {
                 <Typography variant="body2" sx={{ color: tokens.muted, textAlign: "center" }}>
                   You&apos;ll get a unique referral link to share the moment you join.
                 </Typography>
+                {searchParams.get("ref") && (
+                  <Typography variant="caption" sx={{ color: tokens.muted, textAlign: "center" }}>
+                    You were invited by another affiliate - you&apos;ll be linked to them as your recruiter.
+                  </Typography>
+                )}
                 <Button
                   variant="contained"
                   size="large"
@@ -211,5 +219,13 @@ export default function JoinProgramPage() {
         </Grid>
       </Grid>
     </Box>
+  );
+}
+
+export default function JoinProgramPage() {
+  return (
+    <Suspense fallback={null}>
+      <JoinProgramInner />
+    </Suspense>
   );
 }

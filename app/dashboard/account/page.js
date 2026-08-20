@@ -302,6 +302,11 @@ export default function AccountPage() {
   const [logoError, setLogoError] = useState(null);
   const [saveState, setSaveState] = useState({ loading: false, error: null, success: false });
   const [phoneVerified, setPhoneVerified] = useState(true);
+  // Same temporary bypass as middleware.js, but that one is server-only -
+  // needs the NEXT_PUBLIC_ prefix to be readable here on the client at
+  // all. Keeps the Account page from showing a "verify to unlock the rest
+  // of your dashboard" warning when the rest is already unlocked.
+  const phoneGateDisabled = process.env.NEXT_PUBLIC_DISABLE_PHONE_VERIFICATION_GATE === "true";
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneOtpCode, setPhoneOtpCode] = useState("");
   const [phoneState, setPhoneState] = useState({ loading: false, error: null });
@@ -457,7 +462,7 @@ export default function AccountPage() {
       {tab === 0 && (
         <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, borderColor: tokens.border }}>
           <Box sx={{ maxWidth: INNER_WIDTH, mx: "auto" }}>
-            {!phoneVerified && (
+            {!phoneVerified && !phoneGateDisabled && (
               <Alert severity="warning" sx={{ mb: 3 }}>
                 Verify your phone number below to unlock the rest of your dashboard.
               </Alert>
@@ -484,13 +489,14 @@ export default function AccountPage() {
                 {...centeredHelperProps}
               />
 
-              {phoneVerified ? (
+              {phoneVerified || phoneGateDisabled ? (
                 <TextField
-                  placeholder="Phone number - 08012345678"
+                  placeholder="Phone number - 08012345888"
                   fullWidth
                   value={form.phone}
-                  disabled
-                  helperText="Verified"
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) }))}
+                  disabled={phoneVerified && !phoneGateDisabled}
+                  helperText={phoneVerified ? "Verified" : undefined}
                   sx={centeredFieldSx}
                   {...centeredHelperProps}
                 />

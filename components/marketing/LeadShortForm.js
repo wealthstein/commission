@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Paper, Box, Typography, TextField, Button, Stack, Alert } from "@mui/material";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { tokens } from "@/lib/theme";
 
 export default function LeadShortForm({ programId, productName, businessName, logoUrl, checkoutStyle = false }) {
   const [form, setForm] = useState({ fullName: "", phone: "", email: "" });
-  const [state, setState] = useState({ loading: false, error: null, whatsappLink: null, whatsappRef: null, otpId: null });
+  const [state, setState] = useState({ loading: false, error: null, otpId: null });
   const [otpCode, setOtpCode] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
 
@@ -22,23 +19,21 @@ export default function LeadShortForm({ programId, productName, businessName, lo
       // Inline, same page - no redirect, no new screen. To the customer
       // this reads as "one form with an extra field," not a third stop
       // in the journey.
-      setState({ loading: false, error: null, whatsappLink: null, whatsappRef: null, otpId: data.otpId });
+      setState({ loading: false, error: null, otpId: data.otpId });
       return;
     }
     finishWithResult(data);
   }
 
   function finishWithResult(data) {
-    if (checkoutStyle) {
-      window.location.href = data.whatsappLink;
-      return;
-    }
-    setState({ loading: false, error: null, whatsappLink: data.whatsappLink, whatsappRef: data.whatsappRef, otpId: null });
+    // Straight to the Intent Form - no WhatsApp handoff in the middle of
+    // this flow at all anymore.
+    window.location.href = data.intentFormUrl;
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setState({ loading: true, error: null, whatsappLink: null, whatsappRef: null, otpId: null });
+    setState({ loading: true, error: null, otpId: null });
     try {
       const res = await fetch("/api/leads/capture", {
         method: "POST",
@@ -49,7 +44,7 @@ export default function LeadShortForm({ programId, productName, businessName, lo
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       handleCaptureResult(data);
     } catch (err) {
-      setState({ loading: false, error: err.message, whatsappLink: null, whatsappRef: null, otpId: null });
+      setState({ loading: false, error: err.message, otpId: null });
     }
   }
 
@@ -117,37 +112,6 @@ export default function LeadShortForm({ programId, productName, businessName, lo
     );
   }
 
-  if (state.whatsappRef) {
-    return (
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, bgcolor: "#E7F5EE" }}>
-        <Typography fontWeight={700} sx={{ mb: 1 }}>
-          You are on the list!
-        </Typography>
-        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-          Chat with us directly on WhatsApp, or go straight ahead and finish the quick details form below — either
-          way gets you moving.
-        </Typography>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-          {state.whatsappLink && (
-            <Button
-              variant="contained"
-              startIcon={<WhatsAppIcon />}
-              href={state.whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{ bgcolor: "#25D366", color: "#fff", "&:hover": { bgcolor: "#1ebe57" } }}
-            >
-              Continue on WhatsApp
-            </Button>
-          )}
-          <Button variant="outlined" endIcon={<ArrowForwardIcon />} component={Link} href={`/leads/${state.whatsappRef}/continue`}>
-            Finish the details form
-          </Button>
-        </Stack>
-      </Paper>
-    );
-  }
-
   const formContent = (
     <>
       {!checkoutStyle && (
@@ -156,7 +120,7 @@ export default function LeadShortForm({ programId, productName, businessName, lo
             Interested in {productName}?
           </Typography>
           <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-            Tell us a bit about you and we will connect you directly on WhatsApp.
+            Tell us a bit about you and we will connect you with the team.
           </Typography>
         </>
       )}
@@ -212,15 +176,15 @@ export default function LeadShortForm({ programId, productName, businessName, lo
             disabled={state.loading}
             sx={checkoutStyle ? { py: 1.5, mt: 0.5, borderRadius: "12px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 } : undefined}
           >
-            {state.loading ? "Submitting…" : "Continue on WhatsApp"}
+            {state.loading ? "Submitting…" : "Continue"}
           </Button>
         </Stack>
       </Box>
 
       {checkoutStyle && (
         <Typography variant="caption" sx={{ color: tokens.muted, display: "block", textAlign: "center", mt: 3 }}>
-          Submit your details, you&apos;ll be taken straight to WhatsApp, and you can chat with {businessName || "the business"}{" "}
-          directly.
+          Submit your details and you&apos;ll go straight to a quick form for {businessName || "the business"} to
+          follow up with you directly.
         </Typography>
       )}
     </>
