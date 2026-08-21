@@ -6,11 +6,11 @@ import { tokens } from "@/lib/theme";
 export default function CardGridSection({ id, title, items, columns = 4, bgcolor = tokens.paper }) {
   return (
     <Box component="section" id={id} sx={{ py: { xs: 6, md: 9 }, bgcolor }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Typography variant="h3" sx={{ fontSize: { xs: 24, md: 30 }, mb: 4 }}>
           {title}
         </Typography>
-        <Grid container spacing={2.5}>
+        <Grid container spacing={1.5}>
           {items.map((item) => (
             <Grid item xs={12} sm={6} md={12 / columns} key={item.title}>
               <Paper

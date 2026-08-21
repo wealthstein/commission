@@ -28,7 +28,7 @@ export default function AboutPage() {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 8, md: 12 } }}>
-        <Container maxWidth="lg">
+        <Container maxWidth="md">
           <Box sx={{ maxWidth: 720, mb: 7 }}>
             <Chip label="About Commission" size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
             <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 44 }, mb: 2.5 }}>

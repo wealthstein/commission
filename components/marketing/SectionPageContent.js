@@ -13,7 +13,7 @@ export default function SectionPageContent({ item, sourcePage }) {
         {item.intro}
       </Typography>
 
-      <Grid container spacing={2.5} sx={{ mb: 5 }}>
+      <Grid container spacing={1.5} sx={{ mb: 5 }}>
         {item.points.map((point) => (
           <Grid item xs={12} sm={6} key={point.title}>
             <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, height: "100%" }}>

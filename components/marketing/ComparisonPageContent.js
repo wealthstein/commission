@@ -5,7 +5,7 @@ import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function ComparisonPageContent({ comparison }) {
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
         {comparison.headline}
       </Typography>
@@ -14,7 +14,7 @@ export default function ComparisonPageContent({ comparison }) {
         {comparison.intro}
       </Typography>
 
-      <Grid container spacing={2.5} sx={{ mb: 5 }}>
+      <Grid container spacing={1.5} sx={{ mb: 5 }}>
         {comparison.points.map((point) => (
           <Grid item xs={12} sm={6} key={point.title}>
             <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, height: "100%" }}>

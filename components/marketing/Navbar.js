@@ -26,8 +26,8 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
   }
 
   return (
-    <AppBar position="sticky" elevation={0} sx={{ bgcolor: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)" }}>
-      <Toolbar sx={{ maxWidth: 1060, mx: "auto", width: "100%", py: 1.25, px: { xs: 3, sm: 5, md: 8, lg: 10 }, gap: 3 }}>
+    <AppBar position="sticky" elevation={0} sx={{ bgcolor: tokens.paper }}>
+      <Toolbar sx={{ maxWidth: 1060, mx: "auto", width: "100%", py: 2, px: { xs: 3, sm: 5, md: 8, lg: 10 }, gap: 3 }}>
         <Stack component={Link} href="/" direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0, textDecoration: "none" }}>
           <Box style={{ display: "flex", justifyContent: "center" }}>
             <CardMedia

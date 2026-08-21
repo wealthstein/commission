@@ -47,7 +47,7 @@ export default async function WelcomePage() {
 
   return (
     <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center", py: 8 }}>
-      <Container maxWidth="lg" sx={{ textAlign: "center" }}>
+      <Container maxWidth="md" sx={{ textAlign: "center" }}>
         <Avatar src={avatarUrl} sx={{ width: 72, height: 72, mx: "auto", mb: 3, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700 }}>
           {firstName.charAt(0).toUpperCase()}
         </Avatar>

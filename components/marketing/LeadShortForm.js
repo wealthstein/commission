@@ -96,7 +96,7 @@ export default function LeadShortForm({ programId, productName, businessName, lo
               variant="contained"
               size="large"
               disabled={otpLoading || otpCode.length !== 6}
-              sx={checkoutStyle ? { py: 1.5, mt: 0.5, borderRadius: "12px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 } : undefined}
+              sx={checkoutStyle ? { py: 1.5, mt: 0.5, borderRadius: "8px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 } : undefined}
             >
               {otpLoading ? "Verifying…" : "Verify code"}
             </Button>
@@ -174,7 +174,7 @@ export default function LeadShortForm({ programId, productName, businessName, lo
             variant="contained"
             size="large"
             disabled={state.loading}
-            sx={checkoutStyle ? { py: 1.5, mt: 0.5, borderRadius: "12px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 } : undefined}
+            sx={checkoutStyle ? { py: 1.5, mt: 0.5, borderRadius: "8px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 } : undefined}
           >
             {state.loading ? "Submitting…" : "Continue"}
           </Button>

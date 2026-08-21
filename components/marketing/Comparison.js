@@ -6,7 +6,7 @@ import { tokens } from "@/lib/theme";
 export default function Comparison({ data, bgcolor = tokens.paper }) {
   return (
     <Box component="section" sx={{ py: { xs: 6, md: 9 }, bgcolor }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Typography variant="h3" sx={{ fontSize: { xs: 24, md: 30 }, mb: 4 }}>
           {data.title}
         </Typography>

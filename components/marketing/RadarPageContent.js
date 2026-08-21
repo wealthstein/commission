@@ -116,7 +116,7 @@ export default function RadarPageContent() {
 
       {/* Lifecycle stages */}
       <Box sx={{ py: { xs: 7, md: 10 } }}>
-        <Container maxWidth="lg">
+        <Container maxWidth="md">
           <Typography variant="h4" sx={{ fontSize: { xs: 24, md: 32 }, fontWeight: 700, textAlign: "center", mb: 1.5 }}>
             Radar protects every stage of the lead
           </Typography>
@@ -153,7 +153,7 @@ export default function RadarPageContent() {
 
       {/* Concept cards */}
       <Box sx={{ py: { xs: 7, md: 10 }, bgcolor: tokens.canvas }}>
-        <Container maxWidth="lg">
+        <Container maxWidth="md">
           <Typography variant="h4" sx={{ fontSize: { xs: 24, md: 32 }, fontWeight: 700, textAlign: "center", mb: 6 }}>
             Get protection across the whole funnel
           </Typography>
@@ -230,7 +230,7 @@ export default function RadarPageContent() {
 
       {/* Industries */}
       <Box sx={{ py: { xs: 7, md: 10 }, bgcolor: tokens.canvas }}>
-        <Container maxWidth="lg">
+        <Container maxWidth="md">
           <Typography variant="h4" sx={{ fontSize: { xs: 24, md: 32 }, fontWeight: 700, textAlign: "center", mb: 6 }}>
             Radar works across every industry on Commission
           </Typography>

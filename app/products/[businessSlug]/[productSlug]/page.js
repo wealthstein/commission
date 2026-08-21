@@ -243,7 +243,7 @@ export default async function ProductPage({ params, searchParams }) {
     <Box sx={{ py: { xs: 6, md: 9 } }}>
       {jsonLdScripts}
 
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
           <Typography variant="body2" component={Link} href="/" sx={{ color: tokens.muted }}>
             Commission

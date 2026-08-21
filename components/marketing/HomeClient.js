@@ -81,7 +81,7 @@ export default function HomeClient({ searchParams }) {
         <FAQ items={faq} />
 
         <Box sx={{ py: { xs: 6, md: 9 } }}>
-          <Container maxWidth="lg">
+          <Container maxWidth="md">
             <Box sx={{ mx: "auto" }}>
               <RequestAccountForm sourcePage="/" />
             </Box>

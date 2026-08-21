@@ -47,7 +47,7 @@ export default async function CategoryPage({ params, searchParams }) {
 
   return (
     <Box sx={{ py: { xs: 6, md: 9 } }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 38 }, mb: 1.5 }}>
           {categoryLabel} affiliate programs in Nigeria
         </Typography>

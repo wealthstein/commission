@@ -66,7 +66,7 @@ export default function FeaturesIndexContent({ title, description, items, relate
   const [first, ...rest] = items;
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
         {title}
       </Typography>
@@ -74,12 +74,12 @@ export default function FeaturesIndexContent({ title, description, items, relate
         {description}
       </Typography>
 
-      <Grid container spacing={2.5} sx={{ mb: relatedLinks?.length ? 6 : 0 }}>
+      <Grid container spacing={1.5} sx={{ mb: relatedLinks?.length ? 6 : 0 }}>
         <Grid item xs={12} md={6}>
           <FeatureTile item={first} featured />
         </Grid>
         <Grid item xs={12} md={6}>
-          <Grid container spacing={2.5} sx={{ height: "100%" }}>
+          <Grid container spacing={1.5} sx={{ height: "100%" }}>
             {rest.slice(0, 2).map((item) => (
               <Grid item xs={12} sm={6} key={item.slug}>
                 <FeatureTile item={item} />

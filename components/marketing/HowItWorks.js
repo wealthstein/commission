@@ -6,7 +6,7 @@ import { tokens } from "@/lib/theme";
 export default function HowItWorks({ steps, bgcolor = tokens.paper }) {
   return (
     <Box component="section" id="how-it-works" sx={{ py: { xs: 6, md: 9 }, bgcolor }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Typography variant="h3" sx={{ fontSize: { xs: 24, md: 30 }, mb: 5 }}>
           How It Works
         </Typography>

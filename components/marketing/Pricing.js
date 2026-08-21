@@ -8,7 +8,7 @@ import { pricingPlans } from "@/lib/pricingPlans";
 export default function Pricing({ onSelectPlan, bgcolor = tokens.paper }) {
   return (
     <Box component="section" id="pricing" sx={{ py: { xs: 7, md: 10 }, bgcolor }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Box sx={{ mb: 5, maxWidth: 560 }}>
           <Typography variant="h3" sx={{ fontSize: { xs: 24, md: 30 }, mb: 1.5 }}>
             Simple, plan-based pricing
@@ -19,7 +19,7 @@ export default function Pricing({ onSelectPlan, bgcolor = tokens.paper }) {
           </Typography>
         </Box>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={1.5}>
           {pricingPlans.map((plan) => (
             <Grid item xs={12} md={4} key={plan.id}>
               <Paper

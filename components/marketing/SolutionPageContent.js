@@ -10,7 +10,7 @@ export default function SolutionPageContent({ item }) {
   const stages = item.points.slice(0, 3);
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
         {item.headline}
       </Typography>

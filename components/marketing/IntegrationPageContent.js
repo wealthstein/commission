@@ -5,7 +5,7 @@ import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function IntegrationPageContent({ item }) {
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Stack direction="row" spacing={1} sx={{ mb: 2 }} flexWrap="wrap">
         <Chip
           label="Native integration"

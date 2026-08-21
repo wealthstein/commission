@@ -15,7 +15,7 @@ const ZONES = {
 
 export default function LocationsIndexContent({ title, description, buildHref, items, relatedLinks }) {
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
         {title}
       </Typography>
@@ -23,7 +23,7 @@ export default function LocationsIndexContent({ title, description, buildHref, i
         {description}
       </Typography>
 
-      <Grid container spacing={2.5} sx={{ mb: relatedLinks?.length ? 6 : 0 }}>
+      <Grid container spacing={1.5} sx={{ mb: relatedLinks?.length ? 6 : 0 }}>
         {items.map((item) => (
           <Grid item xs={12} sm={6} key={item.slug}>
             <Box

@@ -55,7 +55,7 @@ export default function CorporateIndexPage() {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <Container maxWidth="lg">
+        <Container maxWidth="md">
           <Chip label="Corporate" size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
           <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 42 }, mb: 2 }}>
             Everything about the company

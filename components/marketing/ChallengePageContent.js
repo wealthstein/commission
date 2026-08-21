@@ -5,7 +5,7 @@ import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function ChallengePageContent({ item }) {
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Typography variant="overline" sx={{ color: tokens.muted, letterSpacing: 1.2 }}>
         PROSPECT CHALLENGE
       </Typography>

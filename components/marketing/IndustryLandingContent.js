@@ -11,7 +11,7 @@ export default function IndustryLandingContent({ industryPage }) {
   const ppql = industryPage.ppqlNaira || DEFAULT_PPQL_NAIRA;
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Chip label={industryPage.industryName} size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
 
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
@@ -65,7 +65,7 @@ export default function IndustryLandingContent({ industryPage }) {
       <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
         Why {industryPage.industryName} businesses use Commission
       </Typography>
-      <Grid container spacing={2.5} sx={{ mb: 5 }}>
+      <Grid container spacing={1.5} sx={{ mb: 5 }}>
         {industryPage.whyCommission.map((item) => (
           <Grid item xs={12} sm={6} key={item.title}>
             <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, height: "100%" }}>

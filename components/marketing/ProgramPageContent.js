@@ -21,7 +21,7 @@ export default function ProgramPageContent({ target, industry, liveProducts }) {
       {/* eslint-disable-next-line react/no-danger */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Box sx={{ maxWidth: 560, mx: "auto", textAlign: "center" }}>
         {industry && (
           <Typography variant="body2" sx={{ mb: 3 }}>

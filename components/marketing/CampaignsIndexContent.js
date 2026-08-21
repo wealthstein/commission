@@ -5,7 +5,7 @@ import { tokens } from "@/lib/theme";
 
 export default function CampaignsIndexContent({ title, description, buildHref, items, relatedLinks }) {
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
         {title}
       </Typography>

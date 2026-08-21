@@ -8,7 +8,7 @@ import { tokens } from "@/lib/theme";
 export default function LegalPageContent({ eyebrow, title, intro, lastUpdated, sections }) {
   return (
     <Box sx={{ py: { xs: 8, md: 12 } }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Box sx={{ maxWidth: 720, mx: "auto" }}>
           <Chip label={eyebrow} size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
           <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 1.5 }}>

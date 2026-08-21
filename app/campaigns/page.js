@@ -18,7 +18,7 @@ export default function CampaignsIndexPage() {
         <CampaignsIndexContent title="Campaign Types" description="See how different types of campaigns run on Commission, from health insurance to account opening." buildHref={urls.campaign} items={campaignTypes} relatedLinks={[{ label: "Browse industries", href: urls.industriesIndex() }, { label: "Intent Qualified Leads explained", href: urls.conversion("qualified-leads") }]} />
       </Box>
       <Box sx={{ py: { xs: 6, md: 9 }, bgcolor: altSectionBg }}>
-        <Container maxWidth="lg">
+        <Container maxWidth="md">
           <Typography variant="h4" sx={{ fontSize: { xs: 22, md: 28 }, mb: 3 }}>
             See what a campaign like this could cost
           </Typography>
@@ -26,7 +26,7 @@ export default function CampaignsIndexPage() {
         </Container>
       </Box>
       <Box sx={{ py: { xs: 6, md: 9 }, ...dotPatternSx }}>
-        <Container maxWidth="lg">
+        <Container maxWidth="md">
           <Box sx={{ maxWidth: 480, mx: "auto" }}>
             <SignUpButton role="business" sourcePage="/campaigns" />
           </Box>

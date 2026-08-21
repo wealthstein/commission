@@ -5,7 +5,7 @@ import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function CampaignPageContent({ item }) {
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
         {item.headline}
       </Typography>

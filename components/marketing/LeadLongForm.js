@@ -162,7 +162,7 @@ export default function LeadLongForm({ leadRef, businessName, logoUrl, customFie
             )
           )}
 
-          <Button type="submit" variant="contained" size="large" disabled={state.loading} sx={{ py: 1.5, mt: 0.5, borderRadius: "12px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 }}>
+          <Button type="submit" variant="contained" size="large" disabled={state.loading} sx={{ py: 1.5, mt: 0.5, borderRadius: "8px", textTransform: "uppercase", fontSize: 13, letterSpacing: 0.5 }}>
             {state.loading ? "Submitting…" : "Submit"}
           </Button>
         </Stack>

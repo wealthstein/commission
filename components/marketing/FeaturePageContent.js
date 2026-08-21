@@ -7,7 +7,7 @@ import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function FeaturePageContent({ item }) {
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Box sx={{ width: 56, height: 56, borderRadius: "16px", bgcolor: tokens.brand, display: "grid", placeItems: "center", mb: 3 }}>
         <BoltRoundedIcon sx={{ color: tokens.brandInk }} />
       </Box>

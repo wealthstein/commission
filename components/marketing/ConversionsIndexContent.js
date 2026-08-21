@@ -6,7 +6,7 @@ const LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
 export default function ConversionsIndexContent({ title, description, buildHref, items, relatedLinks }) {
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Box sx={{ maxWidth: 680, mx: "auto" }}>
         <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
           {title}

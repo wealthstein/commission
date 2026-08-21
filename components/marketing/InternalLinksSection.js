@@ -26,7 +26,7 @@ export default async function InternalLinksSection() {
         bgcolor: tokens.canvas,
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Grid container spacing={3}>
           {columns.map((column) => (
             <Grid item xs={6} sm={4} md={2} key={column.title}>

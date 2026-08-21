@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Container, Typography, Paper, Chip } from "@mui/material";
+import { Box, Container, Typography, Paper } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import SectionLabel from "./SectionLabel";
 
 function FaqRow({ item, isOpen, onToggle, isFirst }) {
   return (
@@ -15,7 +16,8 @@ function FaqRow({ item, isOpen, onToggle, isFirst }) {
           display: "block",
           width: "100%",
           cursor: "pointer",
-          py: 3,
+          pt: 3,
+          pb: isOpen ? 1 : 3,
           "&:focus-visible": { outline: `2px solid ${tokens.ink}`, outlineOffset: 2 },
         }}
       >
@@ -32,15 +34,17 @@ function FaqRow({ item, isOpen, onToggle, isFirst }) {
   );
 }
 
-export default function FAQ({ items, eyebrow = "FAQ", title = "Frequently asked questions", subtitle }) {
+export default function FAQ({ items, eyebrow = "FAQ", title = "Frequently asked questions", subtitle, bgcolor = tokens.canvas }) {
   const [openIndex, setOpenIndex] = useState(0);
 
   return (
-    <Box component="section" id="faq" sx={{ py: { xs: 6, md: 9 } }}>
-      <Container maxWidth="lg">
+    <Box component="section" id="faq" sx={{ py: { xs: 6, md: 9 }, bgcolor }}>
+      <Container maxWidth="md">
         <Box sx={{ mx: "auto" }}>
           <Box sx={{ textAlign: "center", mb: 5 }}>
-            <Chip label={eyebrow} size="small" sx={{ bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700, mb: 2.5 }} />
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <SectionLabel>{eyebrow}</SectionLabel>
+            </Box>
             <Typography variant="h3" sx={{ fontSize: { xs: 26, md: 34 }, mb: subtitle ? 1.5 : 0, mx: "auto" }}>
               {title}
             </Typography>
@@ -51,7 +55,7 @@ export default function FAQ({ items, eyebrow = "FAQ", title = "Frequently asked 
             )}
           </Box>
 
-          <Paper variant="outlined" sx={{ borderColor: tokens.border, borderRadius: 1, px: { xs: 3, md: 5 } }}>
+          <Paper variant="outlined" sx={{ bgcolor, borderColor: tokens.border, borderRadius: 1, px: { xs: 3, md: 5 } }}>
             {items.map((item, i) => (
               <FaqRow
                 key={item.q}

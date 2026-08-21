@@ -16,7 +16,7 @@ import { tokens } from "@/lib/theme";
 export default function ProblemSolutionSection({ items, eyebrow = "The reality" }) {
   return (
     <Box component="section" sx={{ py: { xs: 6, md: 9 } }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Box sx={{ textAlign: "center", mb: 6 }}>
           <Typography
             variant="caption"

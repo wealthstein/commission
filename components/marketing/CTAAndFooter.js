@@ -38,33 +38,31 @@ export function CTASection({ content, onPrimaryCta }) {
 export function Footer() {
   return (
     <Box component="footer" sx={{ bgcolor: tokens.canvas, py: 6 }}>
-      <Container maxWidth="lg" sx={{ textAlign: "center" }}>
+      <Container maxWidth="md" sx={{ textAlign: "center" }}>
         <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 4 }}>
           <CardMedia sx={{ width: 22, height: 22, borderRadius: "6px" }} image="/circle.svg" alt="Commission" />
         </Stack>
 
         <Box
           sx={{
-            bgcolor: tokens.ink,
-            color: "#fff",
-            borderRadius: 4,
+            bgcolor: tokens.brand,
+            borderRadius: 2,
             p: { xs: 3, md: 4 },
             mb: 4,
             maxWidth: 560,
             mx: "auto",
           }}
         >
-          <Typography fontWeight={700} sx={{ mb: 0.5, fontSize: 15 }}>
-            Ready to get started?
-          </Typography>
-          <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)", mb: 2.5, fontSize: 13 }}>
-            Request early access as a business or an affiliate.
-          </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} justifyContent="center">
-            <Button variant="contained" href="/?for=business" size="small" sx={{ bgcolor: tokens.brand, color: tokens.brandInk, "&:hover": { bgcolor: "#E6B800" } }}>
+            <Button
+              variant="contained"
+              href="/?for=business"
+              size="small"
+              sx={{ bgcolor: tokens.ink, color: "#fff", "&:hover": { bgcolor: "#000" } }}
+            >
               For businesses
             </Button>
-            <Button variant="outlined" href="/?for=affiliate" size="small" sx={{ borderColor: "rgba(255,255,255,0.4)", color: "#fff" }}>
+            <Button variant="outlined" href="/?for=affiliate" size="small" sx={{ borderColor: tokens.brandInk, color: tokens.brandInk }}>
               For affiliates
             </Button>
           </Stack>

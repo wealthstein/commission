@@ -1,21 +1,18 @@
 "use client";
 
-import { Box, Container, Typography, Button, Stack, Chip } from "@mui/material";
+import { Box, Container, Typography, Button, Stack } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { tokens } from "@/lib/theme";
+import SectionLabel from "./SectionLabel";
 import HeroCalculatorTeaser from "./HeroCalculatorTeaser";
 
 export default function Hero({ content, audience, onPrimaryCta }) {
   return (
-    <Box component="section" sx={{ py: { xs: 8, md: 12 } }}>
-      <Container maxWidth="lg">
+    <Box component="section" sx={{ py: { xs: 8, md: 12 }, bgcolor: tokens.paper }}>
+      <Container maxWidth="md">
         <Stack direction={{ xs: "column", md: "row" }} spacing={6} alignItems="center">
           <Box sx={{ flex: 1 }}>
-            <Chip
-              label={content.eyebrow}
-              size="small"
-              sx={{ bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700, mb: 3 }}
-            />
+            <SectionLabel>{content.eyebrow}</SectionLabel>
             <Typography variant="h1" sx={{ fontSize: { xs: 34, md: 52 }, lineHeight: 1.08, mb: 3 }}>
               {content.headline}
             </Typography>
@@ -28,10 +25,16 @@ export default function Hero({ content, audience, onPrimaryCta }) {
                 size="large"
                 endIcon={<ArrowForwardIcon />}
                 onClick={onPrimaryCta}
+                sx={{ textTransform: "uppercase", fontWeight: 700, fontSize: 13, letterSpacing: 0.5 }}
               >
                 {content.primaryCta}
               </Button>
-              <Button variant="outlined" size="large" href="#how-it-works">
+              <Button
+                variant="outlined"
+                size="large"
+                href="#how-it-works"
+                sx={{ textTransform: "uppercase", fontWeight: 700, fontSize: 13, letterSpacing: 0.5 }}
+              >
                 {content.secondaryCta}
               </Button>
             </Stack>

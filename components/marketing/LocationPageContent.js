@@ -6,7 +6,7 @@ import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function LocationPageContent({ item }) {
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Chip
         icon={<LocationOnRoundedIcon sx={{ fontSize: 16 }} />}
         label="Nigeria"
