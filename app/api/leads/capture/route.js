@@ -90,8 +90,7 @@ export async function POST(req) {
     clickId = click?.id ?? null;
   }
 
-  // TEMPORARILY DISABLED via env var, same pattern as
-  // DISABLE_PHONE_VERIFICATION_GATE - Termii's account needs country/DND
+  // TEMPORARILY DISABLED via env var - Termii's account needs country/DND
   // activation before any OTP can actually send. This treats every lead as
   // if it came from a Trusted affiliate, skipping OTP entirely, so the
   // rest of the flow (Intent Form, custom fields, qualification, business

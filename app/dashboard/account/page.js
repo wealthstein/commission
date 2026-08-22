@@ -301,15 +301,6 @@ export default function AccountPage() {
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState(null);
   const [saveState, setSaveState] = useState({ loading: false, error: null, success: false });
-  const [phoneVerified, setPhoneVerified] = useState(true);
-  // Same temporary bypass as middleware.js, but that one is server-only -
-  // needs the NEXT_PUBLIC_ prefix to be readable here on the client at
-  // all. Keeps the Account page from showing a "verify to unlock the rest
-  // of your dashboard" warning when the rest is already unlocked.
-  const phoneGateDisabled = process.env.NEXT_PUBLIC_DISABLE_PHONE_VERIFICATION_GATE === "true";
-  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
-  const [phoneOtpCode, setPhoneOtpCode] = useState("");
-  const [phoneState, setPhoneState] = useState({ loading: false, error: null });
 
   useEffect(() => {
     const supabase = createClient();
@@ -318,12 +309,11 @@ export default function AccountPage() {
       if (!authUser) return;
       const { data: uRow } = await supabase
         .from("users")
-        .select("id, phone, full_name, phone_verified")
+        .select("id, phone, full_name")
         .eq("auth_user_id", authUser.id)
         .single();
       if (!uRow) return;
       setUserRow(uRow);
-      setPhoneVerified(!!uRow.phone_verified);
 
       const { data: biz } = await supabase
         .from("businesses")
@@ -376,7 +366,7 @@ export default function AccountPage() {
       if (userRow) {
         const { error: userError } = await supabase
           .from("users")
-          .update({ full_name: form.fullName })
+          .update({ full_name: form.fullName, phone: form.phone })
           .eq("id", userRow.id);
         if (userError) throw userError;
       }
@@ -414,41 +404,6 @@ export default function AccountPage() {
     }
   }
 
-  async function handleSendPhoneOtp() {
-    setPhoneState({ loading: true, error: null });
-    try {
-      const res = await fetch("/api/account/send-phone-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: form.phone }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send code");
-      setPhoneOtpSent(true);
-      setPhoneState({ loading: false, error: null });
-    } catch (err) {
-      setPhoneState({ loading: false, error: err.message });
-    }
-  }
-
-  async function handleVerifyPhoneOtp() {
-    setPhoneState({ loading: true, error: null });
-    try {
-      const res = await fetch("/api/account/verify-phone-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin: phoneOtpCode }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to verify code");
-      setPhoneVerified(true);
-      setPhoneOtpSent(false);
-      setPhoneState({ loading: false, error: null });
-    } catch (err) {
-      setPhoneState({ loading: false, error: err.message });
-    }
-  }
-
   return (
     <>
       <PageHeader title="Account" subtitle="Profile, business information, payment details, and settings." />
@@ -462,11 +417,6 @@ export default function AccountPage() {
       {tab === 0 && (
         <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, borderColor: tokens.border }}>
           <Box sx={{ maxWidth: INNER_WIDTH, mx: "auto" }}>
-            {!phoneVerified && !phoneGateDisabled && (
-              <Alert severity="warning" sx={{ mb: 3 }}>
-                Verify your phone number below to unlock the rest of your dashboard.
-              </Alert>
-            )}
             <Stack alignItems="center" spacing={1} sx={{ mb: 3 }}>
               <Avatar src={user?.user_metadata?.avatar_url} sx={{ width: 72, height: 72, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700, fontSize: 28 }}>
                 {(form.fullName || user?.email || "?").charAt(0).toUpperCase()}
@@ -489,61 +439,16 @@ export default function AccountPage() {
                 {...centeredHelperProps}
               />
 
-              {phoneVerified || phoneGateDisabled ? (
-                <TextField
-                  placeholder="Phone number - 08012345888"
-                  fullWidth
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) }))}
-                  disabled={phoneVerified && !phoneGateDisabled}
-                  helperText={phoneVerified ? "Verified" : undefined}
-                  sx={centeredFieldSx}
-                  {...centeredHelperProps}
-                />
-              ) : (
-                <>
-                  {phoneState.error && <Alert severity="error">{phoneState.error}</Alert>}
-                  <TextField
-                    placeholder="Phone number - 08012345678"
-                    fullWidth
-                    disabled={phoneOtpSent}
-                    value={form.phone}
-                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) }))}
-                    helperText={form.phone && form.phone.length !== 11 ? `${form.phone.length}/11 digits` : "11 digits, no +234 needed"}
-                    error={form.phone.length > 0 && form.phone.length !== 11}
-                    sx={centeredFieldSx}
-                    {...centeredHelperProps}
-                  />
-                  {!phoneOtpSent ? (
-                    <Button
-                      variant="contained"
-                      onClick={handleSendPhoneOtp}
-                      disabled={phoneState.loading || form.phone.length !== 11}
-                    >
-                      {phoneState.loading ? "Sending…" : "Send verification code"}
-                    </Button>
-                  ) : (
-                    <>
-                      <TextField
-                        placeholder="6-digit code"
-                        fullWidth
-                        inputMode="numeric"
-                        value={phoneOtpCode}
-                        onChange={(e) => setPhoneOtpCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
-                        sx={centeredFieldSx}
-                        {...centeredHelperProps}
-                      />
-                      <Button
-                        variant="contained"
-                        onClick={handleVerifyPhoneOtp}
-                        disabled={phoneState.loading || phoneOtpCode.length !== 6}
-                      >
-                        {phoneState.loading ? "Verifying…" : "Verify code"}
-                      </Button>
-                    </>
-                  )}
-                </>
-              )}
+              <TextField
+                placeholder="Phone number - 08012345678"
+                fullWidth
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) }))}
+                helperText={form.phone && form.phone.length !== 11 ? `${form.phone.length}/11 digits` : "11 digits, no +234 needed"}
+                error={form.phone.length > 0 && form.phone.length !== 11}
+                sx={centeredFieldSx}
+                {...centeredHelperProps}
+              />
             </Stack>
 
           </Box>

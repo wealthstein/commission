@@ -8,20 +8,21 @@ extra verification is needed before a prospect reaches the business.
 
 ---
 
-## ⚠️ Two features are currently disabled via environment variable
+## ⚠️ One feature is currently disabled via environment variable
 
-**`DISABLE_PHONE_VERIFICATION_GATE=true`** and **`DISABLE_RADAR_OTP=true`** are both set right now, and both need to
-be removed (or set to anything other than `"true"`) before this is genuinely production-ready:
+**`DISABLE_RADAR_OTP=true`** is set right now, and needs to be removed (or set to anything other than `"true"`)
+before this is genuinely production-ready. It skips Radar's inline OTP step on the Interest Form entirely — every
+lead is currently treated as coming from a Trusted affiliate.
 
-- `DISABLE_PHONE_VERIFICATION_GATE` skips the dashboard-wide requirement that every user verify their own phone
-  before using anything but the Account page.
-- `DISABLE_RADAR_OTP` skips Radar's inline OTP step on the Interest Form entirely — every lead is currently treated
-  as coming from a Trusted affiliate.
+This exists because the SMS provider account(s) needed to actually send OTPs are still pending activation (see
+**SMS/OTP providers** below). Nothing about the feature was removed — the UI, the API routes, the database columns
+are all fully built — this flag just skips the part that depends on a working SMS send. Search
+`app/api/leads/capture/route.js` for exactly where it's checked.
 
-Both exist because the SMS provider account(s) needed to actually send OTPs are still pending activation (see
-**SMS/OTP providers** below). Nothing about either feature was removed — the UI, the API routes, the database
-columns are all fully built — these two flags just skip the parts that depend on a working SMS send. Search
-`middleware.js` and `app/api/leads/capture/route.js` for exactly where each one is checked.
+Account-level phone verification (a separate feature from Radar's own OTP) was **removed from the app entirely**,
+not disabled — see `supabase/migration_remove_phone_verification.sql`. The phone field itself is untouched and
+still used by the same-number fraud check below; only the verification step and its two supporting columns are
+gone.
 
 ---
 
@@ -43,8 +44,7 @@ columns are all fully built — these two flags just skip the parts that depend 
 |---|---|---|
 | Trust score | `lib/trustScore.js` | Platform-wide, all-time qualified-leads ÷ total-captured-leads per affiliate. Recalculated fresh on every check, never cached — there is no separate decay job, recalculating from raw totals IS the decay mechanism |
 | Inline OTP (Interest Form) | `components/marketing/LeadShortForm.js`, `app/api/leads/capture/route.js`, `app/api/leads/verify-otp/route.js` | Trusted affiliates skip straight through; unproven affiliates see a 6-digit field on the same page, no redirect |
-| Phone verification (users) | `app/dashboard/account/page.js`, `app/api/account/send-phone-otp`, `app/api/account/verify-phone-otp`, `middleware.js` | Every business/affiliate account must verify its own phone before using the rest of the dashboard — this is what makes the same-number fraud check below possible |
-| Same-number fraud check | `app/api/leads/capture/route.js`, `app/api/leads/external-capture/route.js` | A submitted customer phone can't match the referring affiliate's own verified phone. Doesn't catch a second SIM or a cooperating friend's number, but stops the laziest self-dealing case — and Nigeria's 5-SIM-per-NIN cap keeps the harder version genuinely inconvenient to scale |
+| Same-number fraud check | `app/api/leads/capture/route.js`, `app/api/leads/external-capture/route.js` | A submitted customer phone can't match the referring affiliate's own phone on file. Doesn't catch a second SIM or a cooperating friend's number, but stops the laziest self-dealing case — and Nigeria's 5-SIM-per-NIN cap keeps the harder version genuinely inconvenient to scale |
 
 ### Custom integration (Medium/Large plans)
 
@@ -199,7 +199,7 @@ domain, and configure the external cron jobs (see **Cron jobs** above) on cron-j
 
 - **`products` → `campaigns` table/column rename.** The UI says "Campaign" everywhere now; the underlying table is
   still `products`. A real rename, touching many files — deferred as large and risky relative to its value.
-- **The two disabled-via-env-var features** at the top of this file — not deferred by choice, blocked on external
+- **The disabled-via-env-var feature** at the top of this file — not deferred by choice, blocked on external
   SMS provider activation.
 - **WhatsApp as an OTP delivery channel** — templates were submitted to Meta but ran into WABA verification-tier
   requirements for the Authentication category specifically; a Marketing-category fallback template was explored

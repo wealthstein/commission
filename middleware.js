@@ -38,36 +38,16 @@ export async function middleware(req) {
 
   const { data: userRow, error: userRowError } = await supabase
     .from("users")
-    .select("access_granted, phone_verified")
+    .select("access_granted")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
   if (userRowError) {
-    // Making this loud on purpose - a silently-swallowed query error here
-    // is exactly what made the missing phone_verified column confusing to
-    // diagnose. Falls through to the same access_granted check below,
-    // which already handles a null userRow safely.
     console.error("middleware: failed to fetch user row", userRowError.message);
   }
 
   if (!userRow?.access_granted) {
     return NextResponse.redirect(new URL("/welcome", req.url));
-  }
-
-  // Phone verification gate - same shape as access_granted above. The
-  // Account page itself is exempt, otherwise there would be no way to
-  // ever reach the page that lets someone actually verify.
-  //
-  // TEMPORARILY DISABLED via env var - Termii's account needs country/DND
-  // activation from their support team before OTPs can send at all
-  // ("Country Inactive" error). Nothing about the feature itself changed -
-  // the UI, the OTP routes, the schema are all still there. Remove
-  // DISABLE_PHONE_VERIFICATION_GATE from the environment (or set it to
-  // anything other than "true") to turn this back on once Termii confirms
-  // activation.
-  const gateDisabled = process.env.DISABLE_PHONE_VERIFICATION_GATE === "true";
-  if (!gateDisabled && !userRow?.phone_verified && req.nextUrl.pathname !== "/dashboard/account") {
-    return NextResponse.redirect(new URL("/dashboard/account", req.url));
   }
 
   return response;
