@@ -1,0 +1,11 @@
+{
+  "remoteName": "origin",
+  "projects": [
+    {
+      "id": "prj_LkazhqUQHJqvxptKNZxLo2Lv0gkU",
+      "name": "commission",
+      "directory": ".",
+      "orgId": "team_PdnMuwcybcvlI7YqcjC1bU4P"
+    }
+  ]
+}
