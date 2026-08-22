@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AppBar, Toolbar, Box, CardMedia, Typography, Button, ToggleButtonGroup, ToggleButton, Stack } from "@mui/material";
+import { AppBar, Toolbar, Container, Box, CardMedia, Typography, Button, ToggleButtonGroup, ToggleButton, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
 const NAV_LINKS = [
@@ -27,7 +27,8 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
 
   return (
     <AppBar position="sticky" elevation={0} sx={{ bgcolor: tokens.paper }}>
-      <Toolbar sx={{ maxWidth: 1060, mx: "auto", width: "100%", py: 2, px: { xs: 3, sm: 5, md: 8, lg: 10 }, gap: 3 }}>
+      <Toolbar disableGutters sx={{ width: "100%" }}>
+        <Container maxWidth="md" sx={{ display: "flex", alignItems: "center", width: "100%", py: 2, gap: 3 }}>
         <Stack component={Link} href="/" direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0, textDecoration: "none" }}>
           <Box style={{ display: "flex", justifyContent: "center" }}>
             <CardMedia
@@ -105,6 +106,7 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
         >
           Get started
         </Button>
+        </Container>
       </Toolbar>
     </AppBar>
   );

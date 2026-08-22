@@ -36,8 +36,9 @@ import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
-import { categoriesForType } from "@/lib/categories";
+import { categoriesForType, slugFromCategoryLabel } from "@/lib/categories";
 import { TIER_RATIOS } from "@/lib/commissionEngine";
+import { suggestedAttributionDays, ATTRIBUTION_DAYS_CEILING_BY_PLAN } from "@/lib/attributionDefaults";
 
 // Custom Questions cap, plan-based. Small: 1, Medium: 3, Large: 5.
 const CUSTOM_FIELD_CAP = { free: 1, pro: 3, plus: 5 };
@@ -71,6 +72,7 @@ const DEFAULTS = {
   // pool 50/30/20 (see TIER_RATIOS in lib/commissionEngine.js), fixed
   // platform-wide and not something a business can change.
   total_commission_percent: 10,
+  attribution_days: 30,
 };
 
 // Realistic worked examples for the "View sample campaign" preview -
@@ -235,6 +237,7 @@ export default function NewCampaignPage() {
   const [status, setStatus] = useState({ loading: false, error: null, success: false });
   const [customFields, setCustomFields] = useState([]);
   const [plan, setPlan] = useState(null);
+  const [attributionTouched, setAttributionTouched] = useState(false);
   const [showSample, setShowSample] = useState(false);
   const [profileCheck, setProfileCheck] = useState({ loading: true, complete: true });
 
@@ -253,6 +256,19 @@ export default function NewCampaignPage() {
   }, []);
 
   const fieldCap = CUSTOM_FIELD_CAP[plan] ?? CUSTOM_FIELD_CAP.free;
+
+  // Suggests a sensible attribution window the moment both category and
+  // plan are known, and re-suggests if category changes - but only while
+  // the business hasn't manually touched the field themselves. This is a
+  // starting point, never the enforced value - the real ceiling is
+  // applied server-side regardless (see
+  // supabase/migration_attribution_window_ceiling.sql).
+  useEffect(() => {
+    if (attributionTouched || !plan || !form.category) return;
+    const categorySlug = slugFromCategoryLabel(form.category);
+    setForm((f) => ({ ...f, attribution_days: suggestedAttributionDays(categorySlug, plan) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.category, plan, attributionTouched]);
 
   function addCustomField() {
     if (customFields.length >= fieldCap) return;
@@ -408,6 +424,7 @@ export default function NewCampaignPage() {
           tier1_percent: tier1Percent,
           tier2_percent: tier2Percent,
           tier3_percent: tier3Percent,
+          attribution_days: Number(form.attribution_days) || 30,
           status: "active",
         })
         .select()
@@ -616,6 +633,26 @@ export default function NewCampaignPage() {
                   </MenuItem>
                 ))}
               </TextField>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FieldLabel
+                text="Attribution window (days)"
+                tooltip="How long after a customer clicks an affiliate's link they can still convert and have it count. Suggested automatically based on your category and plan, but you can adjust it."
+              />
+              <TextField
+                type="number"
+                fullWidth
+                required
+                value={form.attribution_days}
+                onChange={(e) => {
+                  setAttributionTouched(true);
+                  const ceiling = ATTRIBUTION_DAYS_CEILING_BY_PLAN[plan] ?? ATTRIBUTION_DAYS_CEILING_BY_PLAN.free;
+                  const raw = Number(e.target.value) || 0;
+                  update("attribution_days", Math.max(1, Math.min(raw, ceiling)));
+                }}
+                inputProps={{ min: 1, max: ATTRIBUTION_DAYS_CEILING_BY_PLAN[plan] ?? ATTRIBUTION_DAYS_CEILING_BY_PLAN.free }}
+                helperText={`Your plan allows up to ${ATTRIBUTION_DAYS_CEILING_BY_PLAN[plan] ?? ATTRIBUTION_DAYS_CEILING_BY_PLAN.free} days`}
+              />
             </Grid>
             <Grid item xs={12}>
               <FieldLabel

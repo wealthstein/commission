@@ -37,36 +37,11 @@ export function CTASection({ content, onPrimaryCta }) {
 
 export function Footer() {
   return (
-    <Box component="footer" sx={{ bgcolor: tokens.canvas, py: 6 }}>
+    <Box component="footer" sx={{ bgcolor: tokens.canvas, pb: 6 }}>
       <Container maxWidth="md" sx={{ textAlign: "center" }}>
-        <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 4 }}>
+        <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 3 }}>
           <CardMedia sx={{ width: 22, height: 22, borderRadius: "6px" }} image="/circle.svg" alt="Commission" />
         </Stack>
-
-        <Box
-          sx={{
-            bgcolor: tokens.brand,
-            borderRadius: 2,
-            p: { xs: 3, md: 4 },
-            mb: 4,
-            maxWidth: 560,
-            mx: "auto",
-          }}
-        >
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} justifyContent="center">
-            <Button
-              variant="contained"
-              href="/?for=business"
-              size="small"
-              sx={{ bgcolor: tokens.ink, color: "#fff", "&:hover": { bgcolor: "#000" } }}
-            >
-              For businesses
-            </Button>
-            <Button variant="outlined" href="/?for=affiliate" size="small" sx={{ borderColor: tokens.brandInk, color: tokens.brandInk }}>
-              For affiliates
-            </Button>
-          </Stack>
-        </Box>
 
         <Breadcrumbs
           separator="•"
