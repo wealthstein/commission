@@ -1,5 +1,6 @@
 import { Box, Container, Typography, Grid } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import { splitPool, recurringTotals } from "@/lib/earningsMath";
 import MarketingPageShell from "@/components/marketing/MarketingPageShell";
 import InternalLinksSection from "@/components/marketing/InternalLinksSection";
@@ -42,7 +43,7 @@ export default function CalculatorPage({ searchParams }) {
       <Box sx={{ py: { xs: 6, md: 9 } }}>
         <Container maxWidth="md">
           <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 42 }, mb: 2 }}>
-            {audience === "business" ? "See what you could save" : "See exactly how you get paid"}
+            {withPeriod(audience === "business" ? "See what you could save" : "See exactly how you get paid")}
           </Typography>
           <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 6, maxWidth: 640 }}>
             {audience === "business"

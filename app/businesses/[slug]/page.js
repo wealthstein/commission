@@ -6,6 +6,7 @@ import LaptopMacRoundedIcon from "@mui/icons-material/LaptopMacRounded";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { buildBusinessMetadata } from "@/lib/seo";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 
 export const revalidate = 3600;
 
@@ -43,7 +44,7 @@ export default async function BusinessPage({ params }) {
       <Container maxWidth="md">
         {business.industry && <Chip label={business.industry} size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />}
         <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 2 }}>
-          {business.name} Affiliate Programs
+          {withPeriod(`${business.name} Affiliate Programs`)}
         </Typography>
         {business.description && (
           <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5, maxWidth: 640 }}>

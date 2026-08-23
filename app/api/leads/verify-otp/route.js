@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { verifyOtp } from "@/lib/sms";
 import { createLeadAndGetIntentFormUrl } from "@/lib/leadCreation";
+import { hashIdentifier, computeTimingFlags, computeCrossCampaignFlags } from "@/lib/riskSignals";
 
 /**
  * POST /api/leads/verify-otp
@@ -71,6 +72,32 @@ export async function POST(req) {
       clickId: otpRow.click_id,
       program,
     });
+
+    try {
+      const phoneHash = hashIdentifier(otpRow.phone);
+      const ipHash = hashIdentifier(otpRow.submitter_ip);
+      const timingFlags = computeTimingFlags({
+        pageLoadedAt: otpRow.page_loaded_at,
+        firstInteractionAt: otpRow.first_interaction_at,
+      });
+      const crossCampaignFlags = await computeCrossCampaignFlags(supabase, {
+        phoneHash,
+        ipHash,
+        excludeProgramId: otpRow.program_id,
+      });
+      const riskFlags = [...timingFlags, ...crossCampaignFlags];
+
+      await supabase.from("leads").update({ risk_flags: riskFlags }).eq("id", result.leadId);
+      await supabase.from("lead_risk_signals").insert({
+        lead_id: result.leadId,
+        phone_hash: phoneHash,
+        ip_hash: ipHash,
+        page_loaded_at: otpRow.page_loaded_at,
+        first_interaction_at: otpRow.first_interaction_at,
+      });
+    } catch (riskErr) {
+      console.error("Risk signal computation failed (lead still created successfully):", riskErr.message);
+    }
 
     // Delete immediately on success - this row's only job was to bridge
     // the gap between OTP send and verify, and it held real PII that has

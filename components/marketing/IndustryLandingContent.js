@@ -3,6 +3,7 @@ import { Container, Typography, Grid, Paper, Stack, Chip, Box } from "@mui/mater
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import HandshakeRoundedIcon from "@mui/icons-material/HandshakeRounded";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import { urls } from "@/lib/urls";
 import SignUpButton from "@/components/marketing/SignUpButton";
 import { DEFAULT_PPQL_NAIRA } from "@/lib/industryPages";
@@ -15,7 +16,7 @@ export default function IndustryLandingContent({ industryPage }) {
       <Chip label={industryPage.industryName} size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
 
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
-        {industryPage.headline}
+        {withPeriod(industryPage.headline)}
       </Typography>
 
       <Typography variant="body2" sx={{ color: tokens.muted, mb: 4, maxWidth: 640 }}>

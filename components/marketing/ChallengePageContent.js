@@ -1,6 +1,7 @@
 import { Container, Typography, Stack, Box } from "@mui/material";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
+import { withPeriod } from "@/lib/textFormat";
 import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function ChallengePageContent({ item }) {
@@ -10,7 +11,7 @@ export default function ChallengePageContent({ item }) {
         PROSPECT CHALLENGE
       </Typography>
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mt: 1, mb: 2 }}>
-        {item.headline}
+        {withPeriod(item.headline)}
       </Typography>
       <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5 }}>
         {item.intro}

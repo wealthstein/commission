@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Box, Container, Typography, Chip, Stack, Avatar } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import { urls } from "@/lib/urls";
 import { buildSeoTargetFaqJsonLd } from "@/lib/seo";
 import SignUpButton from "@/components/marketing/SignUpButton";
@@ -44,7 +45,7 @@ export default function ProgramPageContent({ target, industry, liveProducts }) {
         <Chip label="For affiliates" size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
 
         <Typography variant="h1" sx={{ fontSize: { xs: 26, md: 34 }, mb: 2 }}>
-          Does {target.displayName} have a program you can promote?
+          {withPeriod(`Does ${target.displayName} have a program you can promote?`)}
         </Typography>
 
         <Typography variant="body1" sx={{ color: tokens.muted, mb: 5, maxWidth: 480, mx: "auto" }}>

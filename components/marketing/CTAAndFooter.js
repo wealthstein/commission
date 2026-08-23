@@ -39,9 +39,13 @@ export function Footer() {
   return (
     <Box component="footer" sx={{ bgcolor: tokens.canvas, pb: 6 }}>
       <Container maxWidth="md" sx={{ textAlign: "center" }}>
-        <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 3 }}>
+        <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 2 }}>
           <CardMedia sx={{ width: 22, height: 22, borderRadius: "6px" }} image="/circle.svg" alt="Commission" />
         </Stack>
+
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 1.5 }}>
+          Performance-based customer acquisition for Nigerian businesses.
+        </Typography>
 
         <Breadcrumbs
           separator="•"

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Box, Container, Typography, Grid, Paper, Chip } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import { urls } from "@/lib/urls";
 import MarketingPageShell from "@/components/marketing/MarketingPageShell";
 import InternalLinksSection from "@/components/marketing/InternalLinksSection";
@@ -58,7 +59,7 @@ export default function CorporateIndexPage() {
         <Container maxWidth="md">
           <Chip label="Corporate" size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
           <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 42 }, mb: 2 }}>
-            Everything about the company
+            {withPeriod("Everything about the company")}
           </Typography>
           <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 6, maxWidth: 600 }}>
             About Commission, how to reach us, and the policies that govern using the platform.

@@ -7,6 +7,7 @@ import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { categoryLabelFromSlug, CATEGORIES } from "@/lib/categories";
 import { buildCategoryMetadata } from "@/lib/seo";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 
 export const revalidate = 3600;
 
@@ -49,7 +50,7 @@ export default async function CategoryPage({ params, searchParams }) {
     <Box sx={{ py: { xs: 6, md: 9 } }}>
       <Container maxWidth="md">
         <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 38 }, mb: 1.5 }}>
-          {categoryLabel} affiliate programs in Nigeria
+          {withPeriod(`${categoryLabel} affiliate programs in Nigeria`)}
         </Typography>
         <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5, maxWidth: 640 }}>
           {count || 0} active {categoryLabel} affiliate program{count === 1 ? "" : "s"} recruiting affiliates on Commission.

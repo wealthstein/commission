@@ -9,6 +9,7 @@ import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded";
 import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
 import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 
 const ICONS = {
   "lead-tracking": TrackChangesRoundedIcon,
@@ -68,7 +69,7 @@ export default function FeaturesIndexContent({ title, description, items, relate
   return (
     <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
-        {title}
+        {withPeriod(title)}
       </Typography>
       <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5, maxWidth: 640 }}>
         {description}

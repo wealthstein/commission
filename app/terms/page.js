@@ -1,5 +1,6 @@
 import { Box, Container, Typography, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 
 export const metadata = {
   title: "Terms of Service | Commission",
@@ -11,7 +12,7 @@ export default function TermsPage() {
     <Box sx={{ py: { xs: 8, md: 12 } }}>
       <Container maxWidth="sm">
         <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 38 }, mb: 3 }}>
-          Terms of Service
+          {withPeriod("Terms of Service")}
         </Typography>
         <Stack spacing={2.5}>
           <Typography variant="body2" sx={{ color: tokens.muted }}>

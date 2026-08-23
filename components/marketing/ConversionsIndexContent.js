@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Container, Typography, Stack, Box } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
@@ -9,7 +10,7 @@ export default function ConversionsIndexContent({ title, description, buildHref,
     <Container maxWidth="md">
       <Box sx={{ maxWidth: 680, mx: "auto" }}>
         <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
-          {title}
+          {withPeriod(title)}
         </Typography>
         <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5 }}>
           {description}

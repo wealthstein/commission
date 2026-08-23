@@ -3,6 +3,9 @@ import { Container, Typography, Grid, Box, Stack, Chip, Button } from "@mui/mate
 import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
 import TimelineRoundedIcon from "@mui/icons-material/TimelineRounded";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
+import SpeedRoundedIcon from "@mui/icons-material/SpeedRounded";
+import HubRoundedIcon from "@mui/icons-material/HubRounded";
+import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
 import SignUpButton from "@/components/marketing/SignUpButton";
@@ -43,6 +46,24 @@ const CONCEPT_CARDS = [
   },
 ];
 
+const SIGNAL_LAYER_CARDS = [
+  {
+    icon: SpeedRoundedIcon,
+    title: "Timing patterns",
+    body: "How quickly a form gets filled in, and how long someone actually spends on the page before submitting - a real person reading and considering leaves a different pattern than a fabricated submission.",
+  },
+  {
+    icon: HubRoundedIcon,
+    title: "Cross-campaign detection",
+    body: "The same phone number or network showing up across multiple unrelated campaigns in a short window is a pattern only Commission can see platform-wide - no single business's own site ever could, even with full technical access.",
+  },
+  {
+    icon: VisibilityOffRoundedIcon,
+    title: "Runs on every single lead, no exceptions",
+    body: "Unlike the verification step above, this layer doesn't skip Trusted affiliates - it's silent, it's always on, and it never asks the customer to do anything at all.",
+  },
+];
+
 const INDUSTRIES = [
   { slug: "real-estate", name: "Real Estate" },
   { slug: "fintech", name: "Fintech" },
@@ -63,7 +84,7 @@ const FAQS = [
   },
   {
     q: "How does Radar actually verify a lead?",
-    a: "Radar runs a short verification step for leads from unproven affiliates, built directly into the Interest Form itself - no redirect, no separate app. We don't publish the exact mechanics of that step publicly, the same way most fraud and trust systems don't - but the outcome is what matters: fewer wrong numbers, fewer denials, fewer wasted follow-ups.",
+    a: "Two layers, working together. For leads from an unproven affiliate, a short verification step is built directly into the Interest Form itself - no redirect, no separate app. Underneath that, a separate signal layer runs on every single lead regardless of trust status, checking timing and cross-campaign patterns silently. We don't publish the exact mechanics of either layer publicly, the same way most fraud and trust systems don't - but the outcome is what matters: fewer wrong numbers, fewer denials, fewer wasted follow-ups.",
   },
   {
     q: "Does Radar replace my own follow-up process?",
@@ -87,8 +108,8 @@ export default function RadarPageContent() {
           </Typography>
           <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5, maxWidth: 620, mx: "auto" }}>
             Radar is Commission&apos;s trust layer, built directly into every campaign. It tracks each affiliate&apos;s
-            real track record and decides - automatically, lead by lead - whether extra verification is needed before
-            a prospect ever reaches your team.
+            real track record to decide when extra verification is needed, and runs a completely separate, invisible
+            layer of checks on every single lead - no exceptions, nothing the customer ever sees.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
             <SignUpButton sourcePage="/radar" />
@@ -161,6 +182,36 @@ export default function RadarPageContent() {
             {CONCEPT_CARDS.map((card) => (
               <Grid item xs={12} md={4} key={card.title}>
                 <Box sx={{ p: 3.5, borderRadius: 3, bgcolor: tokens.paper, height: "100%" }}>
+                  <Box sx={{ width: 44, height: 44, borderRadius: "12px", bgcolor: tokens.brand, display: "grid", placeItems: "center", mb: 2 }}>
+                    <card.icon sx={{ color: tokens.brandInk }} />
+                  </Box>
+                  <Typography fontWeight={700} sx={{ mb: 1, fontSize: 17 }}>
+                    {card.title}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: tokens.muted }}>
+                    {card.body}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Invisible signal layer - runs on every lead, no exceptions */}
+      <Box sx={{ py: { xs: 7, md: 10 } }}>
+        <Container maxWidth="md">
+          <Typography variant="h4" sx={{ fontSize: { xs: 24, md: 32 }, fontWeight: 700, textAlign: "center", mb: 1.5 }}>
+            A second layer, running silently underneath
+          </Typography>
+          <Typography sx={{ color: tokens.muted, textAlign: "center", mb: 6, maxWidth: 560, mx: "auto" }}>
+            The verification step above only applies to unproven affiliates. This layer is different - it runs on
+            every single lead, regardless of trust status, and the customer never sees any sign of it at all.
+          </Typography>
+          <Grid container spacing={3}>
+            {SIGNAL_LAYER_CARDS.map((card) => (
+              <Grid item xs={12} md={4} key={card.title}>
+                <Box sx={{ p: 3.5, borderRadius: 3, bgcolor: tokens.canvas, height: "100%" }}>
                   <Box sx={{ width: 44, height: 44, borderRadius: "12px", bgcolor: tokens.brand, display: "grid", placeItems: "center", mb: 2 }}>
                     <card.icon sx={{ color: tokens.brandInk }} />
                   </Box>

@@ -1,5 +1,6 @@
 import { Box, Container, Typography, Grid, Paper, Chip, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import MarketingPageShell from "@/components/marketing/MarketingPageShell";
 import InternalLinksSection from "@/components/marketing/InternalLinksSection";
 import TwoAudienceCta from "@/components/marketing/TwoAudienceCta";
@@ -32,11 +33,11 @@ export default function AboutPage() {
           <Box sx={{ maxWidth: 720, mb: 7 }}>
             <Chip label="About Commission" size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
             <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 44 }, mb: 2.5 }}>
-              A performance-based way to grow, built for how Nigerian businesses actually sell
+              {withPeriod("A performance-based way to grow, built for how Nigerian businesses actually sell")}
             </Typography>
             <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, lineHeight: 1.6 }}>
               Commission connects businesses who want more customers with affiliates who already have an audience
-              that trusts them - a business lists a campaign and sets what a Intent Qualified Lead or sale is worth, an
+              that trusts them - a business lists a campaign and sets what an Intent Qualified Lead or sale is worth, an
               affiliate shares a link, and the commission is tracked and paid automatically.
             </Typography>
           </Box>

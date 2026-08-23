@@ -2,6 +2,7 @@ import { Container, Typography, Box, Stack, Chip } from "@mui/material";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
+import { withPeriod } from "@/lib/textFormat";
 import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function LocationPageContent({ item }) {
@@ -16,13 +17,13 @@ export default function LocationPageContent({ item }) {
       <Typography variant="h1" sx={{ fontSize: { xs: 32, md: 48 }, mb: 2 }}>
         {item.name}
       </Typography>
-      <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 4, maxWidth: 520 }}>
+      <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 4 }}>
         {item.intro}
       </Typography>
 
       <Box sx={{ borderLeft: `3px solid ${tokens.brand}`, pl: 3, mb: 5 }}>
         <Typography variant="body1" fontWeight={600}>
-          {item.headline}
+          {withPeriod(item.headline)}
         </Typography>
       </Box>
 

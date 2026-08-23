@@ -1,6 +1,7 @@
 import { Container, Typography, Box, Chip, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
+import { withPeriod } from "@/lib/textFormat";
 import SignUpButton from "@/components/marketing/SignUpButton";
 
 export default function IntegrationPageContent({ item }) {
@@ -15,9 +16,9 @@ export default function IntegrationPageContent({ item }) {
       </Stack>
 
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
-        {item.headline}
+        {withPeriod(item.headline)}
       </Typography>
-      <Typography variant="body1" sx={{ color: tokens.muted, mb: 4, maxWidth: 520 }}>
+      <Typography variant="body1" sx={{ color: tokens.muted, mb: 4 }}>
         {item.intro}
       </Typography>
 

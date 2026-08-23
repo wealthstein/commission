@@ -1,5 +1,6 @@
 import { Box, Container, Typography } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 
 export const metadata = {
   title: "About Commission | Commission",
@@ -11,7 +12,7 @@ export default function AboutPage() {
     <Box sx={{ py: { xs: 8, md: 12 } }}>
       <Container maxWidth="sm">
         <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 3 }}>
-          About Commission
+          {withPeriod("About Commission")}
         </Typography>
         <Typography variant="body1" sx={{ color: tokens.muted, mb: 2 }}>
           Commission is a Nigerian affiliate marketplace. Businesses list a campaign, set what they are willing to

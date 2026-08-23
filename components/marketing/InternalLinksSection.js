@@ -45,7 +45,7 @@ export default async function InternalLinksSection() {
                     key={link.href}
                     component={Link}
                     href={link.href}
-                    sx={{ color: tokens.ink, fontSize: 11, "&:hover": { color: tokens.muted } }}
+                    sx={{ color: tokens.ink, fontSize: 10, "&:hover": { color: tokens.muted } }}
                   >
                     {link.label}
                   </Typography>

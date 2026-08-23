@@ -1,5 +1,6 @@
 import { Box, Container, Typography, Grid, Paper, Chip, Button } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import MarketingPageShell from "@/components/marketing/MarketingPageShell";
 import InternalLinksSection from "@/components/marketing/InternalLinksSection";
 
@@ -31,7 +32,7 @@ export default function CareersPage() {
           <Box sx={{ maxWidth: 640, mb: 6 }}>
             <Chip label="Careers" size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
             <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 2 }}>
-              No open roles right now - but we are building fast
+              {withPeriod("No open roles right now - but we are building fast")}
             </Typography>
             <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400 }}>
               Commission is a small, early-stage team. There is nothing formally listed today, but here is what we

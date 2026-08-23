@@ -237,6 +237,7 @@ export default function NewCampaignPage() {
   const [status, setStatus] = useState({ loading: false, error: null, success: false });
   const [customFields, setCustomFields] = useState([]);
   const [plan, setPlan] = useState(null);
+  const [businessWebsiteUrl, setBusinessWebsiteUrl] = useState(null);
   const [attributionTouched, setAttributionTouched] = useState(false);
   const [showSample, setShowSample] = useState(false);
   const [profileCheck, setProfileCheck] = useState({ loading: true, complete: true });
@@ -247,8 +248,9 @@ export default function NewCampaignPage() {
       if (!user) return;
       const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", user.id).single();
       if (!userRow) return;
-      const { data: biz } = await supabase.from("businesses").select("plan, name, industry").eq("owner_id", userRow.id).maybeSingle();
+      const { data: biz } = await supabase.from("businesses").select("plan, name, industry, website_url").eq("owner_id", userRow.id).maybeSingle();
       setPlan(biz?.plan || "free");
+      setBusinessWebsiteUrl(biz?.website_url || null);
       // A campaign needs a real business identity behind it - name and
       // industry are the minimum. Website stays optional.
       setProfileCheck({ loading: false, complete: !!(biz?.name && biz?.industry) });
@@ -325,6 +327,15 @@ export default function NewCampaignPage() {
       setStatus({
         loading: false,
         error: "Direct-sale campaigns must commit at least 10% total commission across tiers.",
+        success: false,
+      });
+      return;
+    }
+    if (!isLead && !businessWebsiteUrl) {
+      setStatus({
+        loading: false,
+        error:
+          "A sale-goal campaign needs your own website set up first - customers complete checkout on your site, not a Commission-hosted page. Add your website URL on the Account page, or run a lead-goal campaign instead.",
         success: false,
       });
       return;
@@ -431,9 +442,11 @@ export default function NewCampaignPage() {
         .single();
       if (programError) throw programError;
 
-      // 4. Custom Questions - the business's own Intent Form fields for
-      // this specific campaign. Only meaningful for lead-goal campaigns,
-      // which are the only ones with an Intent Form at all. Dropdown
+      // 4. Custom Questions - the business's own qualifying questions for
+      // this specific campaign. Only meaningful for lead-goal campaigns.
+      // Answers arrive either through the hosted Intent Form, or - for a
+      // business using the custom integration - as metadata from their
+      // own form (see app/api/leads/external-capture). Dropdown
       // options are now real separate strings, not a comma-joined blob.
       if (isLead && customFields.length > 0) {
         const { error: fieldsError } = await supabase.from("campaign_custom_fields").insert(
@@ -782,8 +795,10 @@ export default function NewCampaignPage() {
               Custom questions
             </Typography>
             <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
-              Add your own questions to this campaign&apos;s Intent Form - answers get forwarded straight to you, the
-              same as name and phone. Commission never stores the answers, only these question definitions.
+              Add your own questions for this campaign - answers get forwarded straight to you, the same as name and
+              phone. If you're using Commission's hosted page, customers see these on the Intent Form. If you're
+              using the custom integration on your own site, ask them however you like and pass the answers in as
+              metadata instead. Commission never stores the answers, only these question definitions.
             </Typography>
 
             <Stack spacing={2.5} sx={{ mb: 2 }}>

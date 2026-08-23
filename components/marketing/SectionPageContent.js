@@ -1,15 +1,16 @@
 import { Container, Typography, Grid, Paper, Box } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 
 export default function SectionPageContent({ item, sourcePage }) {
   return (
     <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
-        {item.headline}
+        {withPeriod(item.headline)}
       </Typography>
 
-      <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5, maxWidth: 640 }}>
+      <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5 }}>
         {item.intro}
       </Typography>
 

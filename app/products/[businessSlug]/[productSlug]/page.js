@@ -5,6 +5,7 @@ import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { buildProductMetadata, buildProductJsonLd, buildBreadcrumbJsonLd, billingLabel, SITE_URL } from "@/lib/seo";
 import { resolveLandingBranding } from "@/lib/branding";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import Link from "next/link";
 import LeadShortForm from "@/components/marketing/LeadShortForm";
 
@@ -270,7 +271,7 @@ export default async function ProductPage({ params, searchParams }) {
         />
 
         <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 2 }}>
-          {product.name} Affiliate Program
+          {withPeriod(`${product.name} Affiliate Program`)}
         </Typography>
 
         <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 4, maxWidth: 640 }}>

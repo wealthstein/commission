@@ -2,12 +2,13 @@ import Link from "next/link";
 import { Container, Typography, Stack, Box } from "@mui/material";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 
 export default function SolutionsIndexContent({ title, description, buildHref, items, relatedLinks }) {
   return (
     <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
-        {title}
+        {withPeriod(title)}
       </Typography>
       <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5, maxWidth: 640 }}>
         {description}

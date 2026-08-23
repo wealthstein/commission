@@ -3,6 +3,7 @@ import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { getAffiliateTrustStatus } from "@/lib/trustScore";
 import { sendOtp } from "@/lib/sms";
 import { createLeadAndGetIntentFormUrl } from "@/lib/leadCreation";
+import { hashIdentifier, computeTimingFlags, computeCrossCampaignFlags } from "@/lib/riskSignals";
 
 /**
  * POST /api/leads/capture
@@ -26,12 +27,23 @@ import { createLeadAndGetIntentFormUrl } from "@/lib/leadCreation";
  * triggers an inline OTP step instead - the lead itself is not created here
  * at all in that case; it only gets created once the code is verified (see
  * app/api/leads/verify-otp/route.js), using the exact same creation logic.
+ *
+ * Also runs Radar's separate, invisible signal layer (see
+ * lib/riskSignals.js) - timing and cross-campaign pattern detection,
+ * computed silently regardless of trust status or OTP outcome. This is
+ * purely informational for now (surfaced as risk_flags on the lead for a
+ * business to see), not wired into trust scoring or used to block
+ * anything - see lib/riskSignals.js for why.
  */
 export async function POST(req) {
-  const { programId, fullName, phone, email } = await req.json();
+  const { programId, fullName, phone, email, pageLoadedAt, firstInteractionAt } = await req.json();
   if (!programId || !fullName || !phone || !email) {
     return NextResponse.json({ error: "programId, fullName, phone, and email are required" }, { status: 400 });
   }
+
+  // x-forwarded-for can carry a comma-separated chain (client, proxies) -
+  // the first entry is the actual client.
+  const submitterIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
 
   const referralCode = req.cookies.get("cmn_ref")?.value;
   if (!referralCode) {
@@ -119,6 +131,9 @@ export async function POST(req) {
         phone,
         full_name: fullName,
         email,
+        page_loaded_at: pageLoadedAt || null,
+        first_interaction_at: firstInteractionAt || null,
+        submitter_ip: submitterIp,
       })
       .select("id")
       .single();
@@ -131,6 +146,29 @@ export async function POST(req) {
 
   try {
     const result = await createLeadAndGetIntentFormUrl(supabase, { programId, enrollmentId: enrollment.id, clickId, program });
+
+    try {
+      const phoneHash = hashIdentifier(phone);
+      const ipHash = hashIdentifier(submitterIp);
+      const timingFlags = computeTimingFlags({ pageLoadedAt, firstInteractionAt });
+      const crossCampaignFlags = await computeCrossCampaignFlags(supabase, { phoneHash, ipHash, excludeProgramId: programId });
+      const riskFlags = [...timingFlags, ...crossCampaignFlags];
+
+      await supabase.from("leads").update({ risk_flags: riskFlags }).eq("id", result.leadId);
+      await supabase.from("lead_risk_signals").insert({
+        lead_id: result.leadId,
+        phone_hash: phoneHash,
+        ip_hash: ipHash,
+        page_loaded_at: pageLoadedAt || null,
+        first_interaction_at: firstInteractionAt || null,
+      });
+    } catch (riskErr) {
+      // Never let a risk-signal failure surface as an error to the
+      // customer - the lead itself was already created successfully
+      // above, which is the actual critical path.
+      console.error("Risk signal computation failed (lead still created successfully):", riskErr.message);
+    }
+
     return NextResponse.json({ needsOtp: false, ...result });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
