@@ -74,8 +74,8 @@ export default function Hero({ content, audience, onPrimaryCta }) {
           </Box>
         </Stack>
 
-        <Box sx={{ borderTop: `1px solid ${tokens.border}`, mt: { xs: 6, md: 8 }, pt: { xs: 4, md: 5 } }}>
-          <Stack direction="row" spacing={{ xs: 4, md: 8 }} flexWrap="wrap">
+        <Box sx={{ borderTop: `1px solid ${tokens.border}`, mt: { xs: 6, md: 8 }, pt: { xs: 4, md: 5 }, textAlign: "center" }}>
+          <Stack direction="row" spacing={{ xs: 4, md: 8 }} flexWrap="wrap" justifyContent="center">
             {STATS[audience].map((stat) => (
               <Box key={stat.label}>
                 <Typography sx={{ fontSize: { xs: 24, md: 30 }, fontWeight: 700, lineHeight: 1.1 }}>{stat.value}</Typography>
