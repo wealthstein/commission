@@ -43,6 +43,10 @@ export default function HeroCalculatorTeaser({ audience }) {
         p: 3,
         bgcolor: tokens.paper,
         boxShadow: "0 24px 48px -24px rgba(11,11,12,0.18)",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
       }}
     >
       <Typography variant="overline" sx={{ color: tokens.muted, letterSpacing: 1.2 }}>
