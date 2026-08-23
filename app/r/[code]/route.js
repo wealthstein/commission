@@ -14,10 +14,16 @@ import { randomUUID } from "crypto";
  *   'lead' -> Commission's own Campaign Page (the product page), because
  *     that is where the Interest Form lives — Commission needs to actually
  *     capture the lead before it can go anywhere further into the funnel.
- *   'sale' -> a Commission-hosted Paystack checkout (see lib/checkout.js),
- *     where the customer pays Commission directly and Paystack splits the
- *     payment automatically between the business's own settlement account
- *     and Commission's main account (which later pays out affiliates).
+ *   'sale' -> the BUSINESS'S OWN WEBSITE, with ?ref= appended. Checkout no
+ *     longer initiates from a commission.ng page at all - the business's
+ *     own site calls Commission.initiateSaleCheckout() (see
+ *     public/commission-track.js and app/api/sales/initiate-checkout) from
+ *     their own "Subscribe"/"Buy" button, which is what actually generates
+ *     the Paystack link. A website is required at campaign creation for
+ *     any sale-goal campaign specifically because of this - a customer
+ *     completing a real purchase, especially a recurring one, needs to
+ *     feel like they're buying from the actual business, not a page on an
+ *     unfamiliar third-party domain.
  */
 export async function GET(req, { params }) {
   const code = params.code;
@@ -43,7 +49,15 @@ export async function GET(req, { params }) {
   if (program.conversion_goal === "lead") {
     destination = new URL(`/products/${business.slug}/${product.slug}`, req.url);
     destination.searchParams.set("ref", code);
+  } else if (business.website_url) {
+    destination = new URL(business.website_url);
+    destination.searchParams.set("ref", code);
   } else {
+    // Data-integrity fallback only, not the intended path - a website is
+    // required at campaign creation for sale-goal campaigns now (see
+    // app/dashboard/campaigns/new), so this should only ever fire for a
+    // campaign created before that requirement existed. Falls back to the
+    // old Commission-hosted Paystack checkout rather than a dead end.
     try {
       const authorizationUrl = await initiateCheckoutForReferral(supabase, {
         enrollment,
@@ -55,8 +69,6 @@ export async function GET(req, { params }) {
       destination = new URL(authorizationUrl);
     } catch (err) {
       console.error(`Checkout initialization failed for referral ${code}:`, err.message);
-      // The business has not connected a settlement account yet, or Paystack
-      // itself failed - fall back to the product page rather than a dead end.
       destination = new URL(`/products/${business.slug}/${product.slug}`, req.url);
     }
   }

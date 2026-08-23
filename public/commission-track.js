@@ -24,12 +24,22 @@
  *   window.addEventListener("message", (e) => {
  *     if (e.data?.source === "commission-embed" && e.data?.event === "qualified") { ... }
  *   });
+ *
+ * For a SALE-GOAL campaign instead, there's no lead capture step at all -
+ * just call this from your own "Subscribe"/"Buy" button's click handler:
+ *   Commission.initiateSaleCheckout()
+ *     .then((result) => { window.location.href = result.authorizationUrl; })
+ *     .catch((err) => { ... });
+ * This redirects the customer to Paystack's own checkout - Commission is
+ * never involved in rendering any page before that point for a sale-goal
+ * campaign; the customer stays on your own site until they actually pay.
  */
 (function () {
   var SCRIPT_TAG = document.currentScript;
   var PROGRAM_ID = SCRIPT_TAG ? SCRIPT_TAG.getAttribute("data-program") : null;
   var API_BASE = "https://commission.ng";
   var STORAGE_KEY = "cmn_ref";
+  var SCRIPT_LOADED_AT = new Date().toISOString();
 
   function captureRefFromUrl() {
     var params = new URLSearchParams(window.location.search);
@@ -72,6 +82,7 @@
         phone: lead.phone,
         email: lead.email,
         metadata: lead.metadata || null,
+        pageLoadedAt: SCRIPT_LOADED_AT,
       }),
     }).then(function (res) {
       return res.json().then(function (data) {
@@ -94,5 +105,22 @@
     iframe.title = "Confirm your interest";
     container.innerHTML = "";
     container.appendChild(iframe);
+  };
+
+  window.Commission.initiateSaleCheckout = function () {
+    var ref = getStoredRef();
+    if (!ref) {
+      return Promise.reject(new Error("No referral code found - this visitor did not arrive through a Commission referral link."));
+    }
+    return fetch(API_BASE + "/api/sales/initiate-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ referralCode: ref }),
+    }).then(function (res) {
+      return res.json().then(function (data) {
+        if (!res.ok) throw new Error(data.error || "Failed to start checkout");
+        return data;
+      });
+    });
   };
 })();

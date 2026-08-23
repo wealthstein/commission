@@ -1,5 +1,6 @@
 import { Box, Container, Typography, Grid, Paper, Chip, Button } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import { urls } from "@/lib/urls";
 import MarketingPageShell from "@/components/marketing/MarketingPageShell";
 import InternalLinksSection from "@/components/marketing/InternalLinksSection";
@@ -38,7 +39,7 @@ export default function ContactPage() {
           <Box sx={{ maxWidth: 640, mb: 6 }}>
             <Chip label="Contact" size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
             <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 2 }}>
-              Talk to a real person
+              {withPeriod("Talk to a real person")}
             </Typography>
             <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400 }}>
               Pick whichever fits best - every message reaches the same small team.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Paper, Box, Typography, TextField, Button, Stack, Alert } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
@@ -9,8 +9,17 @@ export default function LeadShortForm({ programId, productName, businessName, lo
   const [state, setState] = useState({ loading: false, error: null, otpId: null });
   const [otpCode, setOtpCode] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
+  const pageLoadedAtRef = useRef(new Date().toISOString());
+  const firstInteractionAtRef = useRef(null);
+
+  useEffect(() => {
+    pageLoadedAtRef.current = new Date().toISOString();
+  }, []);
 
   function update(field, value) {
+    if (!firstInteractionAtRef.current) {
+      firstInteractionAtRef.current = new Date().toISOString();
+    }
     setForm((f) => ({ ...f, [field]: value }));
   }
 
@@ -38,7 +47,12 @@ export default function LeadShortForm({ programId, productName, businessName, lo
       const res = await fetch("/api/leads/capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ programId, ...form }),
+        body: JSON.stringify({
+          programId,
+          ...form,
+          pageLoadedAt: pageLoadedAtRef.current,
+          firstInteractionAt: firstInteractionAtRef.current,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");

@@ -2,6 +2,7 @@ import { Container, Typography, Box, Stack } from "@mui/material";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
+import { withPeriod } from "@/lib/textFormat";
 import SignUpButton from "@/components/marketing/SignUpButton";
 
 const STAGE_LABELS = ["The problem", "How Commission helps", "The outcome"];
@@ -12,9 +13,9 @@ export default function SolutionPageContent({ item }) {
   return (
     <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
-        {item.headline}
+        {withPeriod(item.headline)}
       </Typography>
-      <Typography variant="body1" sx={{ color: tokens.muted, mb: 5, maxWidth: 640 }}>
+      <Typography variant="body1" sx={{ color: tokens.muted, mb: 5 }}>
         {item.intro}
       </Typography>
 

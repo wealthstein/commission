@@ -1,5 +1,6 @@
 import { Box, Container, Typography } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 
 export const metadata = {
   title: "Careers at Commission | Commission",
@@ -11,7 +12,7 @@ export default function CareersPage() {
     <Box sx={{ py: { xs: 8, md: 12 } }}>
       <Container maxWidth="sm">
         <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 3 }}>
-          Careers
+          {withPeriod("Careers")}
         </Typography>
         <Typography variant="body1" sx={{ color: tokens.muted }}>
           Commission is a small, early-stage team. We do not have open roles listed right now, but if you would like

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabaseServer";
 import { createLeadAndGetIntentFormUrl } from "@/lib/leadCreation";
+import { hashIdentifier, computeTimingFlags, computeCrossCampaignFlags } from "@/lib/riskSignals";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -43,13 +44,15 @@ export async function OPTIONS() {
  * verification are different questions.
  */
 export async function POST(req) {
-  const { programId, referralCode, fullName, phone, email, metadata } = await req.json();
+  const { programId, referralCode, fullName, phone, email, metadata, pageLoadedAt } = await req.json();
   if (!programId || !referralCode || !fullName || !phone || !email) {
     return NextResponse.json(
       { error: "programId, referralCode, fullName, phone, and email are required" },
       { status: 400, headers: CORS_HEADERS }
     );
   }
+
+  const submitterIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
 
   const supabase = createAdminSupabaseClient();
 
@@ -116,6 +119,28 @@ export async function POST(req) {
       .from("external_lead_pending")
       .insert({ lead_id: result.leadId, full_name: fullName, phone, email, metadata: metadata || null });
     if (pendingError) throw pendingError;
+
+    try {
+      const phoneHash = hashIdentifier(phone);
+      const ipHash = hashIdentifier(submitterIp);
+      // firstInteractionAt is deliberately not requested here - Commission's
+      // tracking script doesn't own the business's own form fields the way
+      // LeadShortForm.js does, so it can't reliably know when the customer
+      // first touched the form. Only the page-load-based signal applies.
+      const timingFlags = computeTimingFlags({ pageLoadedAt });
+      const crossCampaignFlags = await computeCrossCampaignFlags(supabase, { phoneHash, ipHash, excludeProgramId: programId });
+      const riskFlags = [...timingFlags, ...crossCampaignFlags];
+
+      await supabase.from("leads").update({ risk_flags: riskFlags }).eq("id", result.leadId);
+      await supabase.from("lead_risk_signals").insert({
+        lead_id: result.leadId,
+        phone_hash: phoneHash,
+        ip_hash: ipHash,
+        page_loaded_at: pageLoadedAt || null,
+      });
+    } catch (riskErr) {
+      console.error("Risk signal computation failed (lead still created successfully):", riskErr.message);
+    }
 
     return NextResponse.json(result, { headers: CORS_HEADERS });
   } catch (err) {

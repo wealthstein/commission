@@ -1,5 +1,6 @@
 import { Box, Container, Typography, Stack, Chip } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 
 /**
  * sections: [{ heading, body }] where body is a string or array of strings
@@ -12,7 +13,7 @@ export default function LegalPageContent({ eyebrow, title, intro, lastUpdated, s
         <Box sx={{ maxWidth: 720, mx: "auto" }}>
           <Chip label={eyebrow} size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
           <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 42 }, mb: 1.5 }}>
-            {title}
+            {withPeriod(title)}
           </Typography>
           <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mb: 3 }}>
             Last updated {lastUpdated}

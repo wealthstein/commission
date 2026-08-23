@@ -50,6 +50,7 @@ export default function EditCampaignPage() {
   const [isPhysical, setIsPhysical] = useState(false);
   const [form, setForm] = useState(null);
   const [businessPlan, setBusinessPlan] = useState(null);
+  const [businessWebsiteUrl, setBusinessWebsiteUrl] = useState(null);
   const [status, setStatus] = useState({ loading: false, error: null, success: false });
 
   useEffect(() => {
@@ -58,7 +59,7 @@ export default function EditCampaignPage() {
     async function load() {
       const { data: product, error } = await supabase
         .from("products")
-        .select("*, affiliate_programs(*), businesses(plan)")
+        .select("*, affiliate_programs(*), businesses(plan, website_url)")
         .eq("id", params.id)
         .maybeSingle();
 
@@ -75,6 +76,7 @@ export default function EditCampaignPage() {
       setIsLead(program?.conversion_goal === "lead");
       setIsPhysical(product.product_type === "physical");
       setBusinessPlan(product.businesses?.plan || "free");
+      setBusinessWebsiteUrl(product.businesses?.website_url || null);
 
       const totalCommissionPercent = program
         ? Math.round((program.tier1_percent / TIER_RATIOS.tier1) * 100)
@@ -375,6 +377,60 @@ export default function EditCampaignPage() {
                 Custom integrations are available on Medium and Large plans.{" "}
                 <Box component={Link} href="/dashboard/account" sx={{ color: tokens.ink, fontWeight: 600 }}>
                   View plans
+                </Box>
+              </Typography>
+            )}
+          </Paper>
+        )}
+
+        {!isLead && (
+          <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, borderColor: tokens.border, mb: 3 }}>
+            <Typography fontWeight={700} sx={{ mb: 1 }}>
+              Website integration
+            </Typography>
+            {businessWebsiteUrl ? (
+              <>
+                <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+                  Sale-goal campaigns run entirely on your own site - customers check out there, never on a
+                  Commission-hosted page. Add this script tag, then call{" "}
+                  <code>Commission.initiateSaleCheckout()</code> from your own &quot;Subscribe&quot;/&quot;Buy&quot;
+                  button&apos;s click handler.
+                </Typography>
+                <Box
+                  component="pre"
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: "#0B0B0C",
+                    color: "#E7E5DE",
+                    fontSize: 13,
+                    overflowX: "auto",
+                    mb: 2,
+                  }}
+                >
+                  {`<script src="https://commission.ng/commission-track.js" data-program="${form.programId}"></script>`}
+                </Box>
+                <Box
+                  component="pre"
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: "#0B0B0C",
+                    color: "#E7E5DE",
+                    fontSize: 13,
+                    overflowX: "auto",
+                    mb: 0,
+                  }}
+                >
+                  {`Commission.initiateSaleCheckout()\n  .then((result) => { window.location.href = result.authorizationUrl; })\n  .catch((err) => { /* show err.message to the customer */ });`}
+                </Box>
+              </>
+            ) : (
+              <Typography variant="body2" sx={{ color: tokens.muted }}>
+                Add your website URL on the Account page before this campaign can go live - sale-goal campaigns
+                require customers to check out on your own site.{" "}
+                <Box component={Link} href="/dashboard/account" sx={{ color: tokens.ink, fontWeight: 600 }}>
+                  Go to Account
                 </Box>
               </Typography>
             )}

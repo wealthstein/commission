@@ -75,13 +75,6 @@ create table if not exists users (
   -- Referral: who brought THIS user onto the platform (drives user-referral payouts, sec. "pay users for referring other users")
   referred_by     uuid references users(id),
   -- Payout destination for affiliate commissions (Paystack transfer recipient)
-  -- Every user must verify their own phone before using the dashboard at
-  -- all (see middleware.js) - this is what makes the "a customer's phone
-  -- can't match a registered user's own verified phone" fraud check
-  -- possible at all, and it's independent of Google auth entirely.
-  phone_verified          boolean not null default false,
-  phone_otp_pin_id        text,
-  phone_otp_expires_at    timestamptz,
   bank_code               text,
   bank_account_number     text,
   bank_account_name       text,

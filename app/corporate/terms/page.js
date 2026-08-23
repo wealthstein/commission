@@ -10,7 +10,7 @@ export const metadata = {
 const sections = [
   {
     heading: "What Commission is",
-    body: "Commission is a Nigerian affiliate marketplace. Businesses list a campaign and set what they are willing to pay for a Intent Qualified Lead or a verified sale; affiliates share a unique referral link and earn a tracked commission automatically when it converts. These Terms govern use of Commission by both businesses and affiliates.",
+    body: "Commission is a Nigerian affiliate marketplace. Businesses list a campaign and set what they are willing to pay for an Intent Qualified Lead or a verified sale; affiliates share a unique referral link and earn a tracked commission automatically when it converts. These Terms govern use of Commission by both businesses and affiliates.",
   },
   {
     heading: "Accounts",

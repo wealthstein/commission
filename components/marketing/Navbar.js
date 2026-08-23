@@ -27,8 +27,8 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
 
   return (
     <AppBar position="sticky" elevation={0} sx={{ bgcolor: tokens.paper }}>
-      <Toolbar disableGutters sx={{ width: "100%" }}>
-        <Container maxWidth="md" sx={{ display: "flex", alignItems: "center", width: "100%", py: 2, gap: 3 }}>
+      <Container maxWidth="md" disableGutters sx={{ px: 3 }}>
+        <Toolbar disableGutters sx={{ py: 2, gap: 3 }}>
         <Stack component={Link} href="/" direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0, textDecoration: "none" }}>
           <Box style={{ display: "flex", justifyContent: "center" }}>
             <CardMedia
@@ -106,8 +106,8 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
         >
           Get started
         </Button>
-        </Container>
-      </Toolbar>
+        </Toolbar>
+      </Container>
     </AppBar>
   );
 }

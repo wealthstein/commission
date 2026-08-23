@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Container, Typography, Grid, Box, Stack, Chip } from "@mui/material";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 
 // Real Nigerian geopolitical zones - accurate, not invented.
 const ZONES = {
@@ -17,7 +18,7 @@ export default function LocationsIndexContent({ title, description, buildHref, i
   return (
     <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
-        {title}
+        {withPeriod(title)}
       </Typography>
       <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5, maxWidth: 640 }}>
         {description}

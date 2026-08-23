@@ -22,8 +22,10 @@ import {
   Alert,
   CircularProgress,
   TextField,
+  Tooltip,
 } from "@mui/material";
 import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 import { createClient } from "@/lib/supabaseClient";
@@ -43,6 +45,16 @@ const STATUS_STYLE = {
   captured: { bg: "#FFF3C4", fg: tokens.brandInk, label: "Awaiting qualification" },
   qualified: { bg: "#E7F5EE", fg: tokens.success, label: "Intent Qualified" },
   rejected: { bg: "#F7F6F2", fg: tokens.muted, label: "Rejected" },
+};
+
+// Purely informational (see lib/riskSignals.js) - not wired into Radar's
+// trust scoring, doesn't block or auto-reject anything. A business can
+// use "Mark as invalid" below on a flagged lead using their own judgment.
+const RISK_FLAG_LABELS = {
+  fast_fill: "Filled in under 3 seconds",
+  low_time_on_page: "Submitted almost instantly after landing",
+  cross_campaign_phone_match: "Same phone seen on other campaigns recently",
+  cross_campaign_ip_match: "Same network seen on other campaigns recently",
 };
 
 // Lead Management (filter/search/export) is free for every business - no
@@ -332,7 +344,7 @@ function LeadsTab({ plan, userRowId }) {
       // webhook the moment the lead qualified (see lib/leadForwarding.js).
       const { data: leadRows } = await supabase
         .from("leads")
-        .select("id, lead_ref, status, program_id, charge_amount_naira, created_at")
+        .select("id, lead_ref, status, program_id, charge_amount_naira, created_at, risk_flags")
         .in("program_id", programIds)
         .order("created_at", { ascending: false });
 
@@ -346,6 +358,7 @@ function LeadsTab({ plan, userRowId }) {
             product: product?.name || "Campaign",
             industry: product?.category || null,
             charge_amount_naira: l.charge_amount_naira ? Number(l.charge_amount_naira) : null,
+            risk_flags: l.risk_flags || [],
             created_at: new Date(l.created_at).toLocaleDateString(),
           };
         })
@@ -409,6 +422,19 @@ function LeadsTab({ plan, userRowId }) {
                   </Typography>
                 )}
                 <Chip size="small" label={style.label} sx={{ bgcolor: style.bg, color: style.fg, fontWeight: 700 }} />
+                {lead.risk_flags?.length > 0 && (
+                  <Tooltip
+                    title={
+                      <>
+                        {lead.risk_flags.map((flag) => (
+                          <div key={flag}>{RISK_FLAG_LABELS[flag] || flag}</div>
+                        ))}
+                      </>
+                    }
+                  >
+                    <WarningAmberRoundedIcon sx={{ fontSize: 18, color: "#B87503" }} />
+                  </Tooltip>
+                )}
                 {lead.status === "qualified" && lead.industry === "Real Estate" && (
                   <Button size="small" variant="outlined" onClick={() => setSaleLead(lead)}>
                     Confirm sale closed

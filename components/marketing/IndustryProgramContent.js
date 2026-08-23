@@ -5,6 +5,7 @@ import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import HandshakeRoundedIcon from "@mui/icons-material/HandshakeRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import { urls } from "@/lib/urls";
 import SignUpButton from "@/components/marketing/SignUpButton";
 
@@ -23,9 +24,11 @@ export default function IndustryProgramContent({ industry, liveProducts }) {
         <Chip label="For affiliates" size="small" sx={{ bgcolor: "#F7F6F2", fontWeight: 600, mb: 2 }} />
 
         <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 42 }, mb: 2, maxWidth: 720 }}>
-          {industry.displayName === "Real Estate"
-            ? "Real Estate programs realtors can promote"
-            : `${industry.displayName} programs you can promote`}
+          {withPeriod(
+            industry.displayName === "Real Estate"
+              ? "Real Estate programs realtors can promote"
+              : `${industry.displayName} programs you can promote`
+          )}
         </Typography>
 
         <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 4, maxWidth: 640 }}>

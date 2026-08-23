@@ -43,6 +43,10 @@ export function Footer() {
           <CardMedia sx={{ width: 22, height: 22, borderRadius: "6px" }} image="/circle.svg" alt="Commission" />
         </Stack>
 
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 2 }}>
+          Performance-based customer acquisition for Nigerian businesses.
+        </Typography>
+
         <Breadcrumbs
           separator="•"
           aria-label="breadcrumb"

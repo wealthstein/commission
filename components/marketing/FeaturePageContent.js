@@ -15,7 +15,7 @@ export default function FeaturePageContent({ item }) {
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
         {item.headline}
       </Typography>
-      <Typography variant="body1" sx={{ color: tokens.muted, mb: 4, maxWidth: 520 }}>
+      <Typography variant="body1" sx={{ color: tokens.muted, mb: 4 }}>
         {item.intro}
       </Typography>
 

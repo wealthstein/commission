@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Box, Container, Typography, Grid } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import { urls } from "@/lib/urls";
 import { listPrograms } from "@/lib/programs";
 import { buildProgramsIndexMetadata } from "@/lib/seo";
@@ -27,7 +28,7 @@ export default async function ProgramsIndexPage() {
       <Box sx={{ py: { xs: 6, md: 9 } }}>
         <Container maxWidth="md">
           <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 42 }, mb: 2, maxWidth: 640 }}>
-            Find a program worth promoting
+            {withPeriod("Find a program worth promoting")}
           </Typography>
           <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 6, maxWidth: 600 }}>
             Every industry below is a real, tracked opportunity - share a link, earn a commission automatically,

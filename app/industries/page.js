@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Box, Container, Typography, Stack } from "@mui/material";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import { urls } from "@/lib/urls";
 import { industryPages } from "@/lib/industryPages";
 import { buildIndustriesIndexMetadata } from "@/lib/seo";
@@ -19,10 +20,10 @@ export default function IndustriesIndexPage() {
       <Box sx={{ py: { xs: 6, md: 9 } }}>
         <Container maxWidth="md">
           <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 42 }, mb: 2 }}>
-            Affiliate marketing by industry
+            {withPeriod("Affiliate marketing by industry")}
           </Typography>
           <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 6, maxWidth: 640 }}>
-            What a Intent Qualified Lead typically costs, by industry - highest to lowest.
+            What an Intent Qualified Lead typically costs, by industry - highest to lowest.
           </Typography>
 
           <Stack spacing={0} sx={{ border: `1px solid ${tokens.border}`, borderRadius: 3, overflow: "hidden" }}>

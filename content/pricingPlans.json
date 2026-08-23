@@ -19,13 +19,14 @@
         "Up to 3 commission tiers",
         "Referral link tracking",
         "Automatic affiliate payouts",
-        "Custom fields - up to 1 question of your own on the Intent Form"
+        "Custom fields - up to 1 question of your own on the Intent Form",
+        "Branded checkout page - your logo and brand color on the customer-facing page (coming soon)"
       ]
     },
     {
       "id": "plus",
       "name": "Large",
-      "priceNaira": 250000,
+      "priceNaira": 420000,
       "priceSuffix": "/mo",
       "feePercent": 10,
       "tagline": "For businesses running serious volume through their Campaign Wallet.",
@@ -37,15 +38,13 @@
         "Lowest 10% platform fee on every top-up",
         "2 additional custom fields (5 total per campaign)",
         "Unlimited lead export to CSV",
-        "Priority support",
-        "Branded checkout page - your logo and brand color on the customer-facing page (coming soon)",
-        "Custom integrations - connect your own site directly instead of Commission's hosted page"
+        "Priority support"
       ]
     },
     {
       "id": "pro",
       "name": "Medium",
-      "priceNaira": 180000,
+      "priceNaira": 280000,
       "priceSuffix": "/mo",
       "feePercent": 15,
       "tagline": "For businesses topping up often enough that a lower fee pays for itself.",
@@ -56,7 +55,6 @@
         "Lower 15% platform fee on every top-up",
         "2 additional custom fields (3 total per campaign)",
         "Lead management - view and organize your leads (export not included)",
-        "Branded checkout page - your logo and brand color on the customer-facing page (coming soon)",
         "Custom integrations - connect your own site directly instead of Commission's hosted page"
       ]
     }

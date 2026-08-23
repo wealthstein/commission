@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Container, Typography, Grid, Box, Stack, Chip } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 
 const NATIVE_SLUGS = ["email", "native", "paystack", "excel"];
 
@@ -8,7 +9,7 @@ export default function IntegrationsIndexContent({ title, description, buildHref
   return (
     <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
-        {title}
+        {withPeriod(title)}
       </Typography>
       <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 5, maxWidth: 640 }}>
         {description}

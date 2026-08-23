@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Box, Container, Typography, Grid, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
+import { withPeriod } from "@/lib/textFormat";
 import { urls } from "@/lib/urls";
 import { comparisons } from "@/lib/comparisons";
 import { buildComparisonsIndexMetadata } from "@/lib/seo";
@@ -15,7 +16,7 @@ export default function ComparisonsIndexPage() {
       <Box sx={{ py: { xs: 6, md: 9 } }}>
         <Container maxWidth="md">
           <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 42 }, mb: 2 }}>
-            Commission vs every other marketing channel
+            {withPeriod("Commission vs every other marketing channel")}
           </Typography>
           <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, mb: 6, maxWidth: 640 }}>
             See how Commission compares on cost, speed, and risk against the channels businesses already spend on.
