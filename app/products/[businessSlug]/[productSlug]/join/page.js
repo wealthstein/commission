@@ -28,10 +28,10 @@ function JoinProgramInner() {
     async function load() {
       const { data: biz } = await supabase.from("businesses").select("*").eq("slug", params.businessSlug).maybeSingle();
       const { data: prod } = biz
-        ? await supabase.from("products").select("*").eq("business_id", biz.id).eq("slug", params.productSlug).maybeSingle()
+        ? await supabase.from("campaigns").select("*").eq("business_id", biz.id).eq("slug", params.productSlug).maybeSingle()
         : { data: null };
       const { data: prog } = prod
-        ? await supabase.from("affiliate_programs").select("*").eq("product_id", prod.id).eq("status", "active").maybeSingle()
+        ? await supabase.from("affiliate_programs").select("*").eq("campaign_id", prod.id).eq("status", "active").maybeSingle()
         : { data: null };
 
       if (!biz || !prod || !prog) {

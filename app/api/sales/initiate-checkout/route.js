@@ -52,16 +52,16 @@ export async function POST(req) {
 
   const { data: enrollment } = await admin
     .from("affiliate_enrollments")
-    .select("*, affiliate_programs(*, products(*, businesses(*)))")
+    .select("*, affiliate_programs(*, campaigns(*, businesses(*)))")
     .eq("referral_code", referralCode)
     .eq("status", "active")
     .maybeSingle();
 
   const program = enrollment?.affiliate_programs;
-  const product = program?.products;
-  const business = product?.businesses;
+  const campaign = program?.campaigns;
+  const business = campaign?.businesses;
 
-  if (!enrollment || product?.status !== "active" || program.conversion_goal !== "sale") {
+  if (!enrollment || campaign?.status !== "active" || program.conversion_goal !== "sale") {
     return NextResponse.json({ error: "This referral link is no longer valid for a sale checkout" }, { status: 400, headers: CORS_HEADERS });
   }
 
@@ -69,7 +69,7 @@ export async function POST(req) {
     const authorizationUrl = await initiateCheckoutForReferral(admin, {
       enrollment,
       program,
-      product,
+      product: campaign,
       business,
       referralCode,
     });

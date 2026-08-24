@@ -32,22 +32,22 @@ export async function GET(req, { params }) {
   const { data: enrollment } = await supabase
     .from("affiliate_enrollments")
     .select(
-      "*, affiliate_programs(*, products(*, businesses(*)))"
+      "*, affiliate_programs(*, campaigns(*, businesses(*)))"
     )
     .eq("referral_code", code)
     .eq("status", "active")
     .maybeSingle();
 
   const program = enrollment?.affiliate_programs;
-  const product = program?.products;
-  const business = product?.businesses;
-  if (!enrollment || product?.status !== "active") {
+  const campaign = program?.campaigns;
+  const business = campaign?.businesses;
+  if (!enrollment || campaign?.status !== "active") {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
   let destination;
   if (program.conversion_goal === "lead") {
-    destination = new URL(`/products/${business.slug}/${product.slug}`, req.url);
+    destination = new URL(`/products/${business.slug}/${campaign.slug}`, req.url);
     destination.searchParams.set("ref", code);
   } else if (business.website_url) {
     destination = new URL(business.website_url);
@@ -62,14 +62,14 @@ export async function GET(req, { params }) {
       const authorizationUrl = await initiateCheckoutForReferral(supabase, {
         enrollment,
         program,
-        product,
+        product: campaign,
         business,
         referralCode: code,
       });
       destination = new URL(authorizationUrl);
     } catch (err) {
       console.error(`Checkout initialization failed for referral ${code}:`, err.message);
-      destination = new URL(`/products/${business.slug}/${product.slug}`, req.url);
+      destination = new URL(`/products/${business.slug}/${campaign.slug}`, req.url);
     }
   }
 

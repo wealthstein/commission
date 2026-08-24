@@ -1,26 +1,50 @@
 import { Box, Container, Typography } from "@mui/material";
 import { tokens } from "@/lib/theme";
-import AnimatedIllustration from "@/components/marketing/AnimatedIllustration";
+import ConvergingFlowDiagram from "@/components/marketing/ConvergingFlowDiagram";
 
 /**
  * Renders right after HowItWorks on the homepage, one per audience.
  *
- * Default state is a real, built animated illustration (AnimatedIllustration.js)
- * - a looping sequence of status checks appearing one by one, the same
- * pattern Stripe's Radar page uses to explain what happens behind the
- * scenes. This is genuinely built, not a placeholder waiting on something
- * else - Claude cannot produce actual video files, so this replaces that
- * need entirely rather than standing in for it.
+ * Default state is ConvergingFlowDiagram.js - adapted from a reference
+ * video showing multiple weighted inputs flowing into a central engine,
+ * then out to a single decision. For businesses, the inputs are Radar's
+ * actual trust signals; for affiliates, the multi-tier earning structure.
+ * This is genuinely built, not a placeholder waiting on something else -
+ * Claude cannot produce actual video files, so this replaces that need
+ * entirely rather than standing in for it.
  *
  * If a real recorded video is ever produced anyway, pass its embed URL as
- * videoUrl and it takes priority over the animation.
+ * videoUrl and it takes priority over the diagram.
  */
+const FLOW_DATA = {
+  business: {
+    nodes: [
+      { percent: "40%", label: "Affiliate Trust Score" },
+      { percent: "25%", label: "Form-Fill Timing" },
+      { percent: "20%", label: "Cross-Campaign Signals" },
+      { percent: "15%", label: "Network Plausibility" },
+    ],
+    engineLabel: "Radar Engine",
+    decisionLabel: "Qualified Lead",
+  },
+  affiliate: {
+    nodes: [
+      { percent: "50%", label: "Your Direct Referrals" },
+      { percent: "30%", label: "Tier-2 Recruits" },
+      { percent: "20%", label: "Tier-3 Recruits" },
+    ],
+    engineLabel: "Commission Engine",
+    decisionLabel: "Automatic Payout",
+  },
+};
+
 export default function DemoVideoSection({ audience, videoUrl, bgcolor }) {
   const title = audience === "business" ? "See how Radar protects your leads" : "See how you get paid";
   const subtitle =
     audience === "business"
       ? "What happens the moment a lead comes in - checked, verified, and delivered automatically."
       : "What happens the moment someone clicks your link - tracked, qualified, and paid automatically.";
+  const flow = FLOW_DATA[audience] || FLOW_DATA.business;
 
   return (
     <Box component="section" sx={{ py: { xs: 6, md: 9 }, bgcolor }}>
@@ -41,7 +65,7 @@ export default function DemoVideoSection({ audience, videoUrl, bgcolor }) {
             />
           </Box>
         ) : (
-          <AnimatedIllustration audience={audience} />
+          <ConvergingFlowDiagram nodes={flow.nodes} engineLabel={flow.engineLabel} decisionLabel={flow.decisionLabel} />
         )}
       </Container>
     </Box>

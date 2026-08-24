@@ -17,7 +17,7 @@ import { verifyTransaction } from "@/lib/paystack";
  * existing transaction's paystack_reference is re-verified with Paystack
  * (which returns the plan code and customer_code for subscription
  * purchases), and that's used to backfill subscription_attribution using
- * the product_id/enrollment_id/business_id already on file. No new
+ * the campaign_id/enrollment_id/business_id already on file. No new
  * Paystack API surface needed beyond the verify call already built.
  *
  * Safe to run more than once - upserts on (customer_code, plan_code), and
@@ -34,7 +34,7 @@ export async function POST(req) {
 
   const { data: transactions } = await supabase
     .from("transactions")
-    .select("paystack_reference, product_id, enrollment_id, products(business_id)")
+    .select("paystack_reference, campaign_id, enrollment_id, campaigns(business_id)")
     .eq("source", "paystack")
     .eq("status", "success");
 
@@ -56,9 +56,9 @@ export async function POST(req) {
         {
           customer_code: verified.customer.customer_code,
           plan_code: typeof verified.plan === "string" ? verified.plan : verified.plan.plan_code,
-          product_id: txn.product_id,
+          campaign_id: txn.campaign_id,
           enrollment_id: txn.enrollment_id,
-          business_id: txn.products.business_id,
+          business_id: txn.campaigns.business_id,
         },
         { onConflict: "customer_code,plan_code" }
       );

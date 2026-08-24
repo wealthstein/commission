@@ -94,7 +94,7 @@ function PayoutsTab({ userRowId }) {
     async function load() {
       const { data: enrollments } = await supabase
         .from("affiliate_enrollments")
-        .select("id, affiliate_programs(tier1_percent, products(name))")
+        .select("id, affiliate_programs(tier1_percent, campaigns(name))")
         .eq("affiliate_id", userRowId);
       const enrollmentIds = (enrollments || []).map((e) => e.id);
       const enrollmentById = Object.fromEntries((enrollments || []).map((e) => [e.id, e]));
@@ -115,7 +115,7 @@ function PayoutsTab({ userRowId }) {
         (commissions || []).map((c) => ({
           id: c.id,
           date: new Date(c.created_at).toLocaleDateString(),
-          product: enrollmentById[c.enrollment_id]?.affiliate_programs?.products?.name || "Campaign",
+          product: enrollmentById[c.enrollment_id]?.affiliate_programs?.campaigns?.name || "Campaign",
           commissionNaira: Number(c.affiliate_payout_naira),
           status: c.payout_status,
         }))
@@ -320,18 +320,18 @@ function LeadsTab({ plan, userRowId }) {
         return;
       }
 
-      const { data: products } = await supabase.from("products").select("id, name, category").eq("business_id", business.id);
-      const productIds = (products || []).map((p) => p.id);
-      const productById = Object.fromEntries((products || []).map((p) => [p.id, p]));
-      if (productIds.length === 0) {
+      const { data: campaigns } = await supabase.from("campaigns").select("id, name, category").eq("business_id", business.id);
+      const campaignIds = (campaigns || []).map((p) => p.id);
+      const campaignById = Object.fromEntries((campaigns || []).map((p) => [p.id, p]));
+      if (campaignIds.length === 0) {
         setLeads([]);
         setLoading(false);
         return;
       }
 
-      const { data: programs } = await supabase.from("affiliate_programs").select("id, product_id").in("product_id", productIds);
+      const { data: programs } = await supabase.from("affiliate_programs").select("id, campaign_id").in("campaign_id", campaignIds);
       const programIds = (programs || []).map((p) => p.id);
-      const productIdByProgram = Object.fromEntries((programs || []).map((p) => [p.id, p.product_id]));
+      const campaignIdByProgram = Object.fromEntries((programs || []).map((p) => [p.id, p.campaign_id]));
       if (programIds.length === 0) {
         setLeads([]);
         setLoading(false);
@@ -350,13 +350,13 @@ function LeadsTab({ plan, userRowId }) {
 
       setLeads(
         (leadRows || []).map((l) => {
-          const product = productById[productIdByProgram[l.program_id]];
+          const campaign = campaignById[campaignIdByProgram[l.program_id]];
           return {
             id: l.id,
             lead_ref: l.lead_ref,
             status: l.status,
-            product: product?.name || "Campaign",
-            industry: product?.category || null,
+            product: campaign?.name || "Campaign",
+            industry: campaign?.category || null,
             charge_amount_naira: l.charge_amount_naira ? Number(l.charge_amount_naira) : null,
             risk_flags: l.risk_flags || [],
             created_at: new Date(l.created_at).toLocaleDateString(),

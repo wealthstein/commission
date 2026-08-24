@@ -26,7 +26,7 @@ async function getLeadContext(leadRef) {
   // left-panel business/price summary here.
   const { data: lead } = await supabase
     .from("leads")
-    .select("status, program_id, affiliate_programs(*, products(*, businesses(*)))")
+    .select("status, program_id, affiliate_programs(*, campaigns(*, businesses(*)))")
     .eq("lead_ref", leadRef)
     .maybeSingle();
   if (!lead) return null;
@@ -45,8 +45,8 @@ export default async function LeadContinuePage({ params }) {
   if (!lead) notFound();
 
   const program = lead.affiliate_programs;
-  const product = program.products;
-  const business = product.businesses;
+  const campaign = program.campaigns;
+  const business = campaign.businesses;
   const branding = resolveLandingBranding(business);
   const sharesContactWithAffiliate = requiresAffiliateContactSharing(business);
 
@@ -89,7 +89,7 @@ export default async function LeadContinuePage({ params }) {
               Pay {business.name}
             </Typography>
             <Typography variant="h3" fontWeight={800} sx={{ mb: 4 }}>
-              ₦{Number(product.price_naira).toLocaleString()}
+              ₦{Number(campaign.price_naira).toLocaleString()}
             </Typography>
 
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
@@ -106,27 +106,27 @@ export default async function LeadContinuePage({ params }) {
                   }}
                 >
                   <Typography variant="body2" sx={{ color: tokens.ink, fontWeight: 700 }}>
-                    {(product.name || "?").charAt(0).toUpperCase()}
+                    {(campaign.name || "?").charAt(0).toUpperCase()}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography fontWeight={700}>{product.name}</Typography>
+                  <Typography fontWeight={700}>{campaign.name}</Typography>
                   <Typography variant="caption" sx={{ color: tokens.muted }}>
-                    {billingLabel(product.billing_frequency)}
+                    {billingLabel(campaign.billing_frequency)}
                   </Typography>
                 </Box>
               </Stack>
-              <Typography fontWeight={700}>₦{Number(product.price_naira).toLocaleString()}</Typography>
+              <Typography fontWeight={700}>₦{Number(campaign.price_naira).toLocaleString()}</Typography>
             </Stack>
             <Divider sx={{ mb: 2 }} />
             <Stack direction="row" justifyContent="space-between" sx={{ mb: 4 }}>
               <Typography fontWeight={700}>Total</Typography>
-              <Typography fontWeight={700}>₦{Number(product.price_naira).toLocaleString()}</Typography>
+              <Typography fontWeight={700}>₦{Number(campaign.price_naira).toLocaleString()}</Typography>
             </Stack>
 
-            {product.description && (
+            {campaign.description && (
               <Typography variant="body2" sx={{ color: tokens.muted, mb: 3 }}>
-                {product.description}
+                {campaign.description}
               </Typography>
             )}
 

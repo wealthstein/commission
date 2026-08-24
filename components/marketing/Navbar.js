@@ -1,7 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { AppBar, Toolbar, Container, Box, CardMedia, Typography, Button, ToggleButtonGroup, ToggleButton, Stack } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Container,
+  Box,
+  CardMedia,
+  Typography,
+  Button,
+  ToggleButtonGroup,
+  ToggleButton,
+  Stack,
+  IconButton,
+  Drawer,
+  Divider,
+} from "@mui/material";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { tokens } from "@/lib/theme";
 
 const NAV_LINKS = [
@@ -13,6 +30,7 @@ const NAV_LINKS = [
 
 
 export default function Navbar({ audience, onAudienceChange, onSignIn }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const links = NAV_LINKS.filter(
     (link) => (!link.businessOnly || audience === "business") && (!link.affiliateOnly || audience === "affiliate")
   );
@@ -106,8 +124,83 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
         >
           Get started
         </Button>
+
+        <IconButton
+          onClick={() => setMobileOpen(true)}
+          sx={{ display: { xs: "inline-flex", md: "none" }, color: tokens.ink }}
+          aria-label="Open menu"
+        >
+          <MenuRoundedIcon />
+        </IconButton>
         </Toolbar>
       </Container>
+
+      <Drawer anchor="right" open={mobileOpen} onClose={() => setMobileOpen(false)}>
+        <Box sx={{ width: 280, p: 3, height: "100%", display: "flex", flexDirection: "column" }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+            <Typography fontWeight={700}>Menu</Typography>
+            <IconButton onClick={() => setMobileOpen(false)} aria-label="Close menu">
+              <CloseRoundedIcon />
+            </IconButton>
+          </Stack>
+
+          <ToggleButtonGroup
+            value={audience}
+            exclusive
+            fullWidth
+            size="small"
+            onChange={(_, val) => val && onAudienceChange(val)}
+            sx={{
+              bgcolor: "#F7F6F2",
+              borderRadius: 999,
+              p: 0.4,
+              mb: 3,
+              "& .MuiToggleButton-root": {
+                border: "none",
+                borderRadius: 999,
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: 13,
+                color: tokens.muted,
+              },
+              "& .Mui-selected": {
+                bgcolor: `${tokens.paper} !important`,
+                color: `${tokens.ink} !important`,
+              },
+            }}
+          >
+            <ToggleButton value="business">Businesses</ToggleButton>
+            <ToggleButton value="affiliate">Affiliates</ToggleButton>
+          </ToggleButtonGroup>
+
+          <Stack spacing={2.5} sx={{ mb: 3 }}>
+            {links.map((link) => (
+              <Typography
+                key={link.label}
+                component={Link}
+                href={link.href || hrefFor(link.anchor)}
+                onClick={() => setMobileOpen(false)}
+                sx={{ color: tokens.ink, fontWeight: 600, textDecoration: "none" }}
+              >
+                {link.label}
+              </Typography>
+            ))}
+          </Stack>
+
+          <Divider sx={{ mb: 3 }} />
+
+          <Button
+            variant="contained"
+            component={Link}
+            href={`/signin?role=${audience}`}
+            onClick={() => setMobileOpen(false)}
+            fullWidth
+            sx={{ mt: "auto" }}
+          >
+            Get started
+          </Button>
+        </Box>
+      </Drawer>
     </AppBar>
   );
 }

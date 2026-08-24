@@ -36,8 +36,8 @@ export default async function CategoryPage({ params, searchParams }) {
   const to = from + PAGE_SIZE - 1;
 
   const supabase = createAdminSupabaseClient();
-  const { data: products, count } = await supabase
-    .from("products")
+  const { data: campaigns, count } = await supabase
+    .from("campaigns")
     .select("*, businesses(name, slug)", { count: "exact" })
     .eq("category", categoryLabel)
     .eq("status", "active")
@@ -57,7 +57,7 @@ export default async function CategoryPage({ params, searchParams }) {
         </Typography>
 
         <Grid container spacing={2.5} sx={{ mb: 5 }}>
-          {(products || []).map((p) => (
+          {(campaigns || []).map((p) => (
             <Grid item xs={12} sm={6} md={4} key={p.id}>
               <Paper
                 component={Link}

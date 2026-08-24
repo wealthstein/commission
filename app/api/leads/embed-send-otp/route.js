@@ -52,8 +52,8 @@ export async function POST(req) {
     return NextResponse.json({ error: "This confirmation link has expired. Please start again." }, { status: 404, headers: CORS_HEADERS });
   }
 
-  const { data: program } = await supabase.from("affiliate_programs").select("products(name, business_id, businesses(name))").eq("id", lead.program_id).single();
-  const businessName = program?.products?.businesses?.name || "the business";
+  const { data: program } = await supabase.from("affiliate_programs").select("campaigns(name, business_id, businesses(name))").eq("id", lead.program_id).single();
+  const businessName = program?.campaigns?.businesses?.name || "the business";
 
   let sent;
   try {

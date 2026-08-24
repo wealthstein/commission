@@ -33,7 +33,7 @@ export async function POST(req, { params }) {
 
   const { data: transaction } = await admin
     .from("transactions")
-    .select("*, products(*, businesses(*))")
+    .select("*, campaigns(*, businesses(*))")
     .eq("id", params.transactionId)
     .single();
 
@@ -49,7 +49,7 @@ export async function POST(req, { params }) {
     return NextResponse.json({ status: "rejected" });
   }
 
-  const business = transaction.products.businesses;
+  const business = transaction.campaigns.businesses;
 
   // No affiliate on this sale — nothing owed, nothing to charge. Just confirm it happened.
   if (!transaction.enrollment_id) {
@@ -60,12 +60,12 @@ export async function POST(req, { params }) {
   const { data: program } = await admin
     .from("affiliate_programs")
     .select("*")
-    .eq("product_id", transaction.product_id)
+    .eq("campaign_id", transaction.campaign_id)
     .eq("status", "active")
     .maybeSingle();
   if (!program) {
     await admin.from("transactions").update({ verification_status: "verified", status: "success" }).eq("id", transaction.id);
-    return NextResponse.json({ status: "verified", commissions: [], note: "No active affiliate program on this product" });
+    return NextResponse.json({ status: "verified", commissions: [], note: "No active affiliate program on this campaign" });
   }
 
   const { data: enrollment } = await admin
@@ -134,7 +134,7 @@ export async function POST(req, { params }) {
           to: affiliateUser.email,
           name: affiliateUser.full_name,
           amountNaira: line.affiliatePayoutNaira,
-          productName: transaction.products.name,
+          productName: transaction.campaigns.name,
           tier: line.tier,
         });
       }

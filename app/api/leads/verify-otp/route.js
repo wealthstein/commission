@@ -56,7 +56,7 @@ export async function POST(req) {
 
   const { data: program } = await supabase
     .from("affiliate_programs")
-    .select("*, products(name, business_id)")
+    .select("*, campaigns(name, business_id)")
     .eq("id", otpRow.program_id)
     .eq("status", "active")
     .maybeSingle();

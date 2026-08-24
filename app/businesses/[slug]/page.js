@@ -14,29 +14,29 @@ export async function generateStaticParams() {
   return [];
 }
 
-async function getBusinessWithProducts(slug) {
+async function getBusinessWithCampaigns(slug) {
   const supabase = createAdminSupabaseClient();
   const { data: business } = await supabase.from("businesses").select("*").eq("slug", slug).maybeSingle();
-  if (!business) return { business: null, products: [] };
+  if (!business) return { business: null, campaigns: [] };
 
-  const { data: products } = await supabase
-    .from("products")
+  const { data: campaigns } = await supabase
+    .from("campaigns")
     .select("*")
     .eq("business_id", business.id)
     .eq("status", "active")
     .order("created_at", { ascending: false });
 
-  return { business, products: products || [] };
+  return { business, campaigns: campaigns || [] };
 }
 
 export async function generateMetadata({ params }) {
-  const { business } = await getBusinessWithProducts(params.slug);
+  const { business } = await getBusinessWithCampaigns(params.slug);
   if (!business) return { title: "Business not found • Commission" };
   return buildBusinessMetadata({ business });
 }
 
 export default async function BusinessPage({ params }) {
-  const { business, products } = await getBusinessWithProducts(params.slug);
+  const { business, campaigns } = await getBusinessWithCampaigns(params.slug);
   if (!business) notFound();
 
   return (
@@ -53,7 +53,7 @@ export default async function BusinessPage({ params }) {
         )}
 
         <Grid container spacing={2.5}>
-          {products.map((p) => (
+          {campaigns.map((p) => (
             <Grid item xs={12} sm={6} key={p.id}>
               <Paper
                 component={Link}
@@ -76,7 +76,7 @@ export default async function BusinessPage({ params }) {
               </Paper>
             </Grid>
           ))}
-          {products.length === 0 && (
+          {campaigns.length === 0 && (
             <Typography sx={{ color: tokens.muted, px: 1 }}>
               No active affiliate programs from {business.name} right now.
             </Typography>

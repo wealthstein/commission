@@ -52,7 +52,7 @@ async function getProductAndBusiness(businessSlug, productSlug) {
   if (!business) return { business: null, product: null, program: null };
 
   const { data: product } = await supabase
-    .from("products")
+    .from("campaigns")
     .select("*")
     .eq("business_id", business.id)
     .eq("slug", productSlug)
@@ -63,7 +63,7 @@ async function getProductAndBusiness(businessSlug, productSlug) {
   const { data: program } = await supabase
     .from("affiliate_programs")
     .select("*")
-    .eq("product_id", product.id)
+    .eq("campaign_id", product.id)
     .eq("status", "active")
     .maybeSingle();
 

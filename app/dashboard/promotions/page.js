@@ -27,7 +27,7 @@ function PromotingTab({ userRowId }) {
     async function load() {
       const { data: enrollments } = await supabase
         .from("affiliate_enrollments")
-        .select("id, referral_code, program_id, affiliate_programs(id, products(name, slug, businesses(slug)))")
+        .select("id, referral_code, program_id, affiliate_programs(id, campaigns(name, slug, businesses(slug)))")
         .eq("affiliate_id", userRowId);
 
       const enrollmentIds = (enrollments || []).map((e) => e.id);
@@ -49,9 +49,9 @@ function PromotingTab({ userRowId }) {
         (enrollments || []).map((e) => ({
           id: e.id,
           referralCode: e.referral_code,
-          product: e.affiliate_programs?.products?.name || "Campaign",
-          businessSlug: e.affiliate_programs?.products?.businesses?.slug,
-          productSlug: e.affiliate_programs?.products?.slug,
+          product: e.affiliate_programs?.campaigns?.name || "Campaign",
+          businessSlug: e.affiliate_programs?.campaigns?.businesses?.slug,
+          productSlug: e.affiliate_programs?.campaigns?.slug,
           sales: commissionsByEnrollment[e.id]?.count || 0,
           earnedNaira: commissionsByEnrollment[e.id]?.total || 0,
         }))
@@ -183,7 +183,7 @@ function RealEstateSalesTab({ userRowId }) {
     async function load() {
       const { data } = await supabase
         .from("manual_sale_confirmations")
-        .select("id, reported_sale_amount_naira, reported_commission_naira, notes, created_at, leads(lead_ref, affiliate_programs(products(name)))")
+        .select("id, reported_sale_amount_naira, reported_commission_naira, notes, created_at, leads(lead_ref, affiliate_programs(campaigns(name)))")
         .eq("affiliate_id", userRowId)
         .order("created_at", { ascending: false });
 
@@ -223,7 +223,7 @@ function RealEstateSalesTab({ userRowId }) {
             }}
           >
             <Box sx={{ minWidth: 200 }}>
-              <Typography fontWeight={700}>{r.leads?.affiliate_programs?.products?.name || "Campaign"}</Typography>
+              <Typography fontWeight={700}>{r.leads?.affiliate_programs?.campaigns?.name || "Campaign"}</Typography>
               <Typography variant="caption" sx={{ color: tokens.muted }}>
                 {r.leads?.lead_ref} · Confirmed {new Date(r.created_at).toLocaleDateString()}
                 {r.notes ? ` · ${r.notes}` : ""}

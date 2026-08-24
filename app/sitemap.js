@@ -23,14 +23,14 @@ function buildSectionSitemapEntries(indexUrl, buildItemUrl, items) {
   ];
 }
 
-async function countActiveProducts(supabase) {
-  const { count } = await supabase.from("products").select("id", { count: "exact", head: true }).eq("status", "active");
+async function countActiveCampaigns(supabase) {
+  const { count } = await supabase.from("campaigns").select("id", { count: "exact", head: true }).eq("status", "active");
   return count || 0;
 }
 
 /**
  * Tells Next.js how many sitemap files to build. IDs 0..N-1 each hold up to
- * PAGE_SIZE product URLs. The final ID (N) holds every other URL type
+ * PAGE_SIZE campaign URLs. The final ID (N) holds every other URL type
  * (marketing pages, businesses, category hubs) — these are far lower
  * volume, so one extra file comfortably fits all of them.
  *
@@ -40,19 +40,19 @@ async function countActiveProducts(supabase) {
  */
 export async function generateSitemaps() {
   const supabase = createAdminSupabaseClient();
-  const productCount = await countActiveProducts(supabase);
-  const productPages = Math.max(1, Math.ceil(productCount / PAGE_SIZE));
-  const staticPageId = productPages; // one extra id for everything else
+  const campaignCount = await countActiveCampaigns(supabase);
+  const campaignPages = Math.max(1, Math.ceil(campaignCount / PAGE_SIZE));
+  const staticPageId = campaignPages; // one extra id for everything else
 
-  // ids 0..productPages-1 => product chunks, id productPages => static/business/category chunk
-  return Array.from({ length: productPages + 1 }, (_, i) => ({ id: i }));
+  // ids 0..campaignPages-1 => campaign chunks, id campaignPages => static/business/category chunk
+  return Array.from({ length: campaignPages + 1 }, (_, i) => ({ id: i }));
 }
 
 export default async function sitemap({ id }) {
   const supabase = createAdminSupabaseClient();
-  const productCount = await countActiveProducts(supabase);
-  const productPages = Math.max(1, Math.ceil(productCount / PAGE_SIZE));
-  const staticPageId = productPages;
+  const campaignCount = await countActiveCampaigns(supabase);
+  const campaignPages = Math.max(1, Math.ceil(campaignCount / PAGE_SIZE));
+  const staticPageId = campaignPages;
 
   // The final chunk: marketing pages, every business, every category hub,
   // and every curated company/industry keyword-target page.
@@ -114,18 +114,18 @@ export default async function sitemap({ id }) {
     return entries;
   }
 
-  // A product chunk: PAGE_SIZE product/affiliate-program pages, offset by id.
+  // A campaign chunk: PAGE_SIZE campaign/affiliate-program pages, offset by id.
   const from = id * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const { data: products } = await supabase
-    .from("products")
+  const { data: campaigns } = await supabase
+    .from("campaigns")
     .select("slug, updated_at, businesses(slug)")
     .eq("status", "active")
     .order("id", { ascending: true }) // stable order so pagination does not skip/duplicate rows as data changes
     .range(from, to);
 
-  return (products || [])
+  return (campaigns || [])
     .filter((p) => p.businesses?.slug)
     .map((p) => ({
       url: `${SITE_URL}${urls.product(p.businesses.slug, p.slug)}`,

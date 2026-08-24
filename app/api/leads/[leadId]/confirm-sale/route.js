@@ -33,7 +33,7 @@ export async function POST(req, { params }) {
 
   const { data: lead } = await admin
     .from("leads")
-    .select("id, status, enrollment_id, affiliate_programs(products(business_id, businesses(id, industry)))")
+    .select("id, status, enrollment_id, affiliate_programs(campaigns(business_id, businesses(id, industry)))")
     .eq("id", params.leadId)
     .single();
 
@@ -44,7 +44,7 @@ export async function POST(req, { params }) {
     return NextResponse.json({ error: "Only a qualified (Intent Qualified) lead can have a sale confirmed against it." }, { status: 400 });
   }
 
-  const business = lead.affiliate_programs.products.businesses;
+  const business = lead.affiliate_programs.campaigns.businesses;
   if (!requiresAffiliateContactSharing(business)) {
     return NextResponse.json(
       { error: "Manual sale confirmation is only available for real estate campaigns." },

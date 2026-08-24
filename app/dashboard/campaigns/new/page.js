@@ -383,11 +383,11 @@ export default function NewCampaignPage() {
         businessId = newBusiness.id;
       }
 
-      // 2. Create the product/campaign. Customers always pay you directly
+      // 2. Create the campaign. Customers always pay you directly
       // (product_url, offline_payment_instructions) regardless of physical
       // vs digital — that toggle only affects which categories are available.
-      const { data: product, error: productError } = await supabase
-        .from("products")
+      const { data: campaign, error: campaignError } = await supabase
+        .from("campaigns")
         .insert({
           business_id: businessId,
           name: form.name,
@@ -403,14 +403,14 @@ export default function NewCampaignPage() {
         })
         .select()
         .single();
-      if (productError) {
+      if (campaignError) {
         // Postgres's raw unique-constraint message isn't something a
         // business user should have to parse - the field itself now also
         // carries a warning, this is the fallback if they hit it anyway.
-        if (productError.code === "23505") {
+        if (campaignError.code === "23505") {
           throw new Error("You already have a campaign with this exact name. Choose a different name and try again.");
         }
-        throw productError;
+        throw campaignError;
       }
 
       // 3. Launch the campaign. A lead campaign has no "commission_type" —
@@ -428,7 +428,7 @@ export default function NewCampaignPage() {
       const { data: program, error: programError } = await supabase
         .from("affiliate_programs")
         .insert({
-          product_id: product.id,
+          campaign_id: campaign.id,
           conversion_goal: form.conversion_goal,
           commission_type: isLead ? "one_time" : form.commission_type,
           cost_per_qualified_lead_naira: isLead ? Number(form.cost_per_qualified_lead) : null,

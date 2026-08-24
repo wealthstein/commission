@@ -63,10 +63,10 @@ export async function POST(req) {
 
   const { data: program } = await admin
     .from("affiliate_programs")
-    .select("*, products(name, business_id, businesses(*))")
+    .select("*, campaigns(name, business_id, businesses(*))")
     .eq("id", lead.program_id)
     .single();
-  const business = program.products.businesses;
+  const business = program.campaigns.businesses;
 
   let chargeAmount;
   try {
@@ -92,7 +92,7 @@ export async function POST(req) {
   const forwardedTo = await forwardLeadToBusiness(admin, {
     business,
     ownerEmail: ownerRow?.email,
-    productName: program.products.name,
+    productName: program.campaigns.name,
     fullName: pending.full_name,
     phone: pending.phone,
     email: pending.email,

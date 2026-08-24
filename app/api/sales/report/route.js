@@ -3,21 +3,21 @@ import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
 /**
  * POST /api/sales/report
- * body: { productId, customerEmail, amountNaira, referralCode?, proofUrl? }
+ * body: { campaignId, customerEmail, amountNaira, referralCode?, proofUrl? }
  *
  * For 'sale'-goal campaigns (see affiliate_programs.conversion_goal). Since
  * the customer always pays the business directly — there is no Paystack
- * webhook to trigger commission calculation automatically for ANY product,
+ * webhook to trigger commission calculation automatically for ANY campaign,
  * physical or digital. The business logs the sale here — it lands as
  * 'pending' verification. Nothing is owed to any affiliate yet; that only
  * happens once the business confirms it via POST /api/sales/[id]/verify,
  * which is what actually charges the wallet.
  */
 export async function POST(req) {
-  const { productId, customerEmail, amountNaira, referralCode, proofUrl } = await req.json();
+  const { campaignId, customerEmail, amountNaira, referralCode, proofUrl } = await req.json();
 
-  if (!productId || !customerEmail || !amountNaira) {
-    return NextResponse.json({ error: "productId, customerEmail, and amountNaira are required" }, { status: 400 });
+  if (!campaignId || !customerEmail || !amountNaira) {
+    return NextResponse.json({ error: "campaignId, customerEmail, and amountNaira are required" }, { status: 400 });
   }
 
   const supabase = createServerSupabaseClient();
@@ -30,20 +30,20 @@ export async function POST(req) {
 
   const { data: reporterUser } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
 
-  const { data: product } = await supabase.from("products").select("*").eq("id", productId).single();
-  if (!product) {
-    return NextResponse.json({ error: "Product not found" }, { status: 404 });
+  const { data: campaign } = await supabase.from("campaigns").select("*").eq("id", campaignId).single();
+  if (!campaign) {
+    return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
 
   const { data: program } = await supabase
     .from("affiliate_programs")
     .select("conversion_goal")
-    .eq("product_id", productId)
+    .eq("campaign_id", campaignId)
     .eq("status", "active")
     .maybeSingle();
   if (!program || program.conversion_goal !== "sale") {
     return NextResponse.json(
-      { error: "This product's campaign is not a sale-goal campaign — use the lead capture flow instead." },
+      { error: "This campaign is not a sale-goal campaign — use the lead capture flow instead." },
       { status: 400 }
     );
   }
@@ -62,7 +62,7 @@ export async function POST(req) {
   const { data: customer } = await supabase
     .from("customers")
     .upsert(
-      { business_id: product.business_id, email: customerEmail, attributed_enrollment_id: enrollment?.id ?? null },
+      { business_id: campaign.business_id, email: customerEmail, attributed_enrollment_id: enrollment?.id ?? null },
       { onConflict: "business_id,email" }
     )
     .select()
@@ -71,7 +71,7 @@ export async function POST(req) {
   const { data: transaction, error: txnError } = await supabase
     .from("transactions")
     .insert({
-      product_id: productId,
+      campaign_id: campaignId,
       customer_id: customer.id,
       enrollment_id: enrollment?.id ?? null,
       amount_naira: amountNaira,

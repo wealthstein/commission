@@ -78,7 +78,7 @@ export async function POST(req) {
 
   const { data: program } = await supabase
     .from("affiliate_programs")
-    .select("*, products(name, business_id, businesses(plan))")
+    .select("*, campaigns(name, business_id, businesses(plan))")
     .eq("id", programId)
     .eq("status", "active")
     .maybeSingle();
@@ -99,7 +99,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "This referral code does not belong to this program" }, { status: 400, headers: CORS_HEADERS });
   }
 
-  const plan = program.products?.businesses?.plan;
+  const plan = program.campaigns?.businesses?.plan;
   if (plan !== "pro" && plan !== "plus") {
     return NextResponse.json(
       { error: "Custom integrations are available on Medium and Large plans" },

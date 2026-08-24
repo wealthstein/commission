@@ -121,7 +121,7 @@ async function handleDirectSaleSuccess(data, supabase) {
   const verified = await verifyTransaction(data.reference);
   if (verified.status !== "success") return;
 
-  const productId = data.metadata.product_id;
+  const campaignId = data.metadata.campaign_id;
   const referralCode = data.metadata.referral_code;
 
   // Idempotency: if this reference already produced a transaction, skip.
@@ -132,8 +132,8 @@ async function handleDirectSaleSuccess(data, supabase) {
     .maybeSingle();
   if (existingTxn) return;
 
-  const { data: product } = await supabase.from("products").select("*, businesses(*)").eq("id", productId).single();
-  const business = product.businesses;
+  const { data: campaign } = await supabase.from("campaigns").select("*, businesses(*)").eq("id", campaignId).single();
+  const business = campaign.businesses;
 
   let enrollment = null;
   if (referralCode) {
@@ -144,8 +144,8 @@ async function handleDirectSaleSuccess(data, supabase) {
   await processSaleTransaction(supabase, {
     data,
     verified,
-    productId,
-    product,
+    campaignId,
+    campaign,
     business,
     enrollment,
   });
@@ -158,7 +158,7 @@ async function handleDirectSaleSuccess(data, supabase) {
       {
         customer_code: verified.customer.customer_code,
         plan_code: data.plan,
-        product_id: productId,
+        campaign_id: campaignId,
         enrollment_id: enrollment?.id ?? null,
         business_id: business.id,
       },
@@ -201,8 +201,8 @@ async function handleSubscriptionRenewal(data, supabase) {
     return;
   }
 
-  const { data: product } = await supabase.from("products").select("*, businesses(*)").eq("id", attribution.product_id).single();
-  const business = product.businesses;
+  const { data: campaign } = await supabase.from("campaigns").select("*, businesses(*)").eq("id", attribution.campaign_id).single();
+  const business = campaign.businesses;
 
   let enrollment = null;
   if (attribution.enrollment_id) {
@@ -213,8 +213,8 @@ async function handleSubscriptionRenewal(data, supabase) {
   await processSaleTransaction(supabase, {
     data,
     verified,
-    productId: attribution.product_id,
-    product,
+    campaignId: attribution.campaign_id,
+    campaign,
     business,
     enrollment,
   });
@@ -226,7 +226,7 @@ async function handleSubscriptionRenewal(data, supabase) {
  * referring affiliate) calculates and records commission exactly once,
  * the same way regardless of which path called it.
  */
-async function processSaleTransaction(supabase, { data, verified, productId, product, business, enrollment }) {
+async function processSaleTransaction(supabase, { data, verified, campaignId, campaign, business, enrollment }) {
   const amountNaira = verified.amount / 100;
 
   const { data: customer } = await supabase
@@ -241,7 +241,7 @@ async function processSaleTransaction(supabase, { data, verified, productId, pro
   const { data: transaction } = await supabase
     .from("transactions")
     .insert({
-      product_id: productId,
+      campaign_id: campaignId,
       customer_id: customer.id,
       enrollment_id: enrollment?.id ?? null,
       paystack_reference: data.reference,
@@ -260,7 +260,7 @@ async function processSaleTransaction(supabase, { data, verified, productId, pro
   const { data: program } = await supabase
     .from("affiliate_programs")
     .select("*")
-    .eq("product_id", productId)
+    .eq("campaign_id", campaignId)
     .eq("status", "active")
     .maybeSingle();
   if (!program) return;
@@ -314,7 +314,7 @@ async function processSaleTransaction(supabase, { data, verified, productId, pro
           to: affiliateUser.email,
           name: affiliateUser.full_name,
           amountNaira: line.affiliatePayoutNaira,
-          productName: product.name,
+          productName: campaign.name,
           tier: line.tier,
         });
       }
