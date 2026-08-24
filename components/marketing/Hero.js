@@ -40,7 +40,7 @@ export default function Hero({ content, audience, onPrimaryCta }) {
   return (
     <Box component="section" sx={{ py: { xs: 8, md: 12 }, bgcolor: tokens.paper }}>
       <Container maxWidth="md">
-        <Stack direction={{ xs: "column", md: "row" }} spacing={6} alignItems="center">
+        <Stack direction={{ xs: "column", md: "row" }} spacing={6} alignItems="stretch">
           <Box sx={{ flex: 1 }}>
             <SectionLabel>{content.eyebrow}</SectionLabel>
             <Typography variant="h1" sx={{ fontSize: { xs: 34, md: 52 }, lineHeight: 1.08, mb: 3 }}>
@@ -74,8 +74,8 @@ export default function Hero({ content, audience, onPrimaryCta }) {
           </Box>
         </Stack>
 
-        <Box sx={{ borderTop: `1px solid ${tokens.border}`, mt: { xs: 6, md: 8 }, pt: { xs: 4, md: 5 } }}>
-          <Stack direction="row" spacing={{ xs: 4, md: 8 }} flexWrap="wrap">
+        <Box sx={{ borderTop: `1px solid ${tokens.border}`, mt: { xs: 6, md: 8 }, pt: { xs: 4, md: 5 }, textAlign: "center" }}>
+          <Stack direction="row" spacing={{ xs: 4, md: 8 }} flexWrap="wrap" justifyContent="center">
             {STATS[audience].map((stat) => (
               <Box key={stat.label}>
                 <Typography sx={{ fontSize: { xs: 24, md: 30 }, fontWeight: 700, lineHeight: 1.1 }}>{stat.value}</Typography>
