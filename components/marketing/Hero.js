@@ -85,9 +85,9 @@ export default function Hero({ content, audience, onPrimaryCta }) {
               </Box>
             ))}
           </Stack>
-          <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 2 }}>
+          {/* <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 2 }}>
             Illustrative example - not yet reflective of live usage.
-          </Typography>
+          </Typography> */}
         </Box>
       </Container>
     </Box>
