@@ -20,15 +20,19 @@ import { tokens } from "@/lib/theme";
  * @param {string} decisionLabel - right-side output node label
  */
 export default function ConvergingFlowDiagram({ nodes, engineLabel, decisionLabel }) {
-  const width = 640;
-  const height = 260;
+  // Fixed gap between node centers, same for every audience regardless of
+  // how many nodes it has - height derives from this, not the other way
+  // around, so a 3-node and a 4-node diagram get identical per-node
+  // spacing instead of being squeezed into the same fixed height.
+  const NODE_SPACING = 85;
+  const width = 820;
+  const height = NODE_SPACING * (nodes.length + 1);
   const nodeX = 90;
-  const engineX = 340;
-  const decisionX = 560;
+  const engineX = 480;
+  const decisionX = 740;
   const centerY = height / 2;
-  const spacing = height / (nodes.length + 1);
 
-  const nodePositions = nodes.map((_, i) => ({ x: nodeX, y: spacing * (i + 1) }));
+  const nodePositions = nodes.map((_, i) => ({ x: nodeX, y: NODE_SPACING * (i + 1) }));
 
   function pathFor(pos) {
     // A smooth curve from each input node into the engine's left edge.
@@ -45,7 +49,7 @@ export default function ConvergingFlowDiagram({ nodes, engineLabel, decisionLabe
         overflowX: "auto",
       }}
     >
-      <Box component="svg" viewBox={`0 0 ${width} ${height}`} sx={{ width: "100%", height: "auto", minWidth: 480, display: "block" }}>
+      <Box component="svg" viewBox={`0 0 ${width} ${height}`} sx={{ width: "100%", height: "auto", minWidth: 620, display: "block" }}>
         {/* Connecting paths, input -> engine */}
         {nodePositions.map((pos, i) => (
           <path key={`path-${i}`} id={`flow-path-${i}`} d={pathFor(pos)} fill="none" stroke={tokens.border} strokeWidth="1.5" />
@@ -83,7 +87,7 @@ export default function ConvergingFlowDiagram({ nodes, engineLabel, decisionLabe
             <text x={pos.x} y={pos.y + 4} textAnchor="middle" fontSize="11" fontWeight="700" fill={tokens.ink}>
               {nodes[i].percent}
             </text>
-            <text x={pos.x + 34} y={pos.y + 4} fontSize="11" fill={tokens.muted}>
+            <text x={pos.x + 34} y={pos.y + 4} fontSize="9.5" fill={tokens.muted}>
               {nodes[i].label}
             </text>
           </g>
@@ -91,6 +95,7 @@ export default function ConvergingFlowDiagram({ nodes, engineLabel, decisionLabe
 
         {/* Engine node */}
         <circle cx={engineX} cy={centerY} r="30" fill={tokens.brand} />
+        <image href="/circle.svg" x={engineX - 22} y={centerY - 22} width="44" height="44" />
         <text x={engineX} y={centerY + 45} textAnchor="middle" fontSize="12" fontWeight="700" fill={tokens.ink}>
           {engineLabel}
         </text>

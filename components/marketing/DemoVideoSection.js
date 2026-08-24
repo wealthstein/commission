@@ -20,7 +20,7 @@ const FLOW_DATA = {
   business: {
     nodes: [
       { percent: "40%", label: "Affiliate Trust Score" },
-      { percent: "25%", label: "Form-Fill Timing" },
+      { percent: "25%", label: "Form Intelligence" },
       { percent: "20%", label: "Cross-Campaign Signals" },
       { percent: "15%", label: "Network Plausibility" },
     ],
@@ -29,9 +29,9 @@ const FLOW_DATA = {
   },
   affiliate: {
     nodes: [
-      { percent: "50%", label: "Your Direct Referrals" },
-      { percent: "30%", label: "Tier-2 Recruits" },
-      { percent: "20%", label: "Tier-3 Recruits" },
+      { percent: "50%", label: "You Earn" },
+      { percent: "30%", label: "Your Referred Affiliate Earns" },
+      { percent: "20%", label: "Their Own Referred Affiliate Earns" },
     ],
     engineLabel: "Commission Engine",
     decisionLabel: "Automatic Payout",
