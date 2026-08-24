@@ -5,7 +5,6 @@ import { Box, Typography, ToggleButtonGroup, ToggleButton, Stack } from "@mui/ma
 import { tokens } from "@/lib/theme";
 import { pricingPlans } from "@/lib/pricingPlans";
 
-// Fixed illustrative example: a ₦100,000 sale with a 15% total affiliate
 // commission (8% + 5% + 2%, matching the TRD's worked example). Only the
 // INNER split of that ₦15,000 commission changes with plan — how much
 // Commission keeps vs. how much reaches affiliates. The business's own

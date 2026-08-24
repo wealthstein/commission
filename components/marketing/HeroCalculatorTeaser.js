@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Box, Typography, Slider, Stack, Button } from "@mui/material";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
 import { DEFAULT_PPQL_NAIRA } from "@/lib/industryPages";
@@ -16,6 +17,11 @@ const BUSINESS_MIN_NAIRA = 100000;
 
 const AFFILIATE_MAX_NAIRA = 1000000;
 const AFFILIATE_MIN_NAIRA = 10000;
+
+const CHECKLIST = {
+  business: ["No setup fees or monthly minimums", "Paid out automatically via Paystack", "Built-in fraud protection with Radar"],
+  affiliate: ["No follower minimum to join", "Paid directly to your bank account", "Earn from up to 3 tiers deep"],
+};
 
 /**
  * Compact version of the calculator for the Hero card slot - one slider,
@@ -77,6 +83,17 @@ export default function HeroCalculatorTeaser({ audience }) {
           {isBusiness ? `+${extraLeads.toLocaleString()} leads` : `₦${earningsNaira.toLocaleString()}`}
         </Typography>
       </Box>
+
+      <Stack spacing={0.75} sx={{ mb: 2 }}>
+        {CHECKLIST[isBusiness ? "business" : "affiliate"].map((item) => (
+          <Stack key={item} direction="row" spacing={1} alignItems="center">
+            <CheckCircleRoundedIcon sx={{ fontSize: 16, color: tokens.success }} />
+            <Typography variant="caption" sx={{ color: tokens.muted }}>
+              {item}
+            </Typography>
+          </Stack>
+        ))}
+      </Stack>
 
       <Button
         component={Link}

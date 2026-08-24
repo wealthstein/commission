@@ -9,7 +9,6 @@ import { comparisons } from "@/lib/comparisons";
 import { industryPages, DEFAULT_PPQL_NAIRA } from "@/lib/industryPages";
 import { pricingPlans, feePercentForPlan } from "@/lib/pricingPlans";
 
-// Illustrative cost-per-lead benchmarks for each real alternative - lives
 // here (not in lib/comparisons.js) since that file holds qualitative
 // comparison copy, not numeric assumptions. A business sets its own real
 // numbers once live; this is only meant to make the slider feel concrete.
@@ -236,9 +235,6 @@ export default function SavingsCalculator() {
         </Box>
       )}
 
-      <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 3 }}>
-        Illustrative only - real numbers depend on the campaigns you choose and how they perform.
-      </Typography>
     </Box>
   );
 }

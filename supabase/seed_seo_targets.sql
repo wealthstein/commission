@@ -26,7 +26,6 @@ values
   ('logistics-affiliate-programs', 'industry', 'logistics', 'Logistics', 'Logistics',
    'Explore logistics affiliate programs in Nigeria and earn commission referring shipping and delivery customers.'),
 
-  -- Companies — illustrative examples only. Verify status before publishing;
   -- these ask the question, they don't assert an affiliate program exists.
   ('gtbank-affiliate-program', 'company', 'gtbank', 'GTBank', 'Fintech',
    'Does GTBank have an affiliate program? Here''s what to know, and how to get notified if one launches on Commission.'),
