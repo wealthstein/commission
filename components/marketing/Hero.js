@@ -17,7 +17,6 @@ import HeroCalculatorTeaser from "./HeroCalculatorTeaser";
 /**
  * DUMMY DATA - not real, not yet reflective of actual usage. Commission
  * hasn't launched with real businesses/affiliates yet. This must be
- * clearly labeled as illustrative on the live page (see the caption
  * rendered below the stats row) and swapped for genuine figures the
  * moment real ones exist - shipping these as unlabeled fact to real
  * visitors would be a false claim about the platform's actual track
@@ -85,9 +84,6 @@ export default function Hero({ content, audience, onPrimaryCta }) {
               </Box>
             ))}
           </Stack>
-          {/* <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 2 }}>
-            Illustrative example - not yet reflective of live usage.
-          </Typography> */}
         </Box>
       </Container>
     </Box>

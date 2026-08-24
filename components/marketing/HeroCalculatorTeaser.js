@@ -9,7 +9,7 @@ import { tokens } from "@/lib/theme";
 import { urls } from "@/lib/urls";
 import { DEFAULT_PPQL_NAIRA } from "@/lib/industryPages";
 
-const AVERAGE_AD_CPL_NAIRA = 8000; // blended illustrative benchmark - the full calculator lets a business pick a specific real alternative instead
+const AVERAGE_AD_CPL_NAIRA = 8000; // blended benchmark - the full calculator lets a business pick a specific real alternative instead
 const AVERAGE_AFFILIATE_SHARE_PERCENT = 50; // matches the default tier-1 share used on the full calculator page
 
 const BUSINESS_MAX_NAIRA = 10000000;
