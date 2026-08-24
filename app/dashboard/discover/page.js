@@ -25,14 +25,14 @@ export default function DiscoverPage() {
 
     async function load() {
       try {
-        // The products query has zero dependency on auth state - only the
+        // The campaigns query has zero dependency on auth state - only the
         // LATER filtering below needs myUserId/myBusinessId. Starting it
         // alongside the auth check instead of after it cuts a full
         // round-trip off what was previously a strict sequential chain.
-        const [{ data: authData }, { data: productsData }] = await Promise.all([
+        const [{ data: authData }, { data: campaignsData }] = await Promise.all([
           supabase.auth.getUser(),
           supabase
-            .from("products")
+            .from("campaigns")
             .select(
               "id, name, category, price_naira, business_id, businesses(id, name, plan), affiliate_programs!inner(id, tier1_percent, tier2_percent, tier3_percent, status)"
             )
@@ -40,7 +40,7 @@ export default function DiscoverPage() {
         ]);
         const authUser = authData?.user;
 
-        let visible = productsData || [];
+        let visible = campaignsData || [];
         let myUserId = null;
         let myBusinessId = null;
 
@@ -74,16 +74,16 @@ export default function DiscoverPage() {
         // counting DISTINCT affiliates already enrolled across each
         // business's programs, same logic as the enforcement trigger.
         // This genuinely can't start any earlier - it needs businessIds,
-        // which only exist once the products query above has resolved.
+        // which only exist once the campaigns query above has resolved.
         const businessIds = [...new Set(visible.map((p) => p.business_id))];
         if (businessIds.length > 0) {
           const { data: allEnrollments } = await supabase
             .from("affiliate_enrollments")
-            .select("affiliate_id, affiliate_programs(products(business_id))");
+            .select("affiliate_id, affiliate_programs(campaigns(business_id))");
 
           const affiliatesByBusiness = new Map();
           for (const e of allEnrollments || []) {
-            const bizId = e.affiliate_programs?.products?.business_id;
+            const bizId = e.affiliate_programs?.campaigns?.business_id;
             if (!bizId || !businessIds.includes(bizId)) continue;
             if (!affiliatesByBusiness.has(bizId)) affiliatesByBusiness.set(bizId, new Set());
             affiliatesByBusiness.get(bizId).add(e.affiliate_id);

@@ -47,14 +47,14 @@ export async function POST(req, { params }) {
 
   const { data: lead } = await admin
     .from("leads")
-    .select("id, status, affiliate_programs(products(business_id))")
+    .select("id, status, affiliate_programs(campaigns(business_id))")
     .eq("id", params.leadId)
     .maybeSingle();
   if (!lead) {
     return NextResponse.json({ error: "Lead not found" }, { status: 404 });
   }
 
-  const businessId = lead.affiliate_programs?.products?.business_id;
+  const businessId = lead.affiliate_programs?.campaigns?.business_id;
   const { data: business } = await admin.from("businesses").select("owner_id").eq("id", businessId).maybeSingle();
   if (business?.owner_id !== userRow.id) {
     return NextResponse.json({ error: "This lead doesn't belong to your business" }, { status: 403 });

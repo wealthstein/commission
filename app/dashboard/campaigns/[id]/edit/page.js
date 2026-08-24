@@ -57,8 +57,8 @@ export default function EditCampaignPage() {
     const supabase = createClient();
 
     async function load() {
-      const { data: product, error } = await supabase
-        .from("products")
+      const { data: campaign, error } = await supabase
+        .from("campaigns")
         .select("*, affiliate_programs(*), businesses(plan, website_url)")
         .eq("id", params.id)
         .maybeSingle();
@@ -66,32 +66,32 @@ export default function EditCampaignPage() {
       // RLS already scopes this to campaigns the signed-in user's own
       // business owns - a null result here means either it doesn't exist
       // or it isn't theirs, and those should look the same to the caller.
-      if (error || !product) {
+      if (error || !campaign) {
         setNotFoundOrNotOwner(true);
         setLoading(false);
         return;
       }
 
-      const program = product.affiliate_programs?.[0];
+      const program = campaign.affiliate_programs?.[0];
       setIsLead(program?.conversion_goal === "lead");
-      setIsPhysical(product.product_type === "physical");
-      setBusinessPlan(product.businesses?.plan || "free");
-      setBusinessWebsiteUrl(product.businesses?.website_url || null);
+      setIsPhysical(campaign.product_type === "physical");
+      setBusinessPlan(campaign.businesses?.plan || "free");
+      setBusinessWebsiteUrl(campaign.businesses?.website_url || null);
 
       const totalCommissionPercent = program
         ? Math.round((program.tier1_percent / TIER_RATIOS.tier1) * 100)
         : 10;
 
       setForm({
-        productId: product.id,
+        campaignId: campaign.id,
         programId: program?.id,
-        name: product.name,
-        category: product.category || "",
-        description: product.description || "",
-        price: String(product.price_naira ?? ""),
-        billing_frequency: product.billing_frequency || "one_time",
-        product_url: product.product_url || "",
-        offline_payment_instructions: product.offline_payment_instructions || "",
+        name: campaign.name,
+        category: campaign.category || "",
+        description: campaign.description || "",
+        price: String(campaign.price_naira ?? ""),
+        billing_frequency: campaign.billing_frequency || "one_time",
+        product_url: campaign.product_url || "",
+        offline_payment_instructions: campaign.offline_payment_instructions || "",
         cost_per_qualified_lead: program?.cost_per_qualified_lead_naira != null ? String(program.cost_per_qualified_lead_naira) : "",
         commission_type: program?.commission_type || "one_time",
         total_commission_percent: totalCommissionPercent,
@@ -128,8 +128,8 @@ export default function EditCampaignPage() {
     try {
       const supabase = createClient();
 
-      const { error: productError } = await supabase
-        .from("products")
+      const { error: campaignError } = await supabase
+        .from("campaigns")
         .update({
           name: form.name,
           category: form.category,
@@ -139,12 +139,12 @@ export default function EditCampaignPage() {
           product_url: form.product_url,
           offline_payment_instructions: form.offline_payment_instructions || null,
         })
-        .eq("id", form.productId);
-      if (productError) {
-        if (productError.code === "23505") {
+        .eq("id", form.campaignId);
+      if (campaignError) {
+        if (campaignError.code === "23505") {
           throw new Error("You already have a campaign with this exact name. Choose a different name and try again.");
         }
-        throw productError;
+        throw campaignError;
       }
 
       if (form.programId) {

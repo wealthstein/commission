@@ -15,12 +15,13 @@
       "cta": "Start on Small",
       "features": [
         "Up to 5 affiliates",
-        "Unlimited products and campaigns",
+        "Unlimited campaigns",
         "Up to 3 commission tiers",
         "Referral link tracking",
         "Automatic affiliate payouts",
         "Custom fields - up to 1 question of your own on the Intent Form",
-        "Branded checkout page - your logo and brand color on the customer-facing page (coming soon)"
+        "Your logo on the customer-facing campaign page",
+        "30-day attribution window"
       ]
     },
     {
@@ -38,13 +39,14 @@
         "Lowest 10% platform fee on every top-up",
         "2 additional custom fields (5 total per campaign)",
         "Unlimited lead export to CSV",
-        "Priority support"
+        "Priority support",
+        "Up to 90-day attribution window"
       ]
     },
     {
       "id": "pro",
       "name": "Medium",
-      "priceNaira": 280000,
+      "priceNaira": 350000,
       "priceSuffix": "/mo",
       "feePercent": 15,
       "tagline": "For businesses topping up often enough that a lower fee pays for itself.",
@@ -55,7 +57,8 @@
         "Lower 15% platform fee on every top-up",
         "2 additional custom fields (3 total per campaign)",
         "Lead management - view and organize your leads (export not included)",
-        "Custom integrations - connect your own site directly instead of Commission's hosted page"
+        "Custom integrations - connect your own site directly instead of Commission's hosted page",
+        "Up to 90-day attribution window"
       ]
     }
   ]

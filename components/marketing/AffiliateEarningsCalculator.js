@@ -139,10 +139,6 @@ export default function AffiliateEarningsCalculator() {
         </Grid>
       </Grid>
 
-      <Typography variant="caption" sx={{ color: tokens.muted, display: "block", mt: 3 }}>
-        Illustrative only, using a typical 10,000 naira pool - the real amount is set by each business per campaign
-        and can be smaller or larger.
-      </Typography>
     </Box>
   );
 }

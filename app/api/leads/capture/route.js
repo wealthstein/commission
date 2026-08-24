@@ -78,7 +78,7 @@ export async function POST(req) {
 
   const { data: program } = await supabase
     .from("affiliate_programs")
-    .select("*, products(name, business_id, businesses(name))")
+    .select("*, campaigns(name, business_id, businesses(name))")
     .eq("id", programId)
     .eq("status", "active")
     .maybeSingle();
@@ -116,7 +116,7 @@ export async function POST(req) {
   if (!trust.trusted) {
     let sent;
     try {
-      sent = await sendOtp(phone, program.products?.businesses?.name);
+      sent = await sendOtp(phone, program.campaigns?.businesses?.name);
     } catch (err) {
       return NextResponse.json({ error: `Could not send verification code: ${err.message}` }, { status: 502 });
     }

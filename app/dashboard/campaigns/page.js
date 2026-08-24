@@ -43,7 +43,7 @@ export default function CampaignsPage() {
       }
 
       const { data: rows } = await supabase
-        .from("products")
+        .from("campaigns")
         .select("id, name, category, product_type, price_naira, billing_frequency, status, created_at, affiliate_programs(id)")
         .eq("business_id", business.id)
         .order("created_at", { ascending: false });

@@ -18,9 +18,9 @@ const PAGE_SIZE = 45000; // must match app/sitemap.js
  */
 export async function GET() {
   const supabase = createAdminSupabaseClient();
-  const { count } = await supabase.from("products").select("id", { count: "exact", head: true }).eq("status", "active");
-  const productPages = Math.max(1, Math.ceil((count || 0) / PAGE_SIZE));
-  const totalChunks = productPages + 1; // + the static/business/category chunk
+  const { count } = await supabase.from("campaigns").select("id", { count: "exact", head: true }).eq("status", "active");
+  const campaignPages = Math.max(1, Math.ceil((count || 0) / PAGE_SIZE));
+  const totalChunks = campaignPages + 1; // + the static/business/category chunk
 
   const sitemapEntries = Array.from({ length: totalChunks }, (_, i) => `${SITE_URL}/sitemap/${i}.xml`);
 

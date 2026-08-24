@@ -35,7 +35,7 @@ export default function DashboardHome() {
       if (enrollmentIds.length > 0) {
         const { data } = await supabase
           .from("commissions")
-          .select("affiliate_payout_naira, payout_status, created_at, affiliate_enrollments(affiliate_programs(products(name)))")
+          .select("affiliate_payout_naira, payout_status, created_at, affiliate_enrollments(affiliate_programs(campaigns(name)))")
           .in("enrollment_id", enrollmentIds)
           .order("created_at", { ascending: false });
         commissions = data || [];
@@ -47,16 +47,16 @@ export default function DashboardHome() {
         .reduce((sum, c) => sum + Number(c.affiliate_payout_naira), 0);
       const totalSalesCount = commissions.length;
 
-      // Business side - products and active programs owned by this user's business, if any.
+      // Business side - campaigns and active programs owned by this user's business, if any.
       const { data: business } = await supabase.from("businesses").select("id").eq("owner_id", userRow.id).maybeSingle();
-      let productsListed = 0;
+      let campaignsListed = 0;
       let programsRunning = 0;
       if (business) {
-        const { count: productCount } = await supabase
-          .from("products")
+        const { count: campaignCount } = await supabase
+          .from("campaigns")
           .select("id", { count: "exact", head: true })
           .eq("business_id", business.id);
-        productsListed = productCount || 0;
+        campaignsListed = campaignCount || 0;
 
         const { count: programCount } = await supabase
           .from("affiliate_programs")
@@ -89,7 +89,7 @@ export default function DashboardHome() {
         pendingPayoutNaira,
         totalSalesCount,
         activeReferrals,
-        productsListed,
+        campaignsListed,
         programsRunning,
       });
       setRecent(commissions.slice(0, 8));
@@ -125,7 +125,7 @@ export default function DashboardHome() {
           <StatCard label="Active referrals" value={o.activeReferrals} hint="Across your network" />
         </Grid>
         <Grid item xs={6} md={4}>
-          <StatCard label="Campaigns listed" value={o.productsListed} />
+          <StatCard label="Campaigns listed" value={o.campaignsListed} />
         </Grid>
         <Grid item xs={6} md={4}>
           <StatCard label="Programs running" value={o.programsRunning} />
@@ -157,7 +157,7 @@ export default function DashboardHome() {
           >
             <Box sx={{ minWidth: 180 }}>
               <Typography variant="body2" fontWeight={600}>
-                {c.affiliate_enrollments?.affiliate_programs?.products?.name || "Campaign"}
+                {c.affiliate_enrollments?.affiliate_programs?.campaigns?.name || "Campaign"}
               </Typography>
               <Typography variant="caption" sx={{ color: tokens.muted }}>
                 {new Date(c.created_at).toLocaleDateString()}
