@@ -86,6 +86,7 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
           size="small"
           onChange={(_, val) => val && onAudienceChange(val)}
           sx={{
+            display: { xs: "none", md: "flex" },
             bgcolor: "#F7F6F2",
             borderRadius: 999,
             p: 0.4,
@@ -135,8 +136,13 @@ export default function Navbar({ audience, onAudienceChange, onSignIn }) {
         </Toolbar>
       </Container>
 
-      <Drawer anchor="right" open={mobileOpen} onClose={() => setMobileOpen(false)}>
-        <Box sx={{ width: 280, p: 3, height: "100%", display: "flex", flexDirection: "column" }}>
+      <Drawer
+        anchor="right"
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        PaperProps={{ sx: { height: "100dvh" } }}
+      >
+        <Box sx={{ width: 280, p: 3, height: "100%", display: "flex", flexDirection: "column", overflowY: "auto" }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
             <Typography fontWeight={700}>Menu</Typography>
             <IconButton onClick={() => setMobileOpen(false)} aria-label="Close menu">

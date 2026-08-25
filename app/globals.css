@@ -10,6 +10,8 @@ body {
   margin: 0;
   scroll-behavior: smooth;
   background: #faf9f5;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 a {

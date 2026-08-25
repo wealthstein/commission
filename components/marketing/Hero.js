@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Container, Typography, Button, Stack } from "@mui/material";
+import { Box, Container, Typography, Button, Stack, Grid } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { tokens } from "@/lib/theme";
 import { withPeriod } from "@/lib/textFormat";
@@ -8,19 +8,12 @@ import SectionLabel from "./SectionLabel";
 import HeroCalculatorTeaser from "./HeroCalculatorTeaser";
 
 /**
- * Deliberately factual product attributes, not usage numbers. Commission
- * hasn't launched with real businesses/affiliates yet, so claiming
- * something like "2M+ verified members" would be a fabricated marketing
- * claim, not a stylistic choice - these are all things genuinely true
- * about the product today, regardless of how many people have used it.
- */
-/**
  * DUMMY DATA - not real, not yet reflective of actual usage. Commission
  * hasn't launched with real businesses/affiliates yet. This must be
- * rendered below the stats row) and swapped for genuine figures the
- * moment real ones exist - shipping these as unlabeled fact to real
- * visitors would be a false claim about the platform's actual track
- * record, not a style choice.
+ * clearly labeled as illustrative on the live page and swapped for
+ * genuine figures the moment real ones exist - shipping these as
+ * unlabeled fact to real visitors would be a false claim about the
+ * platform's actual track record, not a style choice.
  */
 const STATS = {
   business: [
@@ -39,10 +32,10 @@ export default function Hero({ content, audience, onPrimaryCta }) {
   return (
     <Box component="section" sx={{ py: { xs: 8, md: 12 }, bgcolor: tokens.paper }}>
       <Container maxWidth="md">
-        <Stack direction={{ xs: "column", md: "row" }} spacing={6} alignItems="stretch">
-          <Box sx={{ flex: 1 }}>
+        <Grid container spacing={6}>
+          <Grid item xs={12} md={6}>
             <SectionLabel>{content.eyebrow}</SectionLabel>
-            <Typography variant="h1" sx={{ fontSize: { xs: 34, md: 52 }, lineHeight: 1.08, mb: 3 }}>
+            <Typography variant="h1" sx={{ fontSize: { xs: 34, md: 48 }, lineHeight: 1.08, mb: 3 }}>
               {withPeriod(content.headline)}
             </Typography>
             <Typography variant="h6" sx={{ color: tokens.muted, fontWeight: 400, maxWidth: 480, mb: 4 }}>
@@ -67,11 +60,11 @@ export default function Hero({ content, audience, onPrimaryCta }) {
                 {content.secondaryCta}
               </Button>
             </Stack>
-          </Box>
-          <Box sx={{ flex: 1, display: "flex", justifyContent: { xs: "flex-start", md: "flex-end" }, width: "100%" }}>
+          </Grid>
+          <Grid item xs={12} md={6} sx={{ display: "flex", justifyContent: { xs: "flex-start", md: "flex-end" } }}>
             {audience === "business" ? <HeroCalculatorTeaser audience="business" /> : <HeroCalculatorTeaser audience="affiliate" />}
-          </Box>
-        </Stack>
+          </Grid>
+        </Grid>
 
         <Box sx={{ borderTop: `1px solid ${tokens.border}`, mt: { xs: 6, md: 8 }, pt: { xs: 4, md: 5 }, textAlign: "center" }}>
           <Stack direction="row" spacing={{ xs: 4, md: 8 }} flexWrap="wrap" justifyContent="center">
