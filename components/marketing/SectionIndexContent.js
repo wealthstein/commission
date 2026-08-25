@@ -3,7 +3,7 @@ import { Container, Typography, Grid, Paper, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
 import { withPeriod } from "@/lib/textFormat";
 
-export default function SectionIndexContent({ title, description, buildHref, items, relatedLinks }) {
+export default function SectionIndexContent({ title, description, buildHref, items }) {
   return (
     <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
@@ -13,7 +13,7 @@ export default function SectionIndexContent({ title, description, buildHref, ite
         {description}
       </Typography>
 
-      <Grid container spacing={1.5} sx={{ mb: relatedLinks?.length ? 6 : 0 }}>
+      <Grid container spacing={1.5}>
         {items.map((item) => (
           <Grid item xs={12} sm={6} md={4} key={item.slug}>
             <Paper
@@ -32,21 +32,6 @@ export default function SectionIndexContent({ title, description, buildHref, ite
           </Grid>
         ))}
       </Grid>
-
-      {relatedLinks?.length > 0 && (
-        <>
-          <Typography variant="caption" fontWeight={700} sx={{ color: tokens.muted, display: "block", mb: 1.5 }}>
-            RELATED
-          </Typography>
-          <Stack direction="row" spacing={3} flexWrap="wrap">
-            {relatedLinks.map((link) => (
-              <Typography key={link.href} component={Link} href={link.href} variant="body2" fontWeight={600} sx={{ color: tokens.ink }}>
-                {link.label} →
-              </Typography>
-            ))}
-          </Stack>
-        </>
-      )}
     </Container>
   );
 }

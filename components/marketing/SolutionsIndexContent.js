@@ -4,7 +4,7 @@ import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { tokens } from "@/lib/theme";
 import { withPeriod } from "@/lib/textFormat";
 
-export default function SolutionsIndexContent({ title, description, buildHref, items, relatedLinks }) {
+export default function SolutionsIndexContent({ title, description, buildHref, items }) {
   return (
     <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
@@ -14,7 +14,7 @@ export default function SolutionsIndexContent({ title, description, buildHref, i
         {description}
       </Typography>
 
-      <Stack spacing={0} sx={{ mb: relatedLinks?.length ? 6 : 0 }}>
+      <Stack spacing={0}>
         {items.map((item, i) => (
           <Box
             key={item.slug}
@@ -54,21 +54,6 @@ export default function SolutionsIndexContent({ title, description, buildHref, i
           </Box>
         ))}
       </Stack>
-
-      {relatedLinks?.length > 0 && (
-        <>
-          <Typography variant="caption" fontWeight={700} sx={{ color: tokens.muted, display: "block", mb: 1.5 }}>
-            RELATED
-          </Typography>
-          <Stack direction="row" spacing={3} flexWrap="wrap">
-            {relatedLinks.map((link) => (
-              <Typography key={link.href} component={Link} href={link.href} variant="body2" fontWeight={600} sx={{ color: tokens.ink }}>
-                {link.label} →
-              </Typography>
-            ))}
-          </Stack>
-        </>
-      )}
     </Container>
   );
 }

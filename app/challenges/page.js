@@ -21,10 +21,6 @@ export default function ChallengesIndexPage() {
           description="The responses businesses hear most often when following up on a lead - and how Commission's Radar trust layer addresses each one."
           buildHref={urls.challenge}
           items={challenges}
-          relatedLinks={[
-            { label: "How Radar works", href: "/radar" },
-            { label: "Browse industries", href: urls.industriesIndex() },
-          ]}
         />
       </Box>
     </MarketingPageShell>

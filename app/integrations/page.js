@@ -12,7 +12,7 @@ export default function IntegrationsIndexPage() {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <IntegrationsIndexContent title="Integrations" description="See how Commission connects with the tools you already use." buildHref={urls.integration} items={integrations} relatedLinks={[{ label: "Campaign Wallet feature", href: urls.feature("campaign-wallet") }, { label: "Wallet vs Checkout", href: urls.conversion("wallet-vs-checkout") }]} />
+        <IntegrationsIndexContent title="Integrations" description="See how Commission connects with the tools you already use." buildHref={urls.integration} items={integrations} />
       </Box>
     </MarketingPageShell>
   );

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { Box, Breadcrumbs, Grid, Typography, Button, Avatar } from "@mui/material";
+import { Box, Breadcrumbs, Grid, Typography, Button, Avatar, Fade } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 import Link from "next/link";
 import CardMedia from "@mui/material/CardMedia";
@@ -12,29 +12,46 @@ import { urls } from "@/lib/urls";
 import teamData from "@/content/team.json";
 import siteConfig from "@/content/site.json";
 
-/**
- * One random team member's message, picked once per page load - reloading
- * /signin or /signup shows a different one.
- */
-function pickRandomMember() {
-  const members = teamData.members;
-  return members[Math.floor(Math.random() * members.length)];
-}
+const ROTATE_INTERVAL_MS = 6000;
+const FADE_DURATION_MS = 400;
 
 export default function AuthPage({ mode }) {
   const isSignup = mode === "signup";
   const searchParams = useSearchParams();
-  // Starts deterministic (always members[0]) so server and client render
-  // the exact same thing on first paint - picking randomly during the
-  // initial render itself produces a different result on the server vs.
-  // during client hydration, which is what previously threw a hydration
-  // mismatch error. The real random pick only happens after mount, in an
-  // effect, which never runs during server rendering.
-  const [member, setMember] = useState(teamData.members[0]);
+  const role = searchParams.get("role");
+
+  // Filtered to the relevant audience when the page knows it (e.g.
+  // ?role=business), since a business signing up has no reason to see an
+  // affiliate's testimonial and vice versa - falls back to every member
+  // if role isn't specified.
+  const relevantMembers = useMemo(() => {
+    const filtered = teamData.members.filter((m) => !role || m.audience === role);
+    return filtered.length > 0 ? filtered : teamData.members;
+  }, [role]);
+
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+  const member = relevantMembers[index % relevantMembers.length];
+
+  // Rotates automatically while the page is open - each visit starts from
+  // a random point in the list, then advances one at a time on a timer,
+  // fading out and back in rather than snapping, looping back to the
+  // start once it reaches the end.
+  useEffect(() => {
+    setIndex(Math.floor(Math.random() * relevantMembers.length));
+  }, [relevantMembers]);
 
   useEffect(() => {
-    setMember(pickRandomMember());
-  }, []);
+    if (relevantMembers.length <= 1) return;
+    const timer = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % relevantMembers.length);
+        setVisible(true);
+      }, FADE_DURATION_MS);
+    }, ROTATE_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [relevantMembers.length]);
 
   async function handleGoogleAuth() {
     // A CTA elsewhere on the site can link here with ?source=/wherever and
@@ -42,7 +59,6 @@ export default function AuthPage({ mode }) {
     // preserved through to the account record instead of every signup
     // starting from a blank slate.
     const source = searchParams.get("source");
-    const role = searchParams.get("role");
     await triggerGoogleAuth({
       sourcePage: source || (isSignup ? urls.signup() : urls.signin()),
       role: role || undefined,
@@ -143,25 +159,29 @@ export default function AuthPage({ mode }) {
         }}
       >
         <Box sx={{ maxWidth: 420 }}>
-          <Typography variant="h3" sx={{ color: tokens.muted, lineHeight: 1, mb: 1 }}>
-            &ldquo;
-          </Typography>
-          <Typography variant="h5" fontWeight={600} sx={{ mb: 4, lineHeight: 1.4 }}>
-            {member.quote}
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Avatar src={member.photo} alt={member.name} sx={{ width: 44, height: 44 }}>
-              {member.name.charAt(0)}
-            </Avatar>
-            <Box>
-              <Typography fontWeight={700} sx={{ fontSize: 14 }}>
-                {member.name}
+          <Fade in={visible} timeout={FADE_DURATION_MS}>
+            <Box key={member.name}>
+              <Typography variant="h3" sx={{ color: tokens.muted, lineHeight: 1, mb: 1 }}>
+                &ldquo;
               </Typography>
-              <Typography variant="body2" sx={{ color: tokens.muted, fontSize: 13 }}>
-                {member.role}, {member.business}
+              <Typography variant="h5" fontWeight={600} sx={{ mb: 4, lineHeight: 1.4 }}>
+                {member.quote}
               </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Avatar src={member.photo} alt={member.name} sx={{ width: 44, height: 44 }}>
+                  {member.name.charAt(0)}
+                </Avatar>
+                <Box>
+                  <Typography fontWeight={700} sx={{ fontSize: 14 }}>
+                    {member.name}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: tokens.muted, fontSize: 13 }}>
+                    {member.role}, {member.business}
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
-          </Box>
+          </Fade>
         </Box>
       </Grid>
     </Grid>

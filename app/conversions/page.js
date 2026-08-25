@@ -12,7 +12,7 @@ export default function ConversionsIndexPage() {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <ConversionsIndexContent title="Conversion Goals" description="See how qualified-lead and direct-sale campaigns work on Commission." buildHref={urls.conversion} items={conversions} relatedLinks={[{ label: "Browse programs", href: urls.programsIndex() }, { label: "Multi-tier Payout", href: urls.feature("multi-tier-payout") }, { label: "Performance Marketing", href: urls.solution("performance-marketing") }]} />
+        <ConversionsIndexContent title="Conversion Goals" description="See how qualified-lead and direct-sale campaigns work on Commission." buildHref={urls.conversion} items={conversions} />
       </Box>
     </MarketingPageShell>
   );

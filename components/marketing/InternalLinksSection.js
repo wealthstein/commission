@@ -21,7 +21,6 @@ export default async function InternalLinksSection() {
       component="nav"
       aria-label="More on Commission"
       sx={{
-        display: { xs: "none", md: "block" }, // hidden on small screens, footer still shows
         py: 6,
         bgcolor: tokens.canvas,
       }}

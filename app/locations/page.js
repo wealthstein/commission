@@ -12,7 +12,7 @@ export default function LocationsIndexPage() {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <LocationsIndexContent title="Commission by Location" description="See how businesses and affiliates in each city use Commission." buildHref={urls.location} items={locations} relatedLinks={[{ label: "Browse industries", href: urls.industriesIndex() }, { label: "Browse programs", href: urls.programsIndex() }]} />
+        <LocationsIndexContent title="Commission by Location" description="See how businesses and affiliates in each city use Commission." buildHref={urls.location} items={locations} />
       </Box>
     </MarketingPageShell>
   );

@@ -14,7 +14,7 @@ const ZONES = {
   enugu: "South East",
 };
 
-export default function LocationsIndexContent({ title, description, buildHref, items, relatedLinks }) {
+export default function LocationsIndexContent({ title, description, buildHref, items }) {
   return (
     <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
@@ -24,7 +24,7 @@ export default function LocationsIndexContent({ title, description, buildHref, i
         {description}
       </Typography>
 
-      <Grid container spacing={1.5} sx={{ mb: relatedLinks?.length ? 6 : 0 }}>
+      <Grid container spacing={1.5}>
         {items.map((item) => (
           <Grid item xs={12} sm={6} key={item.slug}>
             <Box
@@ -63,21 +63,6 @@ export default function LocationsIndexContent({ title, description, buildHref, i
           </Grid>
         ))}
       </Grid>
-
-      {relatedLinks?.length > 0 && (
-        <>
-          <Typography variant="caption" fontWeight={700} sx={{ color: tokens.muted, display: "block", mb: 1.5 }}>
-            RELATED
-          </Typography>
-          <Stack direction="row" spacing={3} flexWrap="wrap">
-            {relatedLinks.map((link) => (
-              <Typography key={link.href} component={Link} href={link.href} variant="body2" fontWeight={600} sx={{ color: tokens.ink }}>
-                {link.label} →
-              </Typography>
-            ))}
-          </Stack>
-        </>
-      )}
     </Container>
   );
 }

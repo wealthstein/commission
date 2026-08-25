@@ -5,7 +5,7 @@ import { withPeriod } from "@/lib/textFormat";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
-export default function ConversionsIndexContent({ title, description, buildHref, items, relatedLinks }) {
+export default function ConversionsIndexContent({ title, description, buildHref, items }) {
   return (
     <Container maxWidth="md">
       <Box sx={{ maxWidth: 680, mx: "auto" }}>
@@ -16,7 +16,7 @@ export default function ConversionsIndexContent({ title, description, buildHref,
           {description}
         </Typography>
 
-        <Stack spacing={2} sx={{ mb: relatedLinks?.length ? 6 : 0 }}>
+        <Stack spacing={2}>
           {items.map((item, i) => (
             <Box
               key={item.slug}
@@ -60,21 +60,6 @@ export default function ConversionsIndexContent({ title, description, buildHref,
             </Box>
           ))}
         </Stack>
-
-        {relatedLinks?.length > 0 && (
-          <>
-            <Typography variant="caption" fontWeight={700} sx={{ color: tokens.muted, display: "block", mb: 1.5 }}>
-              RELATED
-            </Typography>
-            <Stack direction="row" spacing={3} flexWrap="wrap">
-              {relatedLinks.map((link) => (
-                <Typography key={link.href} component={Link} href={link.href} variant="body2" fontWeight={600} sx={{ color: tokens.ink }}>
-                  {link.label} →
-                </Typography>
-              ))}
-            </Stack>
-          </>
-        )}
       </Box>
     </Container>
   );

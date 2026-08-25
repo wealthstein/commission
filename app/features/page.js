@@ -12,7 +12,7 @@ export default function FeaturesIndexPage() {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <FeaturesIndexContent title="Features" description="See what Commission actually tracks and automates for you." items={features} relatedLinks={[{ label: "Browse solutions", href: urls.solutionsIndex() }, { label: "Browse integrations", href: urls.integrationsIndex() }]} />
+        <FeaturesIndexContent title="Features" description="See what Commission actually tracks and automates for you." items={features} />
       </Box>
     </MarketingPageShell>
   );

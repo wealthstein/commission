@@ -15,7 +15,7 @@ export default function CampaignsIndexPage() {
   return (
     <MarketingPageShell internalLinks={<InternalLinksSection />}>
       <Box sx={{ py: { xs: 6, md: 9 } }}>
-        <CampaignsIndexContent title="Campaign Types" description="See how different types of campaigns run on Commission, from health insurance to account opening." buildHref={urls.campaign} items={campaignTypes} relatedLinks={[{ label: "Browse industries", href: urls.industriesIndex() }, { label: "Intent Qualified Leads explained", href: urls.conversion("intent-qualified-leads") }]} />
+        <CampaignsIndexContent title="Campaign Types" description="See how different types of campaigns run on Commission, from health insurance to account opening." buildHref={urls.campaign} items={campaignTypes} />
       </Box>
       <Box sx={{ py: { xs: 6, md: 9 }, bgcolor: altSectionBg }}>
         <Container maxWidth="md">

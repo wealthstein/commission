@@ -5,7 +5,7 @@ import { withPeriod } from "@/lib/textFormat";
 
 const NATIVE_SLUGS = ["email", "native", "paystack", "excel"];
 
-export default function IntegrationsIndexContent({ title, description, buildHref, items, relatedLinks }) {
+export default function IntegrationsIndexContent({ title, description, buildHref, items }) {
   return (
     <Container maxWidth="md">
       <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 40 }, mb: 2 }}>
@@ -15,7 +15,7 @@ export default function IntegrationsIndexContent({ title, description, buildHref
         {description}
       </Typography>
 
-      <Grid container spacing={1.5} sx={{ mb: relatedLinks?.length ? 6 : 0 }}>
+      <Grid container spacing={1.5}>
         {items.map((item) => {
           const isNative = NATIVE_SLUGS.includes(item.slug);
           const isApi = item.slug === "api";
@@ -72,21 +72,6 @@ export default function IntegrationsIndexContent({ title, description, buildHref
           );
         })}
       </Grid>
-
-      {relatedLinks?.length > 0 && (
-        <>
-          <Typography variant="caption" fontWeight={700} sx={{ color: tokens.muted, display: "block", mb: 1.5 }}>
-            RELATED
-          </Typography>
-          <Stack direction="row" spacing={3} flexWrap="wrap">
-            {relatedLinks.map((link) => (
-              <Typography key={link.href} component={Link} href={link.href} variant="body2" fontWeight={600} sx={{ color: tokens.ink }}>
-                {link.label} →
-              </Typography>
-            ))}
-          </Stack>
-        </>
-      )}
     </Container>
   );
 }
