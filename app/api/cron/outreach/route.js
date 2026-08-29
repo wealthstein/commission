@@ -7,6 +7,15 @@ const TOTAL_STEPS = 5;
 
 /**
  * GET/POST /api/cron/outreach
+ *
+ * LEGACY as of the scheduled-email rewrite in
+ * app/api/admin/outreach-contacts - new contacts added through that route
+ * have all 5 emails scheduled with Resend upfront (day 0/3/6/9/12), and
+ * never touch this cron at all. This route still runs and still matters,
+ * but only for contacts added before that rewrite, who are still partway
+ * through this older step-by-step mechanism. Once those finish their
+ * sequence, this route (and its external scheduler) can be retired.
+ *
  * Intended to run daily (see vercel.json). For every contact with
  * status='active': if they've never been emailed, send step 1 immediately;
  * otherwise send the next step once DAYS_BETWEEN_STEPS have passed since
