@@ -68,8 +68,8 @@ export default function AuthPage({ mode }) {
 
   return (
     <Grid container sx={{ minHeight: "100vh" }}>
-      <Grid item xs={12} md={6}>
-        <Box sx={{ maxWidth: 420, mx: "auto", px: 3, py: { xs: 8, md: 12 }, textAlign: "center" }}>
+      <Grid item xs={12} md={6} sx={{ display: "flex", alignItems: "center" }}>
+        <Box sx={{ maxWidth: 420, mx: "auto", px: 3, py: { xs: 6, md: 0 }, textAlign: "center" }}>
           <Box component={Link} href="/" sx={{ display: "inline-block", mb: 3 }}>
             <CardMedia sx={{ height: 32, width: 32, borderRadius: "9px" }} image="/circle.svg" alt={siteConfig.name} />
           </Box>

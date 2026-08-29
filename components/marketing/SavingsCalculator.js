@@ -148,7 +148,7 @@ export default function SavingsCalculator() {
             <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
               Via {comparison?.channelName}
             </Typography>
-            <Typography fontWeight={700}>{leadsViaAlternative.toLocaleString()} leads</Typography>
+            <Typography fontWeight={700}>{leadsViaAlternative.toLocaleString()} Leads</Typography>
           </Box>
         </Grid>
         <Grid item xs={6}>
@@ -157,7 +157,7 @@ export default function SavingsCalculator() {
               Via Commission
             </Typography>
             <Typography fontWeight={700} sx={{ color: tokens.brandInk }}>
-              {leadsViaCommission.toLocaleString()} leads
+              {leadsViaCommission.toLocaleString()} Intent Qualified Leads
             </Typography>
           </Box>
         </Grid>
@@ -165,10 +165,10 @@ export default function SavingsCalculator() {
 
       <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: "#E7F5EE", textAlign: "center", mb: 3 }}>
         <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>
-          {extraLeads > 0 ? "Extra leads, same budget - equivalent to" : "Estimated equivalent value"}
+          {extraLeads > 0 ? "Extra Intent Qualified Leads, same budget - equivalent to" : "Estimated equivalent value"}
         </Typography>
         <Typography variant="h5" fontWeight={700} sx={{ color: tokens.success }}>
-          {extraLeads > 0 ? `+${extraLeads.toLocaleString()} leads · ₦${savingsNaira.toLocaleString()} saved` : "Comparable cost in this industry"}
+          {extraLeads > 0 ? `+${extraLeads.toLocaleString()} Intent Qualified Leads · ₦${savingsNaira.toLocaleString()} saved` : "Comparable cost in this industry"}
         </Typography>
       </Box>
 
