@@ -15,7 +15,7 @@ const TOTAL_STEPS = 5;
  *
  * A contact stops getting emails the moment status is anything other than
  * 'active' - which is exactly what the reply-detection webhook sets when a
- * business replies (see app/api/webhooks/brevo-inbound).
+ * business replies (see app/api/webhooks/resend-inbound).
  */
 export async function GET(req) {
   return runOutreachBatch(req);

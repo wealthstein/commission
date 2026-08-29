@@ -179,10 +179,12 @@ npm test
 Set `SMS_PROVIDER` to `termii` or `sendchamp`, plus that provider's own API key/sender ID (see `.env.example`).
 See **SMS/OTP providers** above for the current status of each.
 
-### 4. Email (Brevo)
+### 4. Email (Resend)
 
-Set `BREVO_API_KEY`. `lib/email.js` no-ops with a console log if it's not set, so this can be skipped for local
-development.
+Set `RESEND_API_KEY`. `lib/email.js` no-ops with a console log if it's not set, so this can be skipped for local
+development. Cold outreach specifically also needs `RESEND_WEBHOOK_SECRET`, `OUTREACH_FROM_ADDRESS`, and
+`OUTREACH_REPLY_TO` - see the Cold outreach row in **Cron jobs** below, and `app/admin/outreach/page.js` for adding
+contacts.
 
 ### 5. Deploy
 
@@ -210,7 +212,7 @@ domain, and configure the external cron jobs (see **Cron jobs** above) on cron-j
 - **Frontend:** Next.js 14 (App Router), React 18, MUI 6
 - **Backend:** Next.js Route Handlers, Supabase (Postgres + Auth)
 - **Payments:** Paystack — wallet top-ups, affiliate payouts, and direct sale/subscription checkouts
-- **Email:** Brevo
+- **Email:** Resend
 - **SMS/OTP:** Termii or Sendchamp, switchable via `lib/sms.js`
 - **Hosting:** Vercel
 
