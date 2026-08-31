@@ -66,6 +66,7 @@ export default function Hero({ content, audience, onPrimaryCta }) {
           </Grid>
         </Grid>
 
+        {/*
         <Box sx={{ borderTop: `1px solid ${tokens.border}`, mt: { xs: 6, md: 8 }, pt: { xs: 4, md: 5 }, textAlign: "center" }}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 3, md: 8 }} justifyContent="center" alignItems="center">
             {STATS[audience].map((stat) => (
@@ -78,6 +79,7 @@ export default function Hero({ content, audience, onPrimaryCta }) {
             ))}
           </Stack>
         </Box>
+        */}
       </Container>
     </Box>
   );

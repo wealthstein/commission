@@ -4,6 +4,7 @@ import { Box, Typography } from "@mui/material";
 import { tokens } from "@/lib/theme";
 
 /**
+ * Adapted from a reference video (Wealthstein's "How It Flows" section) -
  * multiple weighted input factors, each on its own curved path, converge
  * into a central engine node, which flows on to a single decision output.
  * The video used this to show a credit-scoring engine; the same visual
