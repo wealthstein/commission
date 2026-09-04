@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { Box, Container, Typography, Button, Grid, Paper, Stack } from "@mui/material";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import { tokens } from "@/lib/theme";
@@ -12,6 +11,7 @@ import CardGridSection from "@/components/marketing/CardGridSection";
 import FAQ from "@/components/marketing/FAQ";
 import { CTASection } from "@/components/marketing/CTAAndFooter";
 import WhatsAppComparisonSection from "@/components/marketing/WhatsAppComparisonSection";
+import SectionLabel from "@/components/marketing/SectionLabel";
 
 const BENEFITS = [
   { title: "Customers reply where they already are", body: "No app to download, no portal to log into - just the chat app already on their phone, with your business as a saved contact." },
@@ -64,12 +64,7 @@ export default function InboxPageContent() {
         <Container maxWidth="md">
           <Grid container spacing={6} alignItems="center">
             <Grid item xs={12} md={7}>
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                <WhatsAppIcon sx={{ color: tokens.success }} />
-                <Typography variant="caption" fontWeight={700} sx={{ color: tokens.muted, letterSpacing: 1 }}>
-                  COMMISSION INBOX
-                </Typography>
-              </Stack>
+              <SectionLabel>Inbox</SectionLabel>
               <Typography variant="h1" sx={{ fontSize: { xs: 32, md: 46 }, mb: 2.5, lineHeight: 1.15 }}>
                 Turn your business WhatsApp into a team inbox that closes deals
               </Typography>

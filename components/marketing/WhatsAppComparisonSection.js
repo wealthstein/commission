@@ -4,6 +4,7 @@ import { Box, Container, Typography, Grid, Paper, Stack } from "@mui/material";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { tokens } from "@/lib/theme";
+import SectionLabel from "@/components/marketing/SectionLabel";
 
 // Figures below are widely-cited industry benchmarks (Meta/Twilio business
 // messaging reports, Mailchimp/Campaign Monitor email benchmarks,
@@ -119,6 +120,7 @@ export default function WhatsAppComparisonSection({ bgcolor = tokens.paper, ctaB
     <Box component="section" sx={{ py: { xs: 6, md: 9 }, bgcolor }}>
       <Container maxWidth="md">
         <Box sx={{ mb: 5, maxWidth: 620 }}>
+          <SectionLabel>Inbox</SectionLabel>
           <Typography variant="h3" sx={{ fontSize: { xs: 24, md: 30 }, mb: 1.5 }}>
             Why WhatsApp wins the conversation
           </Typography>
