@@ -14,7 +14,9 @@ commission/
 1. `supabase/schema.sql`
 2. Every other `supabase/migration_*.sql` file **except** `migration_inbox.sql` and `migration_rename_core_tables.sql` (these predate Inbox and rename `products`→`campaigns` along the way — several functions/policies were rewritten by hand to match, see `migration_rename_core_tables.sql`'s header)
 3. `supabase/migration_inbox.sql`
-4. `supabase/migration_rename_core_tables.sql` — **last**. Renames every table to a domain-prefixed name (`core_`, `affiliate_`, `billing_`, `growth_`, `inbox_`) using `ALTER TABLE RENAME`, which preserves all data/FKs. Also redefines every function/RLS policy whose body referenced a renamed table by text (Postgres doesn't auto-rewrite those on rename — only FKs/views/`language sql` are OID-tracked; `language plpgsql` bodies are opaque text and would silently break without this).
+4. `supabase/migration_rename_core_tables.sql` — **last**. Renames every table to a domain-prefixed name (`core_`, `affiliate_`, `billing_`, `growth_`, `inbox_`) using `ALTER TABLE RENAME`, which preserves all data/FKs. Also redefines every function/RLS policy whose body referenced a renamed table by text (Postgres doesn't auto-rewrite those on rename — only FKs/views/`language sql` are OID-tracked; `language plpgsql` bodies are opaque text and would silently break without this). Wrapped in an explicit `begin;`/`commit;` — if anything errors mid-run, Postgres rolls the whole thing back automatically, nothing half-renamed. `migration_rename_core_tables_ROLLBACK.sql` sits alongside it if you need to reverse the table names quickly — take a real backup before running the forward migration regardless, this isn't a substitute for one.
+
+**This is not a zero-downtime cutover.** Old app code queries old table names; new app code queries new ones. There's no moment both are simultaneously correct — deploy the updated app first (it'll briefly error on DB calls), then run the rename migration immediately after, so the gap is as short as possible.
 
 ## What's built
 

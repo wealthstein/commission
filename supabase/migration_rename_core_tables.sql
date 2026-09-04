@@ -15,7 +15,29 @@
 -- do not run this against a database the app is actively serving traffic
 -- against without deploying both together, since old-name queries will
 -- start failing the moment the rename lands.
+--
+-- SAFETY NOTES before running this against a live/production database:
+--   1. Take a manual backup (or confirm Supabase's point-in-time recovery
+--      covers this moment) before running - this is easily reversible in
+--      principle (rename back - see migration_rename_core_tables_ROLLBACK.sql
+--      in this same folder), but you want an actual restore point, not
+--      just a plan, before touching a live schema.
+--   2. Wrapped in an explicit begin;/commit; below: every statement either
+--      all commits together, or (if anything errors - a typo, an
+--      unexpected existing state) Postgres rolls the whole transaction
+--      back automatically and your database is left exactly as it was,
+--      not half-renamed.
+--   3. This still needs to land close together with deploying the
+--      matching app code (already updated in this repo) - old code
+--      querying by old table names will start getting real errors the
+--      moment this transaction commits. A brief low-traffic window,
+--      immediately followed by deploying, is the safe order.
+--   4. If your Supabase plan supports database branching, testing this
+--      exact file against a branch first is the safest possible check
+--      before running it for real.
 -- ============================================================================
+
+begin;
 
 -- Shared tenancy tables
 alter table if exists users rename to core_users;
@@ -245,3 +267,5 @@ begin
     end if;
   end loop;
 end $$;
+
+commit;
