@@ -37,8 +37,8 @@ export default async function CategoryPage({ params, searchParams }) {
 
   const supabase = createAdminSupabaseClient();
   const { data: campaigns, count } = await supabase
-    .from("campaigns")
-    .select("*, businesses(name, slug)", { count: "exact" })
+    .from("affiliate_campaigns")
+    .select("*, core_businesses(name, slug)", { count: "exact" })
     .eq("category", categoryLabel)
     .eq("status", "active")
     .order("created_at", { ascending: false })

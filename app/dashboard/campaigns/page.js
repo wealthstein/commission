@@ -31,19 +31,19 @@ export default function CampaignsPage() {
         setLoading(false);
         return;
       }
-      const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
+      const { data: userRow } = await supabase.from("core_users").select("id").eq("auth_user_id", authUser.id).single();
       if (!userRow) {
         setLoading(false);
         return;
       }
-      const { data: business } = await supabase.from("businesses").select("id").eq("owner_id", userRow.id).maybeSingle();
+      const { data: business } = await supabase.from("core_businesses").select("id").eq("owner_id", userRow.id).maybeSingle();
       if (!business) {
         setLoading(false);
         return;
       }
 
       const { data: rows } = await supabase
-        .from("campaigns")
+        .from("affiliate_campaigns")
         .select("id, name, category, product_type, price_naira, billing_frequency, status, created_at, affiliate_programs(id)")
         .eq("business_id", business.id)
         .order("created_at", { ascending: false });

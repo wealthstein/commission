@@ -44,7 +44,7 @@ export async function POST(req) {
 
   const admin = createAdminSupabaseClient();
 
-  const { data: userRow } = await admin.from("users").select("id").eq("auth_user_id", authUser.id).single();
+  const { data: userRow } = await admin.from("core_users").select("id").eq("auth_user_id", authUser.id).single();
   if (!userRow) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }

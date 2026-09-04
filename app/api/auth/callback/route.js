@@ -50,7 +50,7 @@ export async function GET(req) {
 
   if (flow === "signin") {
     const { data: existing, error: lookupError } = await admin
-      .from("users")
+      .from("core_users")
       .select("access_granted")
       .eq("auth_user_id", data.user.id)
       .maybeSingle();
@@ -91,14 +91,14 @@ export async function GET(req) {
   // genuinely new account - the welcome email should send exactly once, not
   // on every later sign-in from the same person.
   const { data: existingBeforeUpsert } = await admin
-    .from("users")
+    .from("core_users")
     .select("id")
     .eq("auth_user_id", data.user.id)
     .maybeSingle();
   const isNewSignup = !existingBeforeUpsert;
 
   const { data: userRow, error: upsertError } = await admin
-    .from("users")
+    .from("core_users")
     .upsert(upsertData, { onConflict: "auth_user_id" })
     .select("access_granted")
     .single();

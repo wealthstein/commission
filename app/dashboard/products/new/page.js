@@ -109,13 +109,13 @@ export default function NewProductPage() {
       }
 
       // 1. Ensure the caller has a business profile (created on first product listing).
-      const { data: businesses } = await supabase.from("businesses").select("id").limit(1);
+      const { data: businesses } = await supabase.from("core_businesses").select("id").limit(1);
       let businessId = businesses?.[0]?.id;
 
       if (!businessId) {
-        const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", user.id).single();
+        const { data: userRow } = await supabase.from("core_users").select("id").eq("auth_user_id", user.id).single();
         const { data: newBusiness, error: bizError } = await supabase
-          .from("businesses")
+          .from("core_businesses")
           .insert({ owner_id: userRow.id, name: `${user.email}'s business`, slug: `biz-${Date.now()}` })
           .select()
           .single();
@@ -127,7 +127,7 @@ export default function NewProductPage() {
       // offline_payment_instructions) regardless of physical vs digital —
       // that toggle now only affects which categories are available.
       const { data: product, error: productError } = await supabase
-        .from("products")
+        .from("affiliate_campaigns")
         .insert({
           business_id: businessId,
           name: form.name,

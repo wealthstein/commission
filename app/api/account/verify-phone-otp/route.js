@@ -24,7 +24,7 @@ export async function POST(req) {
   }
 
   const { data: userRow } = await supabase
-    .from("users")
+    .from("core_users")
     .select("id, phone_otp_pin_id, phone_otp_expires_at")
     .eq("auth_user_id", authUser.id)
     .single();
@@ -46,7 +46,7 @@ export async function POST(req) {
   }
 
   const { error: updateError } = await supabase
-    .from("users")
+    .from("core_users")
     .update({ phone_verified: true, phone_otp_pin_id: null, phone_otp_expires_at: null })
     .eq("id", userRow.id);
   if (updateError) {

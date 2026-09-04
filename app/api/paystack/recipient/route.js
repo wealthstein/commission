@@ -34,7 +34,7 @@ export async function POST(req) {
     });
 
     const { error: updateError } = await supabase
-      .from("users")
+      .from("core_users")
       .update({
         bank_code: bankCode,
         bank_account_number: accountNumber,

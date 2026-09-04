@@ -52,7 +52,7 @@ export async function POST(req) {
 
   const { data: enrollment } = await admin
     .from("affiliate_enrollments")
-    .select("*, affiliate_programs(*, campaigns(*, businesses(*)))")
+    .select("*, affiliate_programs(*, affiliate_campaigns(*, core_businesses(*)))")
     .eq("referral_code", referralCode)
     .eq("status", "active")
     .maybeSingle();

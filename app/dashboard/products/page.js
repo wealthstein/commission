@@ -10,7 +10,7 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import { sampleProducts } from "@/lib/sampleData";
 import { tokens } from "@/lib/theme";
 
-// Production query: supabase.from("products").select("*").eq("business_id", myBusinessId)
+// Production query: supabase.from("affiliate_campaigns").select("*").eq("business_id", myBusinessId)
 
 const TYPE_META = {
   physical: { label: "Physical", icon: Inventory2RoundedIcon },

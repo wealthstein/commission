@@ -43,7 +43,7 @@ async function runExpireBatch(req) {
   const cutoff = new Date(Date.now() - EXPIRE_AFTER_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: staleLeads, error: fetchError } = await supabase
-    .from("leads")
+    .from("affiliate_leads")
     .select("id")
     .eq("status", "captured")
     .lt("created_at", cutoff);
@@ -57,7 +57,7 @@ async function runExpireBatch(req) {
   }
 
   const { error: updateError } = await supabase
-    .from("leads")
+    .from("affiliate_leads")
     .update({ status: "rejected", rejected_reason: SYSTEM_REJECTED_REASON })
     .in(
       "id",

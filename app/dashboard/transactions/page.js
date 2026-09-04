@@ -94,7 +94,7 @@ function PayoutsTab({ userRowId }) {
     async function load() {
       const { data: enrollments } = await supabase
         .from("affiliate_enrollments")
-        .select("id, affiliate_programs(tier1_percent, campaigns(name))")
+        .select("id, affiliate_programs(tier1_percent, affiliate_campaigns(name))")
         .eq("affiliate_id", userRowId);
       const enrollmentIds = (enrollments || []).map((e) => e.id);
       const enrollmentById = Object.fromEntries((enrollments || []).map((e) => [e.id, e]));
@@ -106,7 +106,7 @@ function PayoutsTab({ userRowId }) {
       }
 
       const { data: commissions } = await supabase
-        .from("commissions")
+        .from("billing_commissions")
         .select("id, enrollment_id, affiliate_payout_naira, payout_status, created_at")
         .in("enrollment_id", enrollmentIds)
         .order("created_at", { ascending: false });
@@ -313,14 +313,14 @@ function LeadsTab({ plan, userRowId }) {
     const supabase = createClient();
 
     async function load() {
-      const { data: business } = await supabase.from("businesses").select("id").eq("owner_id", userRowId).maybeSingle();
+      const { data: business } = await supabase.from("core_businesses").select("id").eq("owner_id", userRowId).maybeSingle();
       if (!business) {
         setLeads([]);
         setLoading(false);
         return;
       }
 
-      const { data: campaigns } = await supabase.from("campaigns").select("id, name, category").eq("business_id", business.id);
+      const { data: campaigns } = await supabase.from("affiliate_campaigns").select("id, name, category").eq("business_id", business.id);
       const campaignIds = (campaigns || []).map((p) => p.id);
       const campaignById = Object.fromEntries((campaigns || []).map((p) => [p.id, p]));
       if (campaignIds.length === 0) {
@@ -343,7 +343,7 @@ function LeadsTab({ plan, userRowId }) {
       // details were already forwarded to this business's own email or
       // webhook the moment the lead qualified (see lib/leadForwarding.js).
       const { data: leadRows } = await supabase
-        .from("leads")
+        .from("affiliate_leads")
         .select("id, lead_ref, status, program_id, charge_amount_naira, created_at, risk_flags")
         .in("program_id", programIds)
         .order("created_at", { ascending: false });
@@ -488,10 +488,10 @@ export default function TransactionsPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
       if (!authUser) return;
-      const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
+      const { data: userRow } = await supabase.from("core_users").select("id").eq("auth_user_id", authUser.id).single();
       if (!userRow) return;
       setUserRowId(userRow.id);
-      const { data: biz } = await supabase.from("businesses").select("plan").eq("owner_id", userRow.id).maybeSingle();
+      const { data: biz } = await supabase.from("core_businesses").select("plan").eq("owner_id", userRow.id).maybeSingle();
       setPlan(biz?.plan || "free");
     });
   }, []);

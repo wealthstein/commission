@@ -24,6 +24,7 @@ import { tokens } from "@/lib/theme";
 const NAV_LINKS = [
   { anchor: "benefits", label: "Benefits" },
   { anchor: "how-it-works", label: "How It Works" },
+  { href: "/inbox", label: "Inbox", businessOnly: true },
   { anchor: "pricing", label: "Pricing", businessOnly: true },
   { anchor: "what-you-earn", label: "What You Earn", affiliateOnly: true },
 ];

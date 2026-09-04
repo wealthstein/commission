@@ -71,14 +71,14 @@ export async function POST(req) {
   // it stops the laziest version of an affiliate self-dealing their own
   // referrals, and Nigeria's 5-SIM-per-NIN cap keeps the harder version
   // genuinely inconvenient to scale.
-  const { data: affiliateUser } = await supabase.from("users").select("phone").eq("id", enrollment.affiliate_id).maybeSingle();
+  const { data: affiliateUser } = await supabase.from("core_users").select("phone").eq("id", enrollment.affiliate_id).maybeSingle();
   if (affiliateUser?.phone && affiliateUser.phone === phone) {
     return NextResponse.json({ error: "This phone number can't be used for a lead you're referring yourself." }, { status: 400 });
   }
 
   const { data: program } = await supabase
     .from("affiliate_programs")
-    .select("*, campaigns(name, business_id, businesses(name))")
+    .select("*, affiliate_campaigns(name, business_id, core_businesses(name))")
     .eq("id", programId)
     .eq("status", "active")
     .maybeSingle();
@@ -91,7 +91,7 @@ export async function POST(req) {
   let clickId = null;
   if (visitorId) {
     const { data: click } = await supabase
-      .from("referral_clicks")
+      .from("affiliate_referral_clicks")
       .select("id")
       .eq("enrollment_id", enrollment.id)
       .eq("visitor_id", visitorId)
@@ -154,7 +154,7 @@ export async function POST(req) {
       const crossCampaignFlags = await computeCrossCampaignFlags(supabase, { phoneHash, ipHash, excludeProgramId: programId });
       const riskFlags = [...timingFlags, ...crossCampaignFlags];
 
-      await supabase.from("leads").update({ risk_flags: riskFlags }).eq("id", result.leadId);
+      await supabase.from("affiliate_leads").update({ risk_flags: riskFlags }).eq("id", result.leadId);
       await supabase.from("lead_risk_signals").insert({
         lead_id: result.leadId,
         phone_hash: phoneHash,

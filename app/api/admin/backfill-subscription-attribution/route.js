@@ -33,8 +33,8 @@ export async function POST(req) {
   const supabase = createAdminSupabaseClient();
 
   const { data: transactions } = await supabase
-    .from("transactions")
-    .select("paystack_reference, campaign_id, enrollment_id, campaigns(business_id)")
+    .from("billing_transactions")
+    .select("paystack_reference, campaign_id, enrollment_id, affiliate_campaigns(business_id)")
     .eq("source", "paystack")
     .eq("status", "success");
 

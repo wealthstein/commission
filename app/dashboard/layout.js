@@ -25,6 +25,7 @@ import ExploreRoundedIcon from "@mui/icons-material/ExploreRounded";
 import CampaignRoundedIcon from "@mui/icons-material/CampaignRounded";
 import Diversity3RoundedIcon from "@mui/icons-material/Diversity3Rounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
+import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import { usePathname, useRouter } from "next/navigation";
@@ -40,6 +41,7 @@ import { createClient } from "@/lib/supabaseClient";
 // actually manages here, not an abstract product listing.
 const NAV = [
   { href: "/dashboard", label: "Home", icon: HomeRoundedIcon },
+  { href: "/dashboard/inbox", label: "Inbox", icon: ChatBubbleOutlineRoundedIcon },
   { href: "/dashboard/discover", label: "Discover", icon: ExploreRoundedIcon },
   { href: "/dashboard/campaigns", label: "My Campaigns", icon: CampaignRoundedIcon },
   { href: "/dashboard/promotions", label: "My Promotions", icon: Diversity3RoundedIcon },
@@ -67,7 +69,11 @@ function SidebarContent({ pathname, user }) {
       </Stack>
       <List sx={{ px: 1.5, flexGrow: 1 }}>
         {NAV.map((item) => {
-          const active = pathname === item.href;
+          // Exact match only for Home ("/dashboard" would otherwise also
+          // highlight on every nested route); prefix match for everything
+          // else so sub-pages (e.g. /dashboard/inbox/pipeline) still show
+          // their parent nav item as active.
+          const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href);
           const Icon = item.icon;
           return (
             <ListItemButton

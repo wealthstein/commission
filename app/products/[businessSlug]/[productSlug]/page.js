@@ -48,11 +48,11 @@ export async function generateStaticParams() {
 
 async function getProductAndBusiness(businessSlug, productSlug) {
   const supabase = createAdminSupabaseClient();
-  const { data: business } = await supabase.from("businesses").select("*").eq("slug", businessSlug).maybeSingle();
+  const { data: business } = await supabase.from("core_businesses").select("*").eq("slug", businessSlug).maybeSingle();
   if (!business) return { business: null, product: null, program: null };
 
   const { data: product } = await supabase
-    .from("campaigns")
+    .from("affiliate_campaigns")
     .select("*")
     .eq("business_id", business.id)
     .eq("slug", productSlug)

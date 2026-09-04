@@ -27,14 +27,14 @@ function PromotingTab({ userRowId }) {
     async function load() {
       const { data: enrollments } = await supabase
         .from("affiliate_enrollments")
-        .select("id, referral_code, program_id, affiliate_programs(id, campaigns(name, slug, businesses(slug)))")
+        .select("id, referral_code, program_id, affiliate_programs(id, affiliate_campaigns(name, slug, core_businesses(slug)))")
         .eq("affiliate_id", userRowId);
 
       const enrollmentIds = (enrollments || []).map((e) => e.id);
       let commissionsByEnrollment = {};
       if (enrollmentIds.length > 0) {
         const { data: commissions } = await supabase
-          .from("commissions")
+          .from("billing_commissions")
           .select("enrollment_id, affiliate_payout_naira")
           .in("enrollment_id", enrollmentIds);
         commissionsByEnrollment = (commissions || []).reduce((acc, c) => {
@@ -182,8 +182,8 @@ function RealEstateSalesTab({ userRowId }) {
 
     async function load() {
       const { data } = await supabase
-        .from("manual_sale_confirmations")
-        .select("id, reported_sale_amount_naira, reported_commission_naira, notes, created_at, leads(lead_ref, affiliate_programs(campaigns(name)))")
+        .from("affiliate_manual_sale_confirmations")
+        .select("id, reported_sale_amount_naira, reported_commission_naira, notes, created_at, affiliate_leads(lead_ref, affiliate_programs(affiliate_campaigns(name)))")
         .eq("affiliate_id", userRowId)
         .order("created_at", { ascending: false });
 
@@ -286,7 +286,7 @@ function NetworkTab({ userRowId }) {
       for (let tier = 1; tier <= 3 && frontier.length > 0; tier++) {
         const { data: next } = await supabase
           .from("affiliate_enrollments")
-          .select("id, affiliate_id, program_id, created_at, users(full_name, email)")
+          .select("id, affiliate_id, program_id, created_at, core_users(full_name, email)")
           .in("referrer_enrollment_id", frontier);
         (next || []).forEach((e) => downline.push({ ...e, tierRelativeToMe: tier }));
         frontier = (next || []).map((e) => e.id);
@@ -296,7 +296,7 @@ function NetworkTab({ userRowId }) {
       let commissionsByEnrollment = {};
       if (downlineEnrollmentIds.length > 0) {
         const { data: commissions } = await supabase
-          .from("commissions")
+          .from("billing_commissions")
           .select("enrollment_id, affiliate_payout_naira")
           .in("enrollment_id", downlineEnrollmentIds);
         commissionsByEnrollment = (commissions || []).reduce((acc, c) => {
@@ -314,7 +314,7 @@ function NetworkTab({ userRowId }) {
       // never confirmed, so this does not claim more precision than it has.
       const myEnrollmentIds = (myEnrollments || []).map((e) => e.id);
       const { data: myCommissions } = await supabase
-        .from("commissions")
+        .from("billing_commissions")
         .select("affiliate_payout_naira, affiliate_enrollments(program_id)")
         .in("enrollment_id", myEnrollmentIds);
       const myEarningsByProgram = (myCommissions || []).reduce((acc, c) => {
@@ -410,7 +410,7 @@ export default function PromotionsPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
       if (!authUser) return;
-      const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
+      const { data: userRow } = await supabase.from("core_users").select("id").eq("auth_user_id", authUser.id).single();
       setUserRowId(userRow?.id || null);
     });
   }, []);

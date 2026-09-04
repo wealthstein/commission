@@ -32,8 +32,8 @@ export async function POST(req, { params }) {
   }
 
   const { data: transaction } = await admin
-    .from("transactions")
-    .select("*, campaigns(*, businesses(*))")
+    .from("billing_transactions")
+    .select("*, affiliate_campaigns(*, core_businesses(*))")
     .eq("id", params.transactionId)
     .single();
 
@@ -45,7 +45,7 @@ export async function POST(req, { params }) {
   }
 
   if (!approve) {
-    await admin.from("transactions").update({ verification_status: "rejected", status: "failed" }).eq("id", transaction.id);
+    await admin.from("billing_transactions").update({ verification_status: "rejected", status: "failed" }).eq("id", transaction.id);
     return NextResponse.json({ status: "rejected" });
   }
 
@@ -53,7 +53,7 @@ export async function POST(req, { params }) {
 
   // No affiliate on this sale — nothing owed, nothing to charge. Just confirm it happened.
   if (!transaction.enrollment_id) {
-    await admin.from("transactions").update({ verification_status: "verified", status: "success" }).eq("id", transaction.id);
+    await admin.from("billing_transactions").update({ verification_status: "verified", status: "success" }).eq("id", transaction.id);
     return NextResponse.json({ status: "verified", commissions: [] });
   }
 
@@ -64,7 +64,7 @@ export async function POST(req, { params }) {
     .eq("status", "active")
     .maybeSingle();
   if (!program) {
-    await admin.from("transactions").update({ verification_status: "verified", status: "success" }).eq("id", transaction.id);
+    await admin.from("billing_transactions").update({ verification_status: "verified", status: "success" }).eq("id", transaction.id);
     return NextResponse.json({ status: "verified", commissions: [], note: "No active affiliate program on this campaign" });
   }
 
@@ -101,12 +101,12 @@ export async function POST(req, { params }) {
     return NextResponse.json({ error: `Could not verify: ${err.message}` }, { status: 402 });
   }
 
-  await admin.from("transactions").update({ verification_status: "verified", status: "success" }).eq("id", transaction.id);
+  await admin.from("billing_transactions").update({ verification_status: "verified", status: "success" }).eq("id", transaction.id);
 
   const createdCommissions = [];
   for (const line of result.lines) {
     const { data: commission } = await admin
-      .from("commissions")
+      .from("billing_commissions")
       .insert({
         transaction_id: transaction.id,
         enrollment_id: line.enrollmentId,
@@ -125,7 +125,7 @@ export async function POST(req, { params }) {
     const lineEnrollment = lineage.find((e) => e.id === line.enrollmentId);
     if (lineEnrollment?.affiliate_id) {
       const { data: affiliateUser } = await admin
-        .from("users")
+        .from("core_users")
         .select("email, full_name")
         .eq("id", lineEnrollment.affiliate_id)
         .maybeSingle();

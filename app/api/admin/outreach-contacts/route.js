@@ -62,7 +62,7 @@ export async function POST(req) {
   // previous batch. Only rows returned here are genuinely new - already-
   // existing contacts are silently skipped and never re-scheduled.
   const { data: insertedRows, error: insertError } = await supabase
-    .from("cold_outreach_contacts")
+    .from("growth_cold_outreach_contacts")
     .upsert(rows, { onConflict: "email_address", ignoreDuplicates: true })
     .select();
 
@@ -102,7 +102,7 @@ export async function POST(req) {
       });
 
       await supabase
-        .from("cold_outreach_contacts")
+        .from("growth_cold_outreach_contacts")
         .update({
           sequence_step: 1,
           last_sent_at: new Date().toISOString(),

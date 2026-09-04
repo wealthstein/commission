@@ -34,7 +34,7 @@ export default async function WelcomePage() {
   // the real dashboard is the right place for them now, not this message.
   const admin = createAdminSupabaseClient();
   const { data: userRow } = await admin
-    .from("users")
+    .from("core_users")
     .select("access_granted")
     .eq("auth_user_id", user.id)
     .maybeSingle();

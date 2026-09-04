@@ -25,14 +25,14 @@ async function getLeadContext(leadRef) {
   // (Interest Form) already fetches, needed to replicate the identical
   // left-panel business/price summary here.
   const { data: lead } = await supabase
-    .from("leads")
-    .select("status, program_id, affiliate_programs(*, campaigns(*, businesses(*)))")
+    .from("affiliate_leads")
+    .select("status, program_id, affiliate_programs(*, affiliate_campaigns(*, core_businesses(*)))")
     .eq("lead_ref", leadRef)
     .maybeSingle();
   if (!lead) return null;
 
   const { data: customFields } = await supabase
-    .from("campaign_custom_fields")
+    .from("affiliate_campaign_custom_fields")
     .select("id, label, field_type, options, required, display_order")
     .eq("affiliate_program_id", lead.program_id)
     .order("display_order", { ascending: true });

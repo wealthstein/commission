@@ -21,7 +21,7 @@ export default function DashboardHome() {
         setLoading(false);
         return;
       }
-      const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
+      const { data: userRow } = await supabase.from("core_users").select("id").eq("auth_user_id", authUser.id).single();
       if (!userRow) {
         setLoading(false);
         return;
@@ -34,8 +34,8 @@ export default function DashboardHome() {
       let commissions = [];
       if (enrollmentIds.length > 0) {
         const { data } = await supabase
-          .from("commissions")
-          .select("affiliate_payout_naira, payout_status, created_at, affiliate_enrollments(affiliate_programs(campaigns(name)))")
+          .from("billing_commissions")
+          .select("affiliate_payout_naira, payout_status, created_at, affiliate_enrollments(affiliate_programs(affiliate_campaigns(name)))")
           .in("enrollment_id", enrollmentIds)
           .order("created_at", { ascending: false });
         commissions = data || [];
@@ -48,19 +48,19 @@ export default function DashboardHome() {
       const totalSalesCount = commissions.length;
 
       // Business side - campaigns and active programs owned by this user's business, if any.
-      const { data: business } = await supabase.from("businesses").select("id").eq("owner_id", userRow.id).maybeSingle();
+      const { data: business } = await supabase.from("core_businesses").select("id").eq("owner_id", userRow.id).maybeSingle();
       let campaignsListed = 0;
       let programsRunning = 0;
       if (business) {
         const { count: campaignCount } = await supabase
-          .from("campaigns")
+          .from("affiliate_campaigns")
           .select("id", { count: "exact", head: true })
           .eq("business_id", business.id);
         campaignsListed = campaignCount || 0;
 
         const { count: programCount } = await supabase
           .from("affiliate_programs")
-          .select("id, products!inner(business_id)", { count: "exact", head: true })
+          .select("id, affiliate_campaigns!inner(business_id)", { count: "exact", head: true })
           .eq("products.business_id", business.id)
           .eq("status", "active");
         programsRunning = programCount || 0;

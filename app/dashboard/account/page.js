@@ -290,13 +290,160 @@ function SubscriptionsTab({ currentPlanId }) {
   );
 }
 
-const TABS = ["Account", "Wallet", "Subscriptions", "Business", "Bank"];
+function TeamTab({ businessId, isOwner }) {
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("member");
+  const [inviteState, setInviteState] = useState({ loading: false, error: null, success: false });
+
+  useEffect(() => {
+    if (!businessId) {
+      setLoading(false);
+      return;
+    }
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [businessId]);
+
+  async function load() {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("core_business_team_members")
+      .select("id, email, role, status, created_at")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false });
+    setMembers(data || []);
+    setLoading(false);
+  }
+
+  async function handleInvite(e) {
+    e.preventDefault();
+    setInviteState({ loading: true, error: null, success: false });
+    try {
+      const res = await fetch("/api/team/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, email: email.trim(), role }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send invite");
+      setEmail("");
+      setInviteState({ loading: false, error: null, success: true });
+      load();
+    } catch (err) {
+      setInviteState({ loading: false, error: err.message, success: false });
+    }
+  }
+
+  async function handleRoleChange(memberId, newRole) {
+    await fetch(`/api/team/${memberId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: newRole }),
+    });
+    load();
+  }
+
+  async function handleRevoke(memberId) {
+    if (!confirm("Revoke this teammate's access? They'll lose access immediately.")) return;
+    await fetch(`/api/team/${memberId}`, { method: "DELETE" });
+    load();
+  }
+
+  if (!businessId) {
+    return (
+      <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, borderColor: tokens.border, textAlign: "center" }}>
+        <Typography sx={{ color: tokens.muted }}>Save your business under the Business tab first.</Typography>
+      </Paper>
+    );
+  }
+
+  if (loading) {
+    return <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress size={24} /></Box>;
+  }
+
+  return (
+    <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, borderColor: tokens.border }}>
+      <Box sx={{ maxWidth: INNER_WIDTH, mx: "auto" }}>
+        <Typography fontWeight={700} sx={{ mb: 0.5 }}>Team</Typography>
+        <Typography variant="body2" sx={{ color: tokens.muted, mb: 3 }}>
+          Invite teammates to help manage campaigns, leads, and Inbox. Admins can invite and remove others; members
+          can't.
+        </Typography>
+
+        {isOwner && (
+          <Box component="form" onSubmit={handleInvite} sx={{ mb: 3 }}>
+            {inviteState.error && <Alert severity="error" sx={{ mb: 2 }}>{inviteState.error}</Alert>}
+            {inviteState.success && <Alert severity="success" sx={{ mb: 2 }}>Invite sent</Alert>}
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <TextField
+                placeholder="teammate@email.com"
+                type="email"
+                required
+                fullWidth
+                size="small"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <TextField select size="small" value={role} onChange={(e) => setRole(e.target.value)} sx={{ width: { xs: "100%", sm: 140 } }}>
+                <MenuItem value="member">Member</MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
+              </TextField>
+              <Button type="submit" variant="contained" disabled={inviteState.loading} sx={{ whiteSpace: "nowrap" }}>
+                {inviteState.loading ? <CircularProgress size={18} /> : "Send invite"}
+              </Button>
+            </Stack>
+          </Box>
+        )}
+
+        <Divider sx={{ mb: 2 }} />
+
+        <Stack spacing={1.5}>
+          {members.map((m) => (
+            <Stack key={m.id} direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 1 }}>
+              <Box>
+                <Typography variant="body2" fontWeight={600}>{m.email}</Typography>
+                <Typography variant="caption" sx={{ color: tokens.muted, textTransform: "capitalize" }}>
+                  {m.status} {m.status !== "revoked" && `· ${m.role}`}
+                </Typography>
+              </Box>
+              {isOwner && m.status !== "revoked" && (
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <TextField
+                    select
+                    size="small"
+                    value={m.role}
+                    onChange={(e) => handleRoleChange(m.id, e.target.value)}
+                    sx={{ width: 110 }}
+                  >
+                    <MenuItem value="member">Member</MenuItem>
+                    <MenuItem value="admin">Admin</MenuItem>
+                  </TextField>
+                  <Button size="small" color="error" onClick={() => handleRevoke(m.id)}>Revoke</Button>
+                </Stack>
+              )}
+            </Stack>
+          ))}
+          {members.length === 0 && (
+            <Typography variant="body2" sx={{ color: tokens.muted, textAlign: "center", py: 2 }}>
+              No teammates yet.
+            </Typography>
+          )}
+        </Stack>
+      </Box>
+    </Paper>
+  );
+}
+
+const TABS = ["Account", "Wallet", "Subscriptions", "Business", "Team", "Bank"];
 
 export default function AccountPage() {
   const [tab, setTab] = useState(0);
   const [user, setUser] = useState(null);
   const [userRow, setUserRow] = useState(null);
   const [business, setBusiness] = useState(null);
+  const [isBusinessOwner, setIsBusinessOwner] = useState(false);
   const [form, setForm] = useState({ fullName: "", phone: "", businessName: "", industry: "", website: "", logoUrl: "" });
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState(null);
@@ -308,19 +455,39 @@ export default function AccountPage() {
       setUser(authUser);
       if (!authUser) return;
       const { data: uRow } = await supabase
-        .from("users")
+        .from("core_users")
         .select("id, phone, full_name")
         .eq("auth_user_id", authUser.id)
         .single();
       if (!uRow) return;
       setUserRow(uRow);
 
-      const { data: biz } = await supabase
-        .from("businesses")
+      const { data: ownedBiz } = await supabase
+        .from("core_businesses")
         .select("id, plan, name, industry, website_url, logo_url, wallet_balance_naira")
         .eq("owner_id", uRow.id)
         .maybeSingle();
+
+      let biz = ownedBiz;
+      let ownerFlag = !!ownedBiz;
+
+      // A team member (not the owner) reaching Account for the first time
+      // previously saw a blank/empty business here - this lookup only ever
+      // checked owner_id. Falls back to an active team membership so
+      // teammates can actually see the business they were invited to.
+      if (!biz) {
+        const { data: membership } = await supabase
+          .from("core_business_team_members")
+          .select("core_businesses(id, plan, name, industry, website_url, logo_url, wallet_balance_naira)")
+          .eq("user_id", uRow.id)
+          .eq("status", "active")
+          .maybeSingle();
+        biz = membership?.businesses || null;
+        ownerFlag = false;
+      }
+
       setBusiness(biz || null);
+      setIsBusinessOwner(ownerFlag);
 
       setForm({
         fullName: uRow.full_name || authUser.user_metadata?.full_name || "",
@@ -365,7 +532,7 @@ export default function AccountPage() {
       const supabase = createClient();
       if (userRow) {
         const { error: userError } = await supabase
-          .from("users")
+          .from("core_users")
           .update({ full_name: form.fullName, phone: form.phone })
           .eq("id", userRow.id);
         if (userError) throw userError;
@@ -377,13 +544,13 @@ export default function AccountPage() {
       if (form.businessName.trim()) {
         if (business) {
           const { error: bizError } = await supabase
-            .from("businesses")
+            .from("core_businesses")
             .update({ name: form.businessName, industry: form.industry, website_url: form.website, logo_url: form.logoUrl || null })
             .eq("id", business.id);
           if (bizError) throw bizError;
         } else if (userRow) {
           const { data: newBusiness, error: bizError } = await supabase
-            .from("businesses")
+            .from("core_businesses")
             .insert({
               owner_id: userRow.id,
               name: form.businessName,
@@ -556,7 +723,9 @@ export default function AccountPage() {
         </Paper>
       )}
 
-      {tab === 4 && (
+      {tab === 4 && <TeamTab businessId={business?.id} isOwner={isBusinessOwner} />}
+
+      {tab === 5 && (
         <>
           <BankConnectForm
             title="Affiliate payout bank account"

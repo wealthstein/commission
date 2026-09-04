@@ -30,7 +30,7 @@ export async function POST(req) {
 
   // Confirm the caller actually owns this business (RLS would also block a
   // mismatched business's row, but this gives a clearer error message).
-  const { data: business } = await supabase.from("businesses").select("id").eq("id", businessId).single();
+  const { data: business } = await supabase.from("core_businesses").select("id").eq("id", businessId).single();
   if (!business) {
     return NextResponse.json({ error: "Business not found or you do not have access to it" }, { status: 404 });
   }

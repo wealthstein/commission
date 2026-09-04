@@ -21,7 +21,9 @@
         "Automatic affiliate payouts",
         "Custom fields - up to 1 question of your own on the Intent Form",
         "Your logo on the customer-facing campaign page",
-        "30-day attribution window"
+        "30-day attribution window",
+        "Inbox: 1 WhatsApp number, up to 2 team seats",
+        "Inbox: shared team chat, manual lead capture"
       ]
     },
     {
@@ -40,7 +42,10 @@
         "2 additional custom fields (5 total per campaign)",
         "Unlimited lead export to CSV",
         "Priority support",
-        "Up to 90-day attribution window"
+        "Up to 90-day attribution window",
+        "Inbox: 10 WhatsApp numbers, unlimited team seats",
+        "Inbox: full-text message search across every conversation",
+        "Inbox: inventory catalog for referencing products mid-chat"
       ]
     },
     {
@@ -58,7 +63,9 @@
         "2 additional custom fields (3 total per campaign)",
         "Lead management - view and organize your leads (export not included)",
         "Custom integrations - connect your own site directly instead of Commission's hosted page",
-        "Up to 60-day attribution window"
+        "Up to 60-day attribution window",
+        "Inbox: 3 WhatsApp numbers, up to 10 team seats",
+        "Inbox: lead pipeline, automatic lead routing, tasks & follow-ups, CSV import"
       ]
     }
   ]

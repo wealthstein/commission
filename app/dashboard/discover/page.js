@@ -32,7 +32,7 @@ export default function DiscoverPage() {
         const [{ data: authData }, { data: campaignsData }] = await Promise.all([
           supabase.auth.getUser(),
           supabase
-            .from("campaigns")
+            .from("affiliate_campaigns")
             .select(
               "id, name, category, price_naira, business_id, businesses(id, name, plan), affiliate_programs!inner(id, tier1_percent, tier2_percent, tier3_percent, status)"
             )
@@ -45,7 +45,7 @@ export default function DiscoverPage() {
         let myBusinessId = null;
 
         if (authUser) {
-          const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
+          const { data: userRow } = await supabase.from("core_users").select("id").eq("auth_user_id", authUser.id).single();
           myUserId = userRow?.id || null;
           setUserRowId(myUserId);
 
@@ -55,7 +55,7 @@ export default function DiscoverPage() {
             // products data above - run them together instead of in
             // sequence.
             const [{ data: myBusiness }, { data: enrolled }] = await Promise.all([
-              supabase.from("businesses").select("id").eq("owner_id", myUserId).maybeSingle(),
+              supabase.from("core_businesses").select("id").eq("owner_id", myUserId).maybeSingle(),
               supabase.from("affiliate_enrollments").select("program_id").eq("affiliate_id", myUserId),
             ]);
             myBusinessId = myBusiness?.id || null;
@@ -79,7 +79,7 @@ export default function DiscoverPage() {
         if (businessIds.length > 0) {
           const { data: allEnrollments } = await supabase
             .from("affiliate_enrollments")
-            .select("affiliate_id, affiliate_programs(campaigns(business_id))");
+            .select("affiliate_id, affiliate_programs(affiliate_campaigns(business_id))");
 
           const affiliatesByBusiness = new Map();
           for (const e of allEnrollments || []) {

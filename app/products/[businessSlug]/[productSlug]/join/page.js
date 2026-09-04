@@ -26,9 +26,9 @@ function JoinProgramInner() {
     const supabase = createClient();
 
     async function load() {
-      const { data: biz } = await supabase.from("businesses").select("*").eq("slug", params.businessSlug).maybeSingle();
+      const { data: biz } = await supabase.from("core_businesses").select("*").eq("slug", params.businessSlug).maybeSingle();
       const { data: prod } = biz
-        ? await supabase.from("campaigns").select("*").eq("business_id", biz.id).eq("slug", params.productSlug).maybeSingle()
+        ? await supabase.from("affiliate_campaigns").select("*").eq("business_id", biz.id).eq("slug", params.productSlug).maybeSingle()
         : { data: null };
       const { data: prog } = prod
         ? await supabase.from("affiliate_programs").select("*").eq("campaign_id", prod.id).eq("status", "active").maybeSingle()
@@ -49,7 +49,7 @@ function JoinProgramInner() {
       setAuthUser(user);
 
       if (user) {
-        const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", user.id).single();
+        const { data: userRow } = await supabase.from("core_users").select("id").eq("auth_user_id", user.id).single();
         if (userRow) {
           const { data: existing } = await supabase
             .from("affiliate_enrollments")

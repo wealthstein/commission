@@ -32,7 +32,7 @@ export async function GET(req, { params }) {
   const { data: enrollment } = await supabase
     .from("affiliate_enrollments")
     .select(
-      "*, affiliate_programs(*, campaigns(*, businesses(*)))"
+      "*, affiliate_programs(*, affiliate_campaigns(*, businesses(*)))"
     )
     .eq("referral_code", code)
     .eq("status", "active")
@@ -79,7 +79,7 @@ export async function GET(req, { params }) {
 
   const expiresAt = new Date(Date.now() + attributionDays * 24 * 60 * 60 * 1000);
 
-  await supabase.from("referral_clicks").insert({
+  await supabase.from("affiliate_referral_clicks").insert({
     enrollment_id: enrollment.id,
     visitor_id: visitorId,
     landed_at: new Date().toISOString(),

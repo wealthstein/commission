@@ -58,8 +58,8 @@ export default function EditCampaignPage() {
 
     async function load() {
       const { data: campaign, error } = await supabase
-        .from("campaigns")
-        .select("*, affiliate_programs(*), businesses(plan, website_url)")
+        .from("affiliate_campaigns")
+        .select("*, affiliate_programs(*), core_businesses(plan, website_url)")
         .eq("id", params.id)
         .maybeSingle();
 
@@ -129,7 +129,7 @@ export default function EditCampaignPage() {
       const supabase = createClient();
 
       const { error: campaignError } = await supabase
-        .from("campaigns")
+        .from("affiliate_campaigns")
         .update({
           name: form.name,
           category: form.category,

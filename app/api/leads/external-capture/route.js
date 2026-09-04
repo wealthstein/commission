@@ -68,7 +68,7 @@ export async function POST(req) {
 
   // Same check as the hosted Interest Form - a submitted customer phone
   // can't match the referring affiliate's own verified phone.
-  const { data: affiliateUser } = await supabase.from("users").select("phone").eq("id", enrollment.affiliate_id).maybeSingle();
+  const { data: affiliateUser } = await supabase.from("core_users").select("phone").eq("id", enrollment.affiliate_id).maybeSingle();
   if (affiliateUser?.phone && affiliateUser.phone === phone) {
     return NextResponse.json(
       { error: "This phone number can't be used for a lead you're referring yourself." },
@@ -78,7 +78,7 @@ export async function POST(req) {
 
   const { data: program } = await supabase
     .from("affiliate_programs")
-    .select("*, campaigns(name, business_id, businesses(plan))")
+    .select("*, affiliate_campaigns(name, business_id, core_businesses(plan))")
     .eq("id", programId)
     .eq("status", "active")
     .maybeSingle();
@@ -131,7 +131,7 @@ export async function POST(req) {
       const crossCampaignFlags = await computeCrossCampaignFlags(supabase, { phoneHash, ipHash, excludeProgramId: programId });
       const riskFlags = [...timingFlags, ...crossCampaignFlags];
 
-      await supabase.from("leads").update({ risk_flags: riskFlags }).eq("id", result.leadId);
+      await supabase.from("affiliate_leads").update({ risk_flags: riskFlags }).eq("id", result.leadId);
       await supabase.from("lead_risk_signals").insert({
         lead_id: result.leadId,
         phone_hash: phoneHash,

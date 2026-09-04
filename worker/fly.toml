@@ -1,0 +1,33 @@
+app = "inbox-worker"
+primary_region = "iad"
+
+[build]
+
+[env]
+  PORT = "8080"
+  AUTH_STORAGE_DIR = "/data/sessions"
+
+[[mounts]]
+  source = "weekend_sessions"
+  destination = "/data"
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

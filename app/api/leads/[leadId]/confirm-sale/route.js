@@ -32,8 +32,8 @@ export async function POST(req, { params }) {
   const admin = createAdminSupabaseClient();
 
   const { data: lead } = await admin
-    .from("leads")
-    .select("id, status, enrollment_id, affiliate_programs(campaigns(business_id, businesses(id, industry)))")
+    .from("affiliate_leads")
+    .select("id, status, enrollment_id, affiliate_programs(affiliate_campaigns(business_id, core_businesses(id, industry)))")
     .eq("id", params.leadId)
     .single();
 
@@ -52,7 +52,7 @@ export async function POST(req, { params }) {
     );
   }
 
-  const { data: userRow } = await admin.from("users").select("id").eq("auth_user_id", authUser.id).single();
+  const { data: userRow } = await admin.from("core_users").select("id").eq("auth_user_id", authUser.id).single();
 
   // Tier-1 affiliate resolved from the lead's own enrollment - not
   // manually selected by the business, so there is no room to credit the
@@ -66,7 +66,7 @@ export async function POST(req, { params }) {
   // (sale_confirmations_insert in schema.sql) enforces that only the
   // business owner or an active team admin can create this record.
   const { data: confirmation, error } = await supabase
-    .from("manual_sale_confirmations")
+    .from("affiliate_manual_sale_confirmations")
     .insert({
       lead_id: lead.id,
       business_id: business.id,

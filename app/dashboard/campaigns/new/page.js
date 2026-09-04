@@ -246,9 +246,9 @@ export default function NewCampaignPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
-      const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", user.id).single();
+      const { data: userRow } = await supabase.from("core_users").select("id").eq("auth_user_id", user.id).single();
       if (!userRow) return;
-      const { data: biz } = await supabase.from("businesses").select("plan, name, industry, website_url").eq("owner_id", userRow.id).maybeSingle();
+      const { data: biz } = await supabase.from("core_businesses").select("plan, name, industry, website_url").eq("owner_id", userRow.id).maybeSingle();
       setPlan(biz?.plan || "free");
       setBusinessWebsiteUrl(biz?.website_url || null);
       // A campaign needs a real business identity behind it - name and
@@ -364,18 +364,18 @@ export default function NewCampaignPage() {
         return;
       }
 
-      const { data: userRow } = await supabase.from("users").select("id").eq("auth_user_id", user.id).single();
+      const { data: userRow } = await supabase.from("core_users").select("id").eq("auth_user_id", user.id).single();
 
       // 1. Ensure the caller has a business profile (created on first product
       // listing). Explicitly scoped to this user's own business - previously
       // this used .limit(1) with no owner filter, which could grab whichever
       // business happened to be first in the whole table.
-      const { data: existingBusiness } = await supabase.from("businesses").select("id").eq("owner_id", userRow.id).maybeSingle();
+      const { data: existingBusiness } = await supabase.from("core_businesses").select("id").eq("owner_id", userRow.id).maybeSingle();
       let businessId = existingBusiness?.id;
 
       if (!businessId) {
         const { data: newBusiness, error: bizError } = await supabase
-          .from("businesses")
+          .from("core_businesses")
           .insert({ owner_id: userRow.id, name: `${user.email}'s business`, slug: `biz-${Date.now()}` })
           .select()
           .single();
@@ -387,7 +387,7 @@ export default function NewCampaignPage() {
       // (product_url, offline_payment_instructions) regardless of physical
       // vs digital — that toggle only affects which categories are available.
       const { data: campaign, error: campaignError } = await supabase
-        .from("campaigns")
+        .from("affiliate_campaigns")
         .insert({
           business_id: businessId,
           name: form.name,
@@ -449,7 +449,7 @@ export default function NewCampaignPage() {
       // own form (see app/api/leads/external-capture). Dropdown
       // options are now real separate strings, not a comma-joined blob.
       if (isLead && customFields.length > 0) {
-        const { error: fieldsError } = await supabase.from("campaign_custom_fields").insert(
+        const { error: fieldsError } = await supabase.from("affiliate_campaign_custom_fields").insert(
           customFields.map((f, i) => ({
             affiliate_program_id: program.id,
             label: f.label,

@@ -40,14 +40,14 @@ export async function POST(req, { params }) {
 
   const admin = createAdminSupabaseClient();
 
-  const { data: userRow } = await admin.from("users").select("id").eq("auth_user_id", authUser.id).single();
+  const { data: userRow } = await admin.from("core_users").select("id").eq("auth_user_id", authUser.id).single();
   if (!userRow) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
 
   const { data: lead } = await admin
-    .from("leads")
-    .select("id, status, affiliate_programs(campaigns(business_id))")
+    .from("affiliate_leads")
+    .select("id, status, affiliate_programs(affiliate_campaigns(business_id))")
     .eq("id", params.leadId)
     .maybeSingle();
   if (!lead) {
@@ -55,7 +55,7 @@ export async function POST(req, { params }) {
   }
 
   const businessId = lead.affiliate_programs?.campaigns?.business_id;
-  const { data: business } = await admin.from("businesses").select("owner_id").eq("id", businessId).maybeSingle();
+  const { data: business } = await admin.from("core_businesses").select("owner_id").eq("id", businessId).maybeSingle();
   if (business?.owner_id !== userRow.id) {
     return NextResponse.json({ error: "This lead doesn't belong to your business" }, { status: 403 });
   }
@@ -64,7 +64,7 @@ export async function POST(req, { params }) {
     return NextResponse.json({ error: `This lead is already ${lead.status} and can't be rejected` }, { status: 400 });
   }
 
-  const { error } = await admin.from("leads").update({ status: "rejected", rejected_reason: reason.trim() }).eq("id", lead.id);
+  const { error } = await admin.from("affiliate_leads").update({ status: "rejected", rejected_reason: reason.trim() }).eq("id", lead.id);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

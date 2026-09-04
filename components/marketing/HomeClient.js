@@ -9,6 +9,7 @@ import CardGridSection from "@/components/marketing/CardGridSection";
 import HowItWorks from "@/components/marketing/HowItWorks";
 import DemoVideoSection from "@/components/marketing/DemoVideoSection";
 import Comparison from "@/components/marketing/Comparison";
+import WhatsAppComparisonSection from "@/components/marketing/WhatsAppComparisonSection";
 import EarningsExample from "@/components/marketing/EarningsExample";
 import Pricing from "@/components/marketing/Pricing";
 import FAQ from "@/components/marketing/FAQ";
@@ -16,7 +17,7 @@ import RequestAccountForm from "@/components/marketing/RequestAccountForm";
 import { CTASection } from "@/components/marketing/CTAAndFooter";
 import GoToTopButton from "@/components/marketing/GoToTopButton";
 import { audienceContent, faqByAudience } from "@/components/marketing/content";
-import { Box, Container, Typography } from "@mui/material";
+import { Box, Container, Typography, Button } from "@mui/material";
 import { dotPatternSx, altSectionBg } from "@/lib/patterns";
 import { tokens } from "@/lib/theme";
 
@@ -71,6 +72,17 @@ export default function HomeClient({ searchParams }) {
 
       {audience === "business" && <Comparison data={content.comparison} />}
       {audience === "affiliate" && <EarningsExample data={content.earningsExample} bgcolor={altSectionBg} />}
+
+      {audience === "business" && (
+        <WhatsAppComparisonSection
+          bgcolor={altSectionBg}
+          ctaButton={
+            <Button variant="contained" size="large" onClick={() => router.push("/inbox")}>
+              See how Inbox works
+            </Button>
+          }
+        />
+      )}
 
       {/* Pricing (business only), FAQ, and the Request Access form form one
           continuous closing zone with a shared dot-texture background,

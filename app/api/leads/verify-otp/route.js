@@ -56,7 +56,7 @@ export async function POST(req) {
 
   const { data: program } = await supabase
     .from("affiliate_programs")
-    .select("*, campaigns(name, business_id)")
+    .select("*, affiliate_campaigns(name, business_id)")
     .eq("id", otpRow.program_id)
     .eq("status", "active")
     .maybeSingle();
@@ -87,7 +87,7 @@ export async function POST(req) {
       });
       const riskFlags = [...timingFlags, ...crossCampaignFlags];
 
-      await supabase.from("leads").update({ risk_flags: riskFlags }).eq("id", result.leadId);
+      await supabase.from("affiliate_leads").update({ risk_flags: riskFlags }).eq("id", result.leadId);
       await supabase.from("lead_risk_signals").insert({
         lead_id: result.leadId,
         phone_hash: phoneHash,

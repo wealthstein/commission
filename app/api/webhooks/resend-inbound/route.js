@@ -30,10 +30,15 @@ import { cancelScheduledEmail } from "@/lib/email";
  * replies just land wherever reply.commission.ng's mail currently goes,
  * invisible to the cron.
  *
- * Deliberately does NOT fetch the full email body via
- * resend.emails.receiving.get() - detecting that a reply happened at all
- * is enough to cancel the remaining scheduled emails; reading the reply's
- * content isn't needed for that.
+ * Forwards the full reply to a real human inbox via Resend's own
+ * emails.receiving.forward() API (see
+ * https://resend.com/docs/dashboard/receiving/forward-emails) - this
+ * handles fetching the actual email content itself, so this route never
+ * needs to parse the body directly. Necessary because
+ * reply@reply.commission.ng isn't a traditional mailbox a person can log
+ * into - the MX record routes everything to Resend for webhook
+ * processing, so without an explicit forward, a genuine reply is only
+ * ever seen by this code, never by a human who could follow up.
  *
  * Actually cancels the remaining scheduled emails via Resend's cancel
  * endpoint (see lib/email.js's cancelScheduledEmail), using the
@@ -43,6 +48,14 @@ import { cancelScheduledEmail } from "@/lib/email";
  */
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// The actual human-checkable inbox replies should reach. Necessary because
+// reply.commission.ng's MX record points directly at Resend for inbound
+// processing - there's no traditional mailbox sitting at
+// reply@reply.commission.ng itself for a person to log into. Without an
+// explicit forward, a genuine reply is only ever seen by this webhook
+// programmatically, never by a human who could actually follow up.
+const REPLY_FORWARD_TO = process.env.OUTREACH_REPLY_FORWARD_TO || "nigeria@commission.ng";
 
 function extractSenderEmail(eventData) {
   // Defensive - tries the field shapes most inbound-email APIs use, in
@@ -90,10 +103,27 @@ export async function POST(req) {
     return NextResponse.json({ error: "Could not extract sender email" }, { status: 200 });
   }
 
+  // Forward the actual reply content to a real inbox first, before any of
+  // the cancellation logic below - a human needs to see what the business
+  // actually said, independent of whatever this contact's current status
+  // in the database happens to be.
+  try {
+    await resend.emails.receiving.forward({
+      emailId: event.data.email_id,
+      to: REPLY_FORWARD_TO,
+      from: process.env.OUTREACH_FROM_ADDRESS || "hello@commission.ng",
+    });
+  } catch (err) {
+    // A forwarding failure shouldn't block cancelling the sequence below -
+    // log it and continue, same reasoning as every other email failure in
+    // this app never breaking the flow it's attached to.
+    console.error(`Failed to forward reply from ${senderEmail} to ${REPLY_FORWARD_TO}:`, err.message);
+  }
+
   const supabase = createAdminSupabaseClient();
 
   const { data: contact } = await supabase
-    .from("cold_outreach_contacts")
+    .from("growth_cold_outreach_contacts")
     .select("id, email_2_resend_id, email_3_resend_id, email_4_resend_id, email_5_resend_id")
     .eq("email_address", senderEmail)
     .eq("status", "active")
@@ -117,7 +147,7 @@ export async function POST(req) {
       .map((id) => cancelScheduledEmail(id))
   );
 
-  const { error } = await supabase.from("cold_outreach_contacts").update({ status: "replied" }).eq("id", contact.id);
+  const { error } = await supabase.from("growth_cold_outreach_contacts").update({ status: "replied" }).eq("id", contact.id);
 
   if (error) {
     console.error("Failed to mark contact as replied:", error.message);

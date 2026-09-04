@@ -35,7 +35,7 @@ export async function POST(req) {
 
   const supabase = createAdminSupabaseClient();
 
-  const { data: lead } = await supabase.from("leads").select("id, status, program_id").eq("lead_ref", leadRef).maybeSingle();
+  const { data: lead } = await supabase.from("affiliate_leads").select("id, status, program_id").eq("lead_ref", leadRef).maybeSingle();
   if (!lead) {
     return NextResponse.json({ error: "This link is no longer valid" }, { status: 404, headers: CORS_HEADERS });
   }
@@ -52,7 +52,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "This confirmation link has expired. Please start again." }, { status: 404, headers: CORS_HEADERS });
   }
 
-  const { data: program } = await supabase.from("affiliate_programs").select("campaigns(name, business_id, businesses(name))").eq("id", lead.program_id).single();
+  const { data: program } = await supabase.from("affiliate_programs").select("affiliate_campaigns(name, business_id, core_businesses(name))").eq("id", lead.program_id).single();
   const businessName = program?.campaigns?.businesses?.name || "the business";
 
   let sent;

@@ -28,9 +28,9 @@ export async function POST(req) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
 
-  const { data: reporterUser } = await supabase.from("users").select("id").eq("auth_user_id", authUser.id).single();
+  const { data: reporterUser } = await supabase.from("core_users").select("id").eq("auth_user_id", authUser.id).single();
 
-  const { data: campaign } = await supabase.from("campaigns").select("*").eq("id", campaignId).single();
+  const { data: campaign } = await supabase.from("affiliate_campaigns").select("*").eq("id", campaignId).single();
   if (!campaign) {
     return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
@@ -60,7 +60,7 @@ export async function POST(req) {
   }
 
   const { data: customer } = await supabase
-    .from("customers")
+    .from("affiliate_customers")
     .upsert(
       { business_id: campaign.business_id, email: customerEmail, attributed_enrollment_id: enrollment?.id ?? null },
       { onConflict: "business_id,email" }
@@ -69,7 +69,7 @@ export async function POST(req) {
     .single();
 
   const { data: transaction, error: txnError } = await supabase
-    .from("transactions")
+    .from("billing_transactions")
     .insert({
       campaign_id: campaignId,
       customer_id: customer.id,

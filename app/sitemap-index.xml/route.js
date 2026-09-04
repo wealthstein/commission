@@ -18,7 +18,7 @@ const PAGE_SIZE = 45000; // must match app/sitemap.js
  */
 export async function GET() {
   const supabase = createAdminSupabaseClient();
-  const { count } = await supabase.from("campaigns").select("id", { count: "exact", head: true }).eq("status", "active");
+  const { count } = await supabase.from("affiliate_campaigns").select("id", { count: "exact", head: true }).eq("status", "active");
   const campaignPages = Math.max(1, Math.ceil((count || 0) / PAGE_SIZE));
   const totalChunks = campaignPages + 1; // + the static/business/category chunk
 

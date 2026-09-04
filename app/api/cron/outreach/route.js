@@ -42,7 +42,7 @@ async function runOutreachBatch(req) {
   const supabase = createAdminSupabaseClient();
   const summary = { sent: 0, completed: 0, skippedNotDue: 0, errors: [] };
 
-  const { data: contacts, error } = await supabase.from("cold_outreach_contacts").select("*").eq("status", "active");
+  const { data: contacts, error } = await supabase.from("growth_cold_outreach_contacts").select("*").eq("status", "active");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -71,7 +71,7 @@ async function runOutreachBatch(req) {
 
       const isLastStep = nextStep >= TOTAL_STEPS;
       await supabase
-        .from("cold_outreach_contacts")
+        .from("growth_cold_outreach_contacts")
         .update({
           sequence_step: nextStep,
           last_sent_at: new Date().toISOString(),

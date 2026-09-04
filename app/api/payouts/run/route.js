@@ -34,7 +34,7 @@ async function runPayoutBatch(req) {
 
   // 1. Pull every pending commission with enough context to group and gate it.
   const { data: pending, error } = await supabase
-    .from("commissions")
+    .from("billing_commissions")
     .select(
       `
       id, affiliate_payout_naira, payout_status,
@@ -82,7 +82,7 @@ async function runPayoutBatch(req) {
   // 4. For each affiliate with a qualifying balance, initiate one transfer.
   for (const [affiliateId, entry] of byAffiliate.entries()) {
     const { data: affiliate } = await supabase
-      .from("users")
+      .from("core_users")
       .select("id, email, full_name, paystack_recipient_code")
       .eq("id", affiliateId)
       .single();
@@ -94,7 +94,7 @@ async function runPayoutBatch(req) {
 
     try {
       const { data: payout, error: payoutError } = await supabase
-        .from("payouts")
+        .from("billing_payouts")
         .insert({
           affiliate_id: affiliateId,
           amount_naira: entry.totalNaira,
@@ -105,7 +105,7 @@ async function runPayoutBatch(req) {
         .single();
       if (payoutError) throw payoutError;
 
-      await supabase.from("payout_commissions").insert(
+      await supabase.from("billing_payout_commissions").insert(
         entry.commissionIds.map((commissionId) => ({ payout_id: payout.id, commission_id: commissionId }))
       );
 
@@ -116,12 +116,12 @@ async function runPayoutBatch(req) {
       });
 
       await supabase
-        .from("payouts")
+        .from("billing_payouts")
         .update({ paystack_transfer_code: transfer.transfer_code })
         .eq("id", payout.id);
 
       await supabase
-        .from("commissions")
+        .from("billing_commissions")
         .update({ payout_status: "initiated", paystack_transfer_code: transfer.transfer_code })
         .in("id", entry.commissionIds);
 

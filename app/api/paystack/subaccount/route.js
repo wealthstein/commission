@@ -18,7 +18,7 @@ export async function POST(req) {
   }
 
   const supabase = createServerSupabaseClient();
-  const { data: business, error: bizError } = await supabase.from("businesses").select("id, name").eq("id", businessId).single();
+  const { data: business, error: bizError } = await supabase.from("core_businesses").select("id, name").eq("id", businessId).single();
   if (bizError || !business) {
     return NextResponse.json({ error: "Business not found or you do not have access to it" }, { status: 404 });
   }
@@ -28,7 +28,7 @@ export async function POST(req) {
     const subaccount = await createBusinessSubaccount({ businessName: business.name, bankCode, accountNumber });
 
     const { error: updateError } = await supabase
-      .from("businesses")
+      .from("core_businesses")
       .update({ paystack_subaccount_code: subaccount.subaccount_code })
       .eq("id", businessId);
     if (updateError) throw updateError;

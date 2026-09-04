@@ -38,15 +38,15 @@ async function runWalletNudgeBatch(req) {
   const now = Date.now();
 
   // 1. Enroll any business that has never funded and has no nudge row yet.
-  const { data: businesses } = await supabase.from("businesses").select("id, name, owner_id");
-  const { data: existingNudges } = await supabase.from("wallet_funding_nudges").select("business_id");
+  const { data: businesses } = await supabase.from("core_businesses").select("id, name, owner_id");
+  const { data: existingNudges } = await supabase.from("billing_wallet_funding_nudges").select("business_id");
   const existingIds = new Set((existingNudges || []).map((n) => n.business_id));
 
   for (const business of businesses || []) {
     if (existingIds.has(business.id)) continue;
 
     const { data: topups } = await supabase
-      .from("wallet_transactions")
+      .from("billing_wallet_transactions")
       .select("id")
       .eq("business_id", business.id)
       .eq("type", "topup")
@@ -55,27 +55,27 @@ async function runWalletNudgeBatch(req) {
     if (topups && topups.length > 0) continue; // already funded before this sequence existed - nothing to nudge
 
     const { error: insertError } = await supabase
-      .from("wallet_funding_nudges")
+      .from("billing_wallet_funding_nudges")
       .insert({ business_id: business.id, cycle: 1, sequence_step: 0, status: "active" });
     if (!insertError) summary.newlyEnrolled += 1;
   }
 
   // 2. Process every active nudge.
-  const { data: activeNudges } = await supabase.from("wallet_funding_nudges").select("*").eq("status", "active");
+  const { data: activeNudges } = await supabase.from("billing_wallet_funding_nudges").select("*").eq("status", "active");
 
   for (const nudge of activeNudges || []) {
     try {
       // Always check for a real topup first - stops the sequence dead the
       // moment it's no longer needed, regardless of where in the cycle it is.
       const { data: topups } = await supabase
-        .from("wallet_transactions")
+        .from("billing_wallet_transactions")
         .select("id")
         .eq("business_id", nudge.business_id)
         .eq("type", "topup")
         .limit(1);
 
       if (topups && topups.length > 0) {
-        await supabase.from("wallet_funding_nudges").update({ status: "topped_up" }).eq("id", nudge.id);
+        await supabase.from("billing_wallet_funding_nudges").update({ status: "topped_up" }).eq("id", nudge.id);
         summary.markedToppedUp += 1;
         continue;
       }
@@ -88,8 +88,8 @@ async function runWalletNudgeBatch(req) {
 
       // Pause window just ended - start cycle 2 fresh.
       if (nudge.paused_until && now >= new Date(nudge.paused_until).getTime()) {
-        const { data: business } = await supabase.from("businesses").select("id, name, owner_id").eq("id", nudge.business_id).single();
-        const { data: ownerRow } = await supabase.from("users").select("email, full_name").eq("id", business.owner_id).single();
+        const { data: business } = await supabase.from("core_businesses").select("id, name, owner_id").eq("id", nudge.business_id).single();
+        const { data: ownerRow } = await supabase.from("core_users").select("email, full_name").eq("id", business.owner_id).single();
 
         await sendWalletNudgeEmail(1, {
           to: ownerRow.email,
@@ -98,7 +98,7 @@ async function runWalletNudgeBatch(req) {
         });
 
         await supabase
-          .from("wallet_funding_nudges")
+          .from("billing_wallet_funding_nudges")
           .update({ cycle: 2, sequence_step: 1, last_sent_at: new Date().toISOString(), paused_until: null })
           .eq("id", nudge.id);
 
@@ -118,8 +118,8 @@ async function runWalletNudgeBatch(req) {
       }
 
       const nextStep = nudge.sequence_step + 1;
-      const { data: business } = await supabase.from("businesses").select("id, name, owner_id").eq("id", nudge.business_id).single();
-      const { data: ownerRow } = await supabase.from("users").select("email, full_name").eq("id", business.owner_id).single();
+      const { data: business } = await supabase.from("core_businesses").select("id, name, owner_id").eq("id", nudge.business_id).single();
+      const { data: ownerRow } = await supabase.from("core_users").select("email, full_name").eq("id", business.owner_id).single();
 
       await sendWalletNudgeEmail(nextStep, {
         to: ownerRow.email,
@@ -132,13 +132,13 @@ async function runWalletNudgeBatch(req) {
 
       if (!isLastStepOfCycle) {
         await supabase
-          .from("wallet_funding_nudges")
+          .from("billing_wallet_funding_nudges")
           .update({ sequence_step: nextStep, last_sent_at: new Date().toISOString() })
           .eq("id", nudge.id);
       } else if (nudge.cycle === 1) {
         // End of cycle 1 - pause 14 days before cycle 2.
         await supabase
-          .from("wallet_funding_nudges")
+          .from("billing_wallet_funding_nudges")
           .update({
             sequence_step: nextStep,
             last_sent_at: new Date().toISOString(),
@@ -149,7 +149,7 @@ async function runWalletNudgeBatch(req) {
       } else {
         // End of cycle 2 - done trying.
         await supabase
-          .from("wallet_funding_nudges")
+          .from("billing_wallet_funding_nudges")
           .update({ sequence_step: nextStep, last_sent_at: new Date().toISOString(), status: "exhausted" })
           .eq("id", nudge.id);
         summary.exhausted += 1;

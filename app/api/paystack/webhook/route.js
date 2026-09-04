@@ -91,7 +91,7 @@ async function handleWalletTopupSuccess(data, supabase) {
 
   // Idempotency: if this reference already produced a wallet_transactions row, skip.
   const { data: existing } = await supabase
-    .from("wallet_transactions")
+    .from("billing_wallet_transactions")
     .select("id")
     .eq("paystack_reference", data.reference)
     .maybeSingle();
@@ -101,7 +101,7 @@ async function handleWalletTopupSuccess(data, supabase) {
   // for Commission, Medium 15%, Large 10% — not per-lead or per-sale. Every
   // qualified lead or verified sale afterward deducts its FULL commission
   // straight to affiliates with no further fee (see the qualify/verify routes).
-  const { data: business } = await supabase.from("businesses").select("plan").eq("id", businessId).single();
+  const { data: business } = await supabase.from("core_businesses").select("plan").eq("id", businessId).single();
   const feePercent = feePercentForPlan(business?.plan);
   const platformFeeNaira = Math.round((grossAmountNaira * feePercent) / 100 * 100) / 100;
   const netCreditedNaira = Math.round((grossAmountNaira - platformFeeNaira) * 100) / 100;
@@ -126,13 +126,13 @@ async function handleDirectSaleSuccess(data, supabase) {
 
   // Idempotency: if this reference already produced a transaction, skip.
   const { data: existingTxn } = await supabase
-    .from("transactions")
+    .from("billing_transactions")
     .select("id")
     .eq("paystack_reference", data.reference)
     .maybeSingle();
   if (existingTxn) return;
 
-  const { data: campaign } = await supabase.from("campaigns").select("*, businesses(*)").eq("id", campaignId).single();
+  const { data: campaign } = await supabase.from("affiliate_campaigns").select("*, core_businesses(*)").eq("id", campaignId).single();
   const business = campaign.businesses;
 
   let enrollment = null;
@@ -174,7 +174,7 @@ async function handleSubscriptionRenewal(data, supabase) {
 
   // Idempotency: if this reference already produced a transaction, skip.
   const { data: existingTxn } = await supabase
-    .from("transactions")
+    .from("billing_transactions")
     .select("id")
     .eq("paystack_reference", data.reference)
     .maybeSingle();
@@ -201,7 +201,7 @@ async function handleSubscriptionRenewal(data, supabase) {
     return;
   }
 
-  const { data: campaign } = await supabase.from("campaigns").select("*, businesses(*)").eq("id", attribution.campaign_id).single();
+  const { data: campaign } = await supabase.from("affiliate_campaigns").select("*, core_businesses(*)").eq("id", attribution.campaign_id).single();
   const business = campaign.businesses;
 
   let enrollment = null;
@@ -230,7 +230,7 @@ async function processSaleTransaction(supabase, { data, verified, campaignId, ca
   const amountNaira = verified.amount / 100;
 
   const { data: customer } = await supabase
-    .from("customers")
+    .from("affiliate_customers")
     .upsert(
       { business_id: business.id, email: verified.customer.email, paystack_customer_code: verified.customer.customer_code },
       { onConflict: "business_id,email" }
@@ -239,7 +239,7 @@ async function processSaleTransaction(supabase, { data, verified, campaignId, ca
     .single();
 
   const { data: transaction } = await supabase
-    .from("transactions")
+    .from("billing_transactions")
     .insert({
       campaign_id: campaignId,
       customer_id: customer.id,
@@ -287,7 +287,7 @@ async function processSaleTransaction(supabase, { data, verified, campaignId, ca
   });
 
   for (const line of result.lines) {
-    await supabase.from("commissions").upsert(
+    await supabase.from("billing_commissions").upsert(
       {
         transaction_id: transaction.id,
         enrollment_id: line.enrollmentId,
@@ -305,7 +305,7 @@ async function processSaleTransaction(supabase, { data, verified, campaignId, ca
     const lineEnrollment = lineage.find((e) => e.id === line.enrollmentId);
     if (lineEnrollment?.affiliate_id) {
       const { data: affiliateUser } = await supabase
-        .from("users")
+        .from("core_users")
         .select("email, full_name")
         .eq("id", lineEnrollment.affiliate_id)
         .maybeSingle();
@@ -325,7 +325,7 @@ async function processSaleTransaction(supabase, { data, verified, campaignId, ca
 async function handleTransferStatus(data, eventName, supabase) {
   const status = eventName === "transfer.success" ? "paid" : "failed";
   const { data: payout } = await supabase
-    .from("payouts")
+    .from("billing_payouts")
     .update({ status, paid_at: status === "paid" ? new Date().toISOString() : null })
     .eq("paystack_transfer_code", data.transfer_code)
     .select()
@@ -333,12 +333,12 @@ async function handleTransferStatus(data, eventName, supabase) {
 
   if (status === "paid" && payout) {
     await supabase
-      .from("commissions")
+      .from("billing_commissions")
       .update({ payout_status: "paid" })
       .eq("paystack_transfer_code", data.transfer_code);
 
     const { data: affiliate } = await supabase
-      .from("users")
+      .from("core_users")
       .select("email, full_name")
       .eq("id", payout.affiliate_id)
       .maybeSingle();

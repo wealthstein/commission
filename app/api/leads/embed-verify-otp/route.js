@@ -34,7 +34,7 @@ export async function POST(req) {
 
   const admin = createAdminSupabaseClient();
 
-  const { data: lead } = await admin.from("leads").select("*").eq("lead_ref", leadRef).maybeSingle();
+  const { data: lead } = await admin.from("affiliate_leads").select("*").eq("lead_ref", leadRef).maybeSingle();
   if (!lead) {
     return NextResponse.json({ error: "This link is no longer valid" }, { status: 404, headers: CORS_HEADERS });
   }
@@ -63,7 +63,7 @@ export async function POST(req) {
 
   const { data: program } = await admin
     .from("affiliate_programs")
-    .select("*, campaigns(name, business_id, businesses(*))")
+    .select("*, affiliate_campaigns(name, business_id, core_businesses(*))")
     .eq("id", lead.program_id)
     .single();
   const business = program.campaigns.businesses;
@@ -79,11 +79,11 @@ export async function POST(req) {
     );
   }
 
-  const { data: businessOwner } = await admin.from("businesses").select("owner_id").eq("id", business.id).single();
-  const { data: ownerRow } = await admin.from("users").select("email").eq("id", businessOwner?.owner_id).maybeSingle();
+  const { data: businessOwner } = await admin.from("core_businesses").select("owner_id").eq("id", business.id).single();
+  const { data: ownerRow } = await admin.from("core_users").select("email").eq("id", businessOwner?.owner_id).maybeSingle();
 
   const { data: enrollment } = await admin.from("affiliate_enrollments").select("affiliate_id").eq("id", lead.enrollment_id).single();
-  const { data: affiliateUser } = await admin.from("users").select("email, full_name").eq("id", enrollment?.affiliate_id).maybeSingle();
+  const { data: affiliateUser } = await admin.from("core_users").select("email, full_name").eq("id", enrollment?.affiliate_id).maybeSingle();
 
   const customFieldAnswers = pending.metadata
     ? Object.entries(pending.metadata).map(([label, value]) => ({ label, value: String(value) }))
@@ -102,7 +102,7 @@ export async function POST(req) {
   });
 
   await admin
-    .from("leads")
+    .from("affiliate_leads")
     .update({ status: "qualified", qualified_at: new Date().toISOString(), charge_amount_naira: chargeAmount, forwarded_to: forwardedTo })
     .eq("id", lead.id);
 

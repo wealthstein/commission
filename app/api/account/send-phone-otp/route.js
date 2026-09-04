@@ -24,7 +24,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
 
-  const { data: userRow } = await supabase.from("users").select("id, full_name").eq("auth_user_id", authUser.id).single();
+  const { data: userRow } = await supabase.from("core_users").select("id, full_name").eq("auth_user_id", authUser.id).single();
   if (!userRow) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
@@ -51,7 +51,7 @@ export async function POST(req) {
   }
 
   const { error: updateError } = await supabase
-    .from("users")
+    .from("core_users")
     .update({
       phone,
       phone_verified: false,

@@ -5,7 +5,7 @@ import { Paper, Box, Typography, Chip, Stack, Button, Dialog, DialogTitle, Dialo
 import PageHeader from "@/components/dashboard/PageHeader";
 import { tokens } from "@/lib/theme";
 
-// Production query: supabase.from("leads").select("*, affiliate_programs(*, products(name, businesses(id, owner_id)))")
+// Production query: supabase.from("affiliate_leads").select("*, affiliate_programs(*, affiliate_campaigns(name, core_businesses(id, owner_id)))")
 //   .in("affiliate_programs.products.business_id", myBusinessIds).order("created_at", { ascending: false })
 //
 // Note there is no name/phone/email field to select - Commission never

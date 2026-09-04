@@ -24,7 +24,7 @@ function buildSectionSitemapEntries(indexUrl, buildItemUrl, items) {
 }
 
 async function countActiveCampaigns(supabase) {
-  const { count } = await supabase.from("campaigns").select("id", { count: "exact", head: true }).eq("status", "active");
+  const { count } = await supabase.from("affiliate_campaigns").select("id", { count: "exact", head: true }).eq("status", "active");
   return count || 0;
 }
 
@@ -57,7 +57,7 @@ export default async function sitemap({ id }) {
   // The final chunk: marketing pages, every business, every category hub,
   // and every curated company/industry keyword-target page.
   if (id === staticPageId) {
-    const { data: businesses } = await supabase.from("businesses").select("slug, updated_at");
+    const { data: businesses } = await supabase.from("core_businesses").select("slug, updated_at");
     const seoTargets = listPrograms();
 
     const entries = [
@@ -119,8 +119,8 @@ export default async function sitemap({ id }) {
   const to = from + PAGE_SIZE - 1;
 
   const { data: campaigns } = await supabase
-    .from("campaigns")
-    .select("slug, updated_at, businesses(slug)")
+    .from("affiliate_campaigns")
+    .select("slug, updated_at, core_businesses(slug)")
     .eq("status", "active")
     .order("id", { ascending: true }) // stable order so pagination does not skip/duplicate rows as data changes
     .range(from, to);
