@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { Box, Breadcrumbs, Grid, Typography, Button, Avatar, Fade } from "@mui/material";
+import { Box, Breadcrumbs, Grid, Typography, Button, Avatar, Fade, Alert } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 import Link from "next/link";
 import CardMedia from "@mui/material/CardMedia";
@@ -19,6 +19,7 @@ export default function AuthPage({ mode }) {
   const isSignup = mode === "signup";
   const searchParams = useSearchParams();
   const role = searchParams.get("role");
+  const message = searchParams.get("message");
 
   // Filtered to the relevant audience when the page knows it (e.g.
   // ?role=business), since a business signing up has no reason to see an
@@ -80,6 +81,12 @@ export default function AuthPage({ mode }) {
           <Typography variant="body2" sx={{ color: tokens.muted, mb: 4 }}>
             {isSignup ? "One account for launching & joining a campaign." : `Sign in to your ${siteConfig.name} account.`}
           </Typography>
+
+          {message === "logged_out_elsewhere" && (
+            <Alert severity="info" sx={{ mb: 3, textAlign: "left" }}>
+              You were signed out because this account was used to sign in somewhere else.
+            </Alert>
+          )}
 
           <Button
             fullWidth

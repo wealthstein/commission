@@ -95,7 +95,10 @@ export default function ChatWindow({ conversation, businessId, currentUsersId, o
           </Avatar>
           <Box>
             <Typography variant="body1" fontWeight={600}>{name}</Typography>
-            <Typography variant="caption" sx={{ color: tokens.muted }}>{conversation.contact?.wa_number}</Typography>
+            <Typography variant="caption" sx={{ color: tokens.muted }}>
+              {conversation.contact?.wa_number}
+              {conversation.connection?.label ? ` · ${conversation.connection.label}` : ""}
+            </Typography>
           </Box>
         </Stack>
 

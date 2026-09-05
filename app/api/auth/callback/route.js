@@ -8,6 +8,15 @@ import { sendWelcomeEmail } from "@/lib/email";
  * auth code for a session, then ensure a corresponding row exists in our
  * own `users` table (the unified account — see TRD section 4).
  *
+ * Also enforces single-active-session-per-account: every successful login
+ * here overwrites core_users.active_session_token with a fresh random
+ * value and sets the same value as an httpOnly cookie. middleware.js
+ * compares the two on every dashboard request - a login from anywhere
+ * else (another device, another browser) overwrites the DB value, which
+ * invalidates every OTHER cookie already out there holding the old one.
+ * See migration_single_session.sql for the column and the reasoning
+ * behind not enforcing this against a null (pre-rollout) value.
+ *
  * `flow=signin` (from /signin only) means: only look this account up, never
  * create it. If no row exists for this auth_user_id, this Google account
  * has never been through Commission before - redirect to /signup instead
@@ -26,6 +35,18 @@ import { sendWelcomeEmail } from "@/lib/email";
  * full Commission dashboard access - someone should be able to accept an
  * invite even if their own account is still pending review.
  */
+const SESSION_COOKIE = "commission_session_token";
+
+function setSessionCookie(response, token) {
+  response.cookies.set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365, // a year - invalidated by value mismatch on next login elsewhere, not by expiry
+  });
+}
+
 export async function GET(req) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
@@ -47,6 +68,7 @@ export async function GET(req) {
   }
 
   const admin = createAdminSupabaseClient();
+  const sessionToken = crypto.randomUUID();
 
   if (flow === "signin") {
     const { data: existing, error: lookupError } = await admin
@@ -73,7 +95,14 @@ export async function GET(req) {
       if (sourcePage) signupUrl.searchParams.set("source_page", sourcePage);
       return NextResponse.redirect(signupUrl);
     }
-    return NextResponse.redirect(new URL(alwaysHonorNext || existing.access_granted ? next : "/welcome", url.origin));
+
+    await admin.from("core_users").update({ active_session_token: sessionToken }).eq("auth_user_id", data.user.id);
+
+    const response = NextResponse.redirect(
+      new URL(alwaysHonorNext || existing.access_granted ? next : "/welcome", url.origin)
+    );
+    setSessionCookie(response, sessionToken);
+    return response;
   }
 
   const upsertData = {
@@ -81,6 +110,7 @@ export async function GET(req) {
     email: data.user.email,
     full_name: data.user.user_metadata?.full_name ?? null,
     avatar_url: data.user.user_metadata?.avatar_url ?? null,
+    active_session_token: sessionToken,
   };
   // Only recorded when present, so a later real sign-in (no role/source_page
   // in the URL) never overwrites what was captured at the original signup.
@@ -116,6 +146,8 @@ export async function GET(req) {
   }
 
   const destination = alwaysHonorNext || userRow?.access_granted ? next : "/welcome";
-  return NextResponse.redirect(new URL(destination, url.origin));
+  const response = NextResponse.redirect(new URL(destination, url.origin));
+  setSessionCookie(response, sessionToken);
+  return response;
 }
 

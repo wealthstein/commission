@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   Box, List, ListItemButton, ListItemAvatar, Avatar, ListItemText,
-  Typography, InputBase, Badge, Stack, Divider,
+  Typography, InputBase, Badge, Stack, Divider, Chip, Tabs, Tab,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { tokens } from "@/lib/theme";
@@ -37,14 +37,33 @@ function timeAgo(iso) {
 export default function ConversationList({ businessId, activeId, onSelect, hideOnMobile }) {
   const { conversations, loading } = useConversations(businessId);
   const [search, setSearch] = useState("");
+  const [connectionFilter, setConnectionFilter] = useState("all");
+
+  // Distinct connections actually present in the conversation list, in
+  // first-seen order. Only relevant once a business has more than one
+  // number connected - the filter tabs and per-item line badge below
+  // both stay hidden entirely for the common single-number case, so
+  // nobody sees "Main line" labelled on every single chat for no reason.
+  const connections = useMemo(() => {
+    const seen = new Map();
+    for (const c of conversations) {
+      if (c.connection && !seen.has(c.connection.id)) seen.set(c.connection.id, c.connection);
+    }
+    return [...seen.values()];
+  }, [conversations]);
+  const hasMultipleConnections = connections.length > 1;
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return conversations;
+    let list = conversations;
+    if (hasMultipleConnections && connectionFilter !== "all") {
+      list = list.filter((c) => c.connection?.id === connectionFilter);
+    }
+    if (!search.trim()) return list;
     const q = search.toLowerCase();
-    return conversations.filter(
+    return list.filter(
       (c) => (c.contact?.name ?? "").toLowerCase().includes(q) || (c.contact?.wa_number ?? "").includes(q)
     );
-  }, [conversations, search]);
+  }, [conversations, search, connectionFilter, hasMultipleConnections]);
 
   const shouldSearchMessages = search.trim().length >= 3 && filtered.length === 0;
   const { results: messageResults, searching } = useMessageSearch(shouldSearchMessages ? businessId : null, search);
@@ -81,6 +100,22 @@ export default function ConversationList({ businessId, activeId, onSelect, hideO
           />
         </Box>
       </Box>
+
+      {hasMultipleConnections && (
+        <Tabs
+          value={connectionFilter}
+          onChange={(_, v) => setConnectionFilter(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          sx={{ minHeight: 36, borderBottom: `1px solid ${tokens.border}`, "& .MuiTab-root": { minHeight: 36, py: 0.5, fontSize: 13 } }}
+        >
+          <Tab value="all" label="All numbers" />
+          {connections.map((conn) => (
+            <Tab key={conn.id} value={conn.id} label={conn.label} />
+          ))}
+        </Tabs>
+      )}
 
       <List sx={{ flex: 1, overflowY: "auto", py: 0 }}>
         {loading && (
@@ -159,9 +194,18 @@ export default function ConversationList({ businessId, activeId, onSelect, hideO
                 }
                 secondary={
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="body2" sx={{ color: tokens.muted }} noWrap style={{ maxWidth: 220 }}>
-                      {conversation.last_message_preview ?? "No messages yet"}
-                    </Typography>
+                    <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+                      {hasMultipleConnections && conversation.connection && (
+                        <Chip
+                          label={conversation.connection.label}
+                          size="small"
+                          sx={{ height: 18, fontSize: 10, fontWeight: 700, bgcolor: tokens.canvas, flexShrink: 0 }}
+                        />
+                      )}
+                      <Typography variant="body2" sx={{ color: tokens.muted }} noWrap style={{ maxWidth: 180 }}>
+                        {conversation.last_message_preview ?? "No messages yet"}
+                      </Typography>
+                    </Stack>
                     {conversation.unread_count > 0 && (
                       <Badge badgeContent={conversation.unread_count} sx={{ "& .MuiBadge-badge": { bgcolor: tokens.brand, color: tokens.brandInk } }} />
                     )}

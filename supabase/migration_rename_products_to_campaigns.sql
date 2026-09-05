@@ -19,11 +19,20 @@
 -- confusion with affiliate_programs.conversion_goal (lead vs sale) if
 -- renamed to something like campaign_type, and this migration is already
 -- large enough without introducing that ambiguity for marginal benefit.
+--
+-- Wrapped in begin;/commit; (added when this was actually run for the
+-- first time - it sat unapplied for a while, see supabase/README notes)
+-- so a failure partway through (a typo, an unexpected existing state)
+-- rolls back the whole thing instead of leaving the database half-renamed.
+-- if exists added to the table rename for the same reason - safe to run
+-- again by accident without erroring on an already-completed rename.
+
+begin;
 
 -- ============================================================================
 -- 1. Rename the table itself
 -- ============================================================================
-alter table products rename to campaigns;
+alter table if exists products rename to campaigns;
 
 -- ============================================================================
 -- 2. Rename the foreign key columns on tables that reference it
@@ -186,3 +195,5 @@ begin
   return new;
 end;
 $$ language plpgsql security definer;
+
+commit;

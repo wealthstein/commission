@@ -17,13 +17,13 @@ export async function POST(req) {
 
   const supabase = createAdminSupabaseClient();
 
-  const { data: target } = await supabase.from("seo_keyword_targets").select("id").eq("route_slug", routeSlug).maybeSingle();
+  const { data: target } = await supabase.from("growth_seo_keyword_targets").select("id").eq("route_slug", routeSlug).maybeSingle();
   if (!target) {
     return NextResponse.json({ error: "Unknown page" }, { status: 404 });
   }
 
   const { error } = await supabase
-    .from("notify_requests")
+    .from("growth_notify_requests")
     .upsert({ seo_target_id: target.id, email }, { onConflict: "seo_target_id,email" });
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

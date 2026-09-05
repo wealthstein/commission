@@ -1,0 +1,26 @@
+-- ============================================================================
+-- SINGLE ACTIVE SESSION PER ACCOUNT
+--
+-- Run this AFTER migration_rename_core_tables.sql (references core_users,
+-- the post-rename name).
+--
+-- Supabase Auth allows multiple concurrent sessions per account by design
+-- (sign in on phone and desktop, both stay valid). This adds an explicit
+-- "only the most recent login counts" rule on top of that: every
+-- successful sign-in (app/api/auth/callback) writes a fresh random token
+-- to this column, overwriting whatever was there. middleware.js compares
+-- that stored token against a cookie set on the SAME login - a mismatch
+-- means a more recent login happened somewhere else since, so the
+-- request holding the older cookie gets signed out.
+--
+-- Nullable and defaulting to nothing: existing sessions at the moment
+-- this ships have no cookie for this new mechanism yet. middleware.js
+-- only enforces the check when this column is NOT null for that user -
+-- otherwise every already-logged-in person would get force-logged-out
+-- the instant this deploys, before they've ever had a chance to receive
+-- the new cookie. The very next login after this ships sets the first
+-- real baseline; only a login after that (before or after) can trigger
+-- an actual kick-out.
+-- ============================================================================
+
+alter table if exists core_users add column if not exists active_session_token uuid;

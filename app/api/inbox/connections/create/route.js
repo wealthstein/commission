@@ -51,7 +51,11 @@ export async function POST(req) {
   const { maxConnections } = inboxLimitsForPlan(business?.plan);
   if (typeof existingCount === "number" && existingCount >= maxConnections) {
     return NextResponse.json(
-      { error: `Your plan includes ${maxConnections} WhatsApp number${maxConnections === 1 ? "" : "s"}. Upgrade to connect another.` },
+      {
+        error: maxConnections === 0
+          ? "Inbox isn't included on your plan. Upgrade to connect a WhatsApp number."
+          : `Your plan includes ${maxConnections} WhatsApp number${maxConnections === 1 ? "" : "s"}. Upgrade to connect another.`,
+      },
       { status: 402 }
     );
   }

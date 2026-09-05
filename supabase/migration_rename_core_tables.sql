@@ -67,9 +67,31 @@ alter table if exists payout_commissions rename to billing_payout_commissions;
 alter table if exists wallet_transactions rename to billing_wallet_transactions;
 alter table if exists user_referral_rewards rename to billing_user_referral_rewards;
 alter table if exists wallet_funding_nudges rename to billing_wallet_funding_nudges;
+-- Bridges Paystack subscription renewals back to product/affiliate
+-- attribution (see migration_subscription_attribution.sql) - no RLS
+-- policies or functions reference it by name elsewhere (checked), so a
+-- plain rename is all this one needs.
+alter table if exists subscription_attribution rename to billing_subscription_attribution;
 
 -- Growth / pre-signup prospecting (admin-only, not tenant data)
 alter table if exists cold_outreach_contacts rename to growth_cold_outreach_contacts;
+-- These three don't have a CREATE TABLE anywhere in this repo's migration
+-- history, and schema.sql even has a comment claiming notify_requests/
+-- waitlist_requests were removed - but both are still live, still
+-- actively written to by real routes (/api/seo-targets/notify,
+-- /api/waitlist/join), confirmed against the actual live database rather
+-- than the (out of date, in this respect) committed schema. Likely
+-- created directly via the Supabase dashboard at some point rather than
+-- through a committed migration. Those two routes already query them
+-- under these exact growth_-prefixed names - until this runs, they're
+-- broken against the live database (querying a name that doesn't exist
+-- yet), so this isn't a cosmetic rename for these three, it's fixing a
+-- live mismatch. Worth adding a proper CREATE TABLE for all three to
+-- schema.sql separately so it stops silently disagreeing with reality,
+-- but that's a documentation fix, not part of this rename.
+alter table if exists seo_keyword_targets rename to growth_seo_keyword_targets;
+alter table if exists waitlist_requests rename to growth_waitlist_requests;
+alter table if exists notify_requests rename to growth_notify_requests;
 
 -- ============================================================================
 -- REDEFINE every function/policy whose BODY references a renamed table.
@@ -249,16 +271,17 @@ create policy leads_program_owner_select on affiliate_leads for select
   );
 
 -- subscription_attribution's FKs (product_id -> campaign_id already renamed
--- by migration_rename_products_to_campaigns.sql; the table has no RLS
--- policies referencing renamed tables by text, so nothing further needed
--- here beyond the FK target following the rename automatically).
+-- by migration_rename_products_to_campaigns.sql; renamed to
+-- billing_subscription_attribution above - see that rename for why no
+-- further function/policy redefinition is needed here).
 
 do $$
 declare
   old_names text[] := array['users','businesses','business_team_members','campaigns',
     'marketing_assets','referral_clicks','customers','campaign_custom_fields','leads',
     'manual_sale_confirmations','transactions','commissions','payouts','payout_commissions',
-    'wallet_transactions','user_referral_rewards','wallet_funding_nudges','cold_outreach_contacts'];
+    'wallet_transactions','user_referral_rewards','wallet_funding_nudges','cold_outreach_contacts',
+    'subscription_attribution','seo_keyword_targets','notify_requests','waitlist_requests'];
   n text;
 begin
   foreach n in array old_names loop

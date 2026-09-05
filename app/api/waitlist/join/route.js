@@ -22,7 +22,7 @@ export async function POST(req) {
 
   const supabase = createAdminSupabaseClient();
   const { error } = await supabase
-    .from("waitlist_requests")
+    .from("growth_waitlist_requests")
     .upsert(
       { first_name: firstName, email, phone, role, source_page: sourcePage ?? null },
       { onConflict: "email,role" }

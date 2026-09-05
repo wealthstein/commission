@@ -85,7 +85,11 @@ export async function POST(req) {
     const seatsUsed = (activeCount ?? 0) + 1;
     if (seatsUsed >= maxSeats) {
       return NextResponse.json(
-        { error: `Your plan includes up to ${maxSeats} team seats (including you). Upgrade to add more.` },
+        {
+          error: maxSeats === 0
+            ? "Team collaboration isn't included on your plan. Upgrade to add teammates."
+            : `Your plan includes up to ${maxSeats} team seats (including you). Upgrade to add more.`,
+        },
         { status: 402 }
       );
     }

@@ -64,13 +64,28 @@ function authDirFor(connectionId: string) {
   return dir;
 }
 
+// Inbox is for 1:1 customer conversations, not internal group chats - a
+// group JID (ends in @g.us) processed the same way as a contact would
+// produce a garbage "phone number" (the group's own JID) and mix internal
+// team/community chats into what's meant to be a customer inbox.
+function isGroupJid(jid: string | null | undefined): boolean {
+  return !!jid && jid.endsWith('@g.us');
+}
+
 export async function startConnection(connectionId: string) {
   if (activeSockets.has(connectionId)) return;
 
   const { state, saveCreds } = await useMultiFileAuthState(authDirFor(connectionId));
   const { version } = await fetchLatestBaileysVersion();
 
-  const socket = makeWASocket({ version, auth: state, logger, printQRInTerminal: false });
+  // syncFullHistory requests as much prior chat history as WhatsApp will
+  // sync to a newly linked device - this is what makes "see conversations
+  // that existed before connecting" possible at all. Real limits still
+  // apply on top of this flag: how much history WhatsApp's servers and
+  // the phone itself actually retain and choose to sync is outside
+  // Baileys' (or Inbox's) control - this asks for the fullest sync
+  // available, it doesn't guarantee literally every message ever sent.
+  const socket = makeWASocket({ version, auth: state, logger, printQRInTerminal: false, syncFullHistory: true });
   activeSockets.set(connectionId, socket);
 
   socket.ev.on('creds.update', saveCreds);
@@ -138,9 +153,21 @@ export async function startConnection(connectionId: string) {
   socket.ev.on('messages.upsert', async ({ messages, type }) => {
     if (type !== 'notify') return;
     for (const msg of messages) {
-      if (!msg.message || msg.key.fromMe) continue;
+      if (!msg.message || msg.key.fromMe || isGroupJid(msg.key.remoteJid)) continue;
       await handleInboundMessage(connectionId, msg);
     }
+  });
+
+  // Fires once (sometimes in a few chunks) shortly after a successful
+  // link, carrying whatever prior chat history WhatsApp synced to this
+  // device. Handled completely separately from messages.upsert above:
+  // history includes messages the business itself sent (fromMe), which
+  // the live handler deliberately ignores (those are written by Inbox's
+  // own outbound-send path instead, in outboundQueue.ts) - and history
+  // must never fire a push notification for a message that's actually
+  // days or months old.
+  socket.ev.on('messaging-history.set', async ({ messages }) => {
+    await handleHistorySync(connectionId, messages);
   });
 
   return socket;
@@ -230,6 +257,123 @@ async function handleInboundMessage(connectionId: string, msg: any) {
 
   await notifyNewMessage(connection.business_id, conversation!.id, contact?.name || waNumber, text || `Sent a ${type}`)
     .catch((err) => console.error('Push notification failed', err));
+}
+
+/**
+ * Processes prior chat history synced from a newly-linked device (see the
+ * messaging-history.set listener above). Deliberately different from
+ * handleInboundMessage in a few ways:
+ *
+ * - Includes both directions (fromMe true and false), not just inbound -
+ *   this is the one path that needs to backfill what the business itself
+ *   sent before Inbox existed.
+ * - Never calls notifyNewMessage - a push notification for a message from
+ *   three months ago would be actively wrong, not just unnecessary.
+ * - Skips media download entirely. History sync can carry hundreds or
+ *   thousands of messages at once; re-downloading every historical photo
+ *   and voice note in that moment isn't reasonable (time, storage, and
+ *   it's exactly the kind of burst of activity that's worth avoiding on
+ *   an unofficial connection). Historical media messages are still
+ *   recorded - type, caption if any, timestamp - just without the file
+ *   itself. Live media (handleInboundMessage) is unaffected and still
+ *   downloads normally.
+ * - Batches contact/conversation lookups per unique remoteJid instead of
+ *   re-querying per message, and bulk-inserts messages per contact.
+ */
+async function handleHistorySync(connectionId: string, messages: any[]) {
+  const { data: connection } = await supabase
+    .from('inbox_whatsapp_connections')
+    .select('business_id')
+    .eq('id', connectionId)
+    .single();
+  if (!connection) return;
+
+  const byJid = new Map<string, any[]>();
+  for (const msg of messages) {
+    const jid = msg.key?.remoteJid;
+    if (!msg.message || !jid || isGroupJid(jid)) continue;
+    if (!byJid.has(jid)) byJid.set(jid, []);
+    byJid.get(jid)!.push(msg);
+  }
+
+  for (const [jid, jidMessages] of byJid) {
+    const waNumber = jid.split('@')[0];
+    if (!waNumber) continue;
+
+    const pushName = jidMessages.find((m) => m.pushName)?.pushName ?? null;
+
+    const { data: contact } = await supabase
+      .from('inbox_contacts')
+      .upsert(
+        { business_id: connection.business_id, wa_number: waNumber, name: pushName },
+        { onConflict: 'business_id,wa_number', ignoreDuplicates: false }
+      )
+      .select()
+      .single();
+    if (!contact) continue;
+
+    const { data: conversation } = await supabase
+      .from('inbox_conversations')
+      .upsert(
+        { business_id: connection.business_id, connection_id: connectionId, contact_id: contact.id, status: 'open' },
+        { onConflict: 'connection_id,contact_id', ignoreDuplicates: false }
+      )
+      .select()
+      .single();
+    if (!conversation) continue;
+
+    const rows = jidMessages
+      .map((msg) => {
+        const text: string | undefined =
+          msg.message.conversation ||
+          msg.message.extendedTextMessage?.text ||
+          msg.message.imageMessage?.caption ||
+          undefined;
+
+        const mediaType = Object.keys(msg.message)[0] ?? '';
+        const type = mediaType.includes('image') ? 'image'
+          : mediaType.includes('video') ? 'video'
+          : mediaType.includes('audio') ? 'audio'
+          : mediaType.includes('document') ? 'document'
+          : mediaType.includes('sticker') ? 'sticker'
+          : 'text';
+
+        const direction = msg.key.fromMe ? 'outbound' : 'inbound';
+        const timestampMs = msg.messageTimestamp
+          ? Number(msg.messageTimestamp) * 1000
+          : Date.now();
+
+        return {
+          business_id: connection.business_id,
+          conversation_id: conversation.id,
+          direction,
+          type,
+          content: text ?? null,
+          media_url: null, // see function comment - history sync doesn't download media
+          media_mime_type: null,
+          wa_message_id: msg.key.id,
+          // Historical messages are, by definition, ones the phone already
+          // had - treated as already seen rather than freshly delivered.
+          status: 'read',
+          created_at: new Date(timestampMs).toISOString(),
+        };
+      })
+      .filter((row) => row.wa_message_id); // dedupe key required - skip anything without one rather than risk an unkeyed duplicate
+
+    if (rows.length === 0) continue;
+
+    // onConflict on the same unique wa_message_id index used for live
+    // messages - if a message shows up in both a history batch and a live
+    // event (possible right around the moment of linking), this keeps
+    // exactly one row rather than two.
+    const { error } = await supabase
+      .from('inbox_messages')
+      .upsert(rows, { onConflict: 'wa_message_id', ignoreDuplicates: true });
+
+    if (error) {
+      console.error(`History sync insert failed for ${jid}`, error);
+    }
+  }
 }
 
 export async function sendOutboundMessage(connectionId: string, waNumber: string, text: string) {

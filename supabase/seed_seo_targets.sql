@@ -7,6 +7,15 @@
 -- list of company names you haven't reviewed. Company entries ask a
 -- question ("Does X have an affiliate program?") rather than asserting an
 -- answer, specifically so this stays honest even before you know.
+--
+-- Ordering note: must run BEFORE supabase/migration_rename_core_tables.sql
+-- if you're setting up a fresh database - that migration renames this
+-- table to growth_seo_keyword_targets, and this file (like every other
+-- migration that predates the rename) intentionally still references the
+-- original name, correct for wherever it sits in the sequence. Not
+-- relevant to re-run against this project's actual live database - this
+-- seed already ran there at some point (the notify-me feature is live and
+-- working against real data), it's only here for future fresh installs.
 -- ============================================================================
 
 insert into seo_keyword_targets (route_slug, type, keyword_slug, display_name, industry_category, meta_description)
