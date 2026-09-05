@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Box, Typography, Stack } from "@mui/material";
 import Diversity3RoundedIcon from "@mui/icons-material/Diversity3Rounded";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
@@ -11,60 +10,40 @@ import HandshakeRoundedIcon from "@mui/icons-material/HandshakeRounded";
 import EmojiEventsRoundedIcon from "@mui/icons-material/EmojiEventsRounded";
 import { tokens } from "@/lib/theme";
 
-// Node copy is deliberately careful about what "affiliate as the source"
-// actually means here: it's the traffic origin (how the customer found
-// the business and ended up messaging them), not a claim that winning a
-// deal in Inbox's pipeline automatically triggers an affiliate commission
-// payout - those are two separate systems in this product, and this
-// component shouldn't imply a wiring that doesn't exist.
-const NODES = [
-  { key: "affiliate", label: "Affiliate referral", detail: "Customer finds you via an affiliate's link", icon: Diversity3RoundedIcon },
-  { key: "inbox", label: "Messages you", detail: "Reaches out on WhatsApp with a question", icon: WhatsAppIcon },
-  { key: "new", label: "New Lead", detail: "Conversation added to the pipeline", icon: FiberNewRoundedIcon },
-  { key: "contacted", label: "Contacted", detail: "First reply sent, follow-up set", icon: PhoneInTalkRoundedIcon },
-  { key: "qualified", label: "Qualified", detail: "Budget and need confirmed", icon: VerifiedRoundedIcon },
-  { key: "negotiation", label: "Negotiation", detail: "Price and terms discussed", icon: HandshakeRoundedIcon },
-  { key: "won", label: "Won", detail: "Deal closed", icon: EmojiEventsRoundedIcon },
+export const JOURNEY_NODES = [
+  { key: "affiliate", label: "Affiliate referral", detail: "Customer finds you via an affiliate's link", icon: Diversity3RoundedIcon, body: "An affiliate shares your product with their own audience. Someone clicks through and, instead of checking out immediately, decides to ask a question first." },
+  { key: "inbox", label: "Messages you", detail: "Reaches out on WhatsApp with a question", icon: WhatsAppIcon, body: "They message your WhatsApp number directly. It arrives in Inbox like any other conversation - visible to your whole team, not sitting in one person's personal phone." },
+  { key: "new", label: "New Lead", detail: "Conversation added to the pipeline", icon: FiberNewRoundedIcon, body: "A conversation gets added to the pipeline with one click, right from the chat - no separate form to fill in." },
+  { key: "contacted", label: "Contacted", detail: "First reply sent, follow-up set", icon: PhoneInTalkRoundedIcon, body: "You've replied. Set a follow-up reminder in the same click so the conversation doesn't go quiet on your end." },
+  { key: "qualified", label: "Qualified", detail: "Budget and need confirmed", icon: VerifiedRoundedIcon, body: "Need and budget are confirmed - this is a real deal, not just a question." },
+  { key: "negotiation", label: "Negotiation", detail: "Price and terms discussed", icon: HandshakeRoundedIcon, body: "Price and terms get worked out in the same WhatsApp thread you've been replying from the whole time." },
+  { key: "won", label: "Won", detail: "Deal closed", icon: EmojiEventsRoundedIcon, body: "Deal closed. It shows up in Insights as real, attributed pipeline value." },
 ];
 
-const STEP_MS = 850;
-const LOOP_PAUSE_MS = 2200;
-
-export default function InboxJourneyMap() {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    const timers = [];
-    function run() {
-      setActiveIndex(0);
-      NODES.forEach((_, i) => {
-        timers.push(setTimeout(() => !cancelled && setActiveIndex(i), i * STEP_MS));
-      });
-      timers.push(setTimeout(() => !cancelled && run(), NODES.length * STEP_MS + LOOP_PAUSE_MS));
-    }
-    run();
-    return () => {
-      cancelled = true;
-      timers.forEach(clearTimeout);
-    };
-  }, []);
-
+// No auto-play - this previously animated through all 7 nodes on a timer
+// and kept looping, which read as the pipeline moving on its own even
+// when nobody had touched it. selectedIndex is owned entirely by the
+// parent (InboxPageContent) and only ever changes when a node is clicked.
+export default function InboxJourneyMap({ selectedIndex, onSelect }) {
   return (
-    <Box sx={{ overflowX: { xs: "auto", md: "visible" }, pb: { xs: 1, md: 0 } }} aria-hidden="true">
+    <Box sx={{ overflowX: { xs: "auto", md: "visible" }, pb: { xs: 1, md: 0 } }}>
       <Stack
         direction="row"
         alignItems="flex-start"
         sx={{ minWidth: { xs: 760, md: "auto" }, position: "relative" }}
       >
-        {NODES.map((node, i) => {
-          const reached = i <= activeIndex;
-          const isCurrent = i === activeIndex;
+        {JOURNEY_NODES.map((node, i) => {
+          const reached = i <= selectedIndex;
+          const isCurrent = i === selectedIndex;
           const isWon = node.key === "won";
           const Icon = node.icon;
 
           return (
-            <Box key={node.key} sx={{ flex: 1, position: "relative", textAlign: "center", px: 0.5 }}>
+            <Box
+              key={node.key}
+              onClick={() => onSelect(i)}
+              sx={{ flex: 1, position: "relative", textAlign: "center", px: 0.5, cursor: "pointer" }}
+            >
               {i > 0 && (
                 <Box
                   sx={{
@@ -73,7 +52,7 @@ export default function InboxJourneyMap() {
                     left: "-50%",
                     width: "100%",
                     height: 3,
-                    bgcolor: i <= activeIndex ? tokens.brand : tokens.border,
+                    bgcolor: i <= selectedIndex ? tokens.brand : tokens.border,
                     transition: "background-color 300ms ease-out",
                     zIndex: 0,
                   }}
@@ -93,8 +72,10 @@ export default function InboxJourneyMap() {
                   justifyContent: "center",
                   bgcolor: isWon && reached ? tokens.success : reached ? tokens.brand : tokens.canvas,
                   border: `2px solid ${reached ? "transparent" : tokens.border}`,
-                  transform: isCurrent ? "scale(1.15)" : "scale(1)",
-                  transition: "all 300ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+                  outline: isCurrent ? `3px solid ${tokens.ink}` : "none",
+                  outlineOffset: 2,
+                  transition: "all 200ms ease-out",
+                  "&:hover": { transform: "scale(1.08)" },
                 }}
               >
                 <Icon sx={{ fontSize: 20, color: reached ? "#fff" : tokens.muted }} />
@@ -114,6 +95,10 @@ export default function InboxJourneyMap() {
           );
         })}
       </Stack>
+
+      <Typography variant="caption" sx={{ display: "block", textAlign: "center", color: tokens.muted, mt: 2 }}>
+        Click any step to explore it
+      </Typography>
     </Box>
   );
 }

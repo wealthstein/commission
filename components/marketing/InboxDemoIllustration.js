@@ -6,14 +6,19 @@ import DoneIcon from "@mui/icons-material/Done";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import CircleIcon from "@mui/icons-material/Circle";
 import { tokens } from "@/lib/theme";
+import { avatarColorForName } from "@/components/marketing/inboxAvatarColors";
 
 // Full names + a real avatar (colored initial) on every person, both
-// customers and agents - see the AVATAR NOTE at the bottom of this file
-// for exactly where to change these if you want real photos instead.
+// customers and agents - colors come from avatarColorForName so the same
+// person gets the same color everywhere they appear, and different people
+// shown together (e.g. the contacts in one sidebar) get visibly different
+// colors rather than everyone sharing the same brand-yellow avatar. See
+// the AVATAR NOTE at the bottom of this file for exactly where to change
+// these if you want real photos instead.
 const AGENTS = {
-  chidinma: { name: "Chidinma Eze", initial: "C", color: "#8E5CE8" },
-  tunde: { name: "Tunde Bakare", initial: "T", color: "#2F8AE0" },
-  bisi: { name: "Bisi Adeyemi", initial: "B", color: tokens.success },
+  chidinma: { name: "Chidinma Eze", initial: "C" },
+  tunde: { name: "Tunde Bakare", initial: "T" },
+  bisi: { name: "Bisi Adeyemi", initial: "B" },
 };
 
 // Two connections (numbers), each with its own customer list and real
@@ -152,7 +157,7 @@ export default function InboxDemoIllustration() {
                   "&:hover": { bgcolor: active ? "#F0EEE8" : "#F5F3EE" },
                 }}
               >
-                <Avatar sx={{ width: 30, height: 30, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700, fontSize: 13 }}>
+                <Avatar sx={{ width: 30, height: 30, bgcolor: avatarColorForName(c.name).bg, color: avatarColorForName(c.name).text, fontWeight: 700, fontSize: 13 }}>
                   {c.name.charAt(0)}
                 </Avatar>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -177,7 +182,7 @@ export default function InboxDemoIllustration() {
 
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         <Stack direction="row" alignItems="center" spacing={1.25} sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${tokens.border}` }}>
-          <Avatar sx={{ width: 36, height: 36, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700 }}>{contact.name.charAt(0)}</Avatar>
+          <Avatar sx={{ width: 36, height: 36, bgcolor: avatarColorForName(contact.name).bg, color: avatarColorForName(contact.name).text, fontWeight: 700 }}>{contact.name.charAt(0)}</Avatar>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="body1" fontWeight={700} noWrap>{contact.name}</Typography>
             <Stack direction="row" spacing={0.5} alignItems="center">
@@ -194,13 +199,13 @@ export default function InboxDemoIllustration() {
             return (
               <Stack key={i} direction="row" spacing={1} justifyContent={isOut ? "flex-end" : "flex-start"} alignItems="flex-end">
                 {!isOut && (
-                  <Avatar sx={{ width: 26, height: 26, bgcolor: tokens.brand, color: tokens.brandInk, fontWeight: 700, fontSize: 12 }}>
+                  <Avatar sx={{ width: 26, height: 26, bgcolor: avatarColorForName(contact.name).bg, color: avatarColorForName(contact.name).text, fontWeight: 700, fontSize: 12 }}>
                     {contact.name.charAt(0)}
                   </Avatar>
                 )}
                 <Box sx={{ display: "flex", flexDirection: "column", alignItems: isOut ? "flex-end" : "flex-start", maxWidth: "62%" }}>
                   {isOut && (
-                    <Typography variant="caption" sx={{ color: agent.color, fontWeight: 700, fontSize: 11, mb: 0.25, mr: 0.5 }}>
+                    <Typography variant="caption" sx={{ color: avatarColorForName(agent.name).text, fontWeight: 700, fontSize: 11, mb: 0.25, mr: 0.5 }}>
                       {agent.name}
                     </Typography>
                   )}
@@ -228,7 +233,7 @@ export default function InboxDemoIllustration() {
                   </Box>
                 </Box>
                 {isOut && (
-                  <Avatar sx={{ width: 26, height: 26, bgcolor: agent.color, color: "#fff", fontWeight: 700, fontSize: 12 }}>
+                  <Avatar sx={{ width: 26, height: 26, bgcolor: avatarColorForName(agent.name).bg, color: avatarColorForName(agent.name).text, fontWeight: 700, fontSize: 12 }}>
                     {agent.initial}
                   </Avatar>
                 )}

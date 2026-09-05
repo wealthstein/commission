@@ -5,6 +5,7 @@ import { Box, Typography, Stack, Avatar, Paper, Checkbox } from "@mui/material";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { tokens } from "@/lib/theme";
+import { avatarColorForName } from "@/components/marketing/inboxAvatarColors";
 
 // Shared card shell so all four feature demos read as one family rather
 // than four differently-styled widgets.
@@ -48,9 +49,9 @@ function useLoop(steps, totalMs) {
 }
 
 const AGENTS = [
-  { name: "Chidinma", color: "#8E5CE8" },
-  { name: "Tunde", color: "#2F8AE0" },
-  { name: "Bisi", color: tokens.success },
+  { name: "Chidinma Eze", initial: "C" },
+  { name: "Tunde Bakare", initial: "T" },
+  { name: "Bisi Adeyemi", initial: "B" },
 ];
 
 export function LeadRoutingDemo() {
@@ -84,7 +85,7 @@ export function LeadRoutingDemo() {
               <Box key={a.name} sx={{ textAlign: "center" }}>
                 <Avatar
                   sx={{
-                    width: 34, height: 34, mx: "auto", bgcolor: a.color, color: "#fff", fontWeight: 700, fontSize: 13,
+                    width: 34, height: 34, mx: "auto", bgcolor: avatarColorForName(a.name).bg, color: avatarColorForName(a.name).text, fontWeight: 700, fontSize: 13,
                     outline: active ? `3px solid ${tokens.brand}` : "3px solid transparent",
                     outlineOffset: 2,
                     transform: step === 2 && isTarget ? "scale(1.12)" : "scale(1)",
@@ -93,7 +94,7 @@ export function LeadRoutingDemo() {
                 >
                   {a.name.charAt(0)}
                 </Avatar>
-                <Typography variant="caption" sx={{ color: tokens.muted, fontSize: 10 }}>{a.name}</Typography>
+                <Typography variant="caption" sx={{ color: tokens.muted, fontSize: 10 }}>{a.name.split(" ")[0]}</Typography>
               </Box>
             );
           })}
@@ -109,7 +110,7 @@ export function LeadRoutingDemo() {
                 "@keyframes featurePop": { from: { opacity: 0, transform: "scale(0.9)" }, to: { opacity: 1, transform: "scale(1)" } },
               }}
             >
-              Assigned to {assignedTo.name} - online now
+              Assigned to {assignedTo.name.split(" ")[0]} - online now
             </Typography>
           )}
         </Box>

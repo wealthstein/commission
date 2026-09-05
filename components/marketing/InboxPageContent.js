@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Container, Typography, Button, Grid, Paper, Stack } from "@mui/material";
 import { tokens } from "@/lib/theme";
@@ -13,7 +14,7 @@ import SectionLabel from "@/components/marketing/SectionLabel";
 import InboxDemoIllustration from "@/components/marketing/InboxDemoIllustration";
 import InboxHeroDemo from "@/components/marketing/InboxHeroDemo";
 import InboxJourneyMap from "@/components/marketing/InboxJourneyMap";
-import PipelineStageExplorer from "@/components/marketing/InboxPipelineStageExplorer";
+import InboxJourneyDetail from "@/components/marketing/InboxJourneyDetail";
 import { LeadRoutingDemo, TasksDemo, CsvImportDemo, MessageSearchDemo } from "@/components/marketing/InboxFeatureIllustrations";
 
 const CRM_CHALLENGES = [
@@ -90,20 +91,21 @@ const FAQ_ITEMS = [
 
 export default function InboxPageContent() {
   const router = useRouter();
+  const [journeyIndex, setJourneyIndex] = useState(0);
 
   return (
     <>
       {/* Hero */}
       <Box component="section" sx={{ pt: { xs: 8, md: 12 }, pb: { xs: 6, md: 8 }, bgcolor: tokens.paper }}>
         <Container maxWidth="md">
-          <Grid container spacing={6} alignItems="center">
-            <Grid item xs={12} md={7}>
+          <Grid container spacing={6}>
+            <Grid item xs={12} md={6}>
               <SectionLabel>Inbox</SectionLabel>
               <Typography variant="h1" sx={{ fontSize: { xs: 32, md: 46 }, mb: 2.5, lineHeight: 1.15 }}>
-                Turn your business WhatsApp into a team inbox that closes deals
+                Turn your WhatsApp into a team inbox that closes deals.
               </Typography>
               <Typography variant="body1" sx={{ color: tokens.muted, fontSize: 18, mb: 4, maxWidth: 520 }}>
-                Connect one WhatsApp number, add your whole team, and reply to every customer from a shared inbox
+                Connect one WhatsApp number, add your team, and reply to customers from a shared inbox
                 with a built-in pipeline - no WhatsApp Business API, no separate app to learn.
               </Typography>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -115,8 +117,8 @@ export default function InboxPageContent() {
                 </Button>
               </Stack>
             </Grid>
-            <Grid item xs={12} md={5}>
-              <Paper variant="outlined" sx={{ borderRadius: 4, borderColor: tokens.border, bgcolor: "#F7F6F2", overflow: "hidden" }}>
+            <Grid item xs={12} md={6}>
+              <Paper variant="outlined" sx={{ height: "100%", borderRadius: 4, borderColor: tokens.border, bgcolor: "#F7F6F2", overflow: "hidden" }}>
                 <InboxHeroDemo />
               </Paper>
             </Grid>
@@ -196,9 +198,9 @@ export default function InboxPageContent() {
             </Typography>
           </Box>
 
-          <InboxJourneyMap />
+          <InboxJourneyMap selectedIndex={journeyIndex} onSelect={setJourneyIndex} />
 
-          <PipelineStageExplorer />
+          <InboxJourneyDetail selectedIndex={journeyIndex} />
         </Container>
       </Box>
 

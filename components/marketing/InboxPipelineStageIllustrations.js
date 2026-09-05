@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, Typography, Stack, Chip, Checkbox } from "@mui/material";
+import { Box, Typography, Stack, Chip, Checkbox, Avatar } from "@mui/material";
 import DoneIcon from "@mui/icons-material/Done";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import EmojiEventsRoundedIcon from "@mui/icons-material/EmojiEventsRounded";
+import Diversity3RoundedIcon from "@mui/icons-material/Diversity3Rounded";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import { tokens } from "@/lib/theme";
+import { avatarColorForName } from "@/components/marketing/inboxAvatarColors";
 
 function StageCard({ children, height = 240 }) {
   return (
@@ -33,6 +36,71 @@ function useLoop(delays, totalMs) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return step;
+}
+
+export function AffiliateReferralStage() {
+  // 0 idle, 1 affiliate shares link, 2 customer clicks through
+  const step = useLoop([300, 1500], 4000);
+
+  return (
+    <StageCard>
+      <Stack spacing={2.5} alignItems="center">
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ opacity: step >= 1 ? 1 : 0, transition: "opacity 250ms" }}>
+          <Avatar sx={{ width: 32, height: 32, bgcolor: avatarColorForName("Kemi").bg, color: avatarColorForName("Kemi").text, fontWeight: 700, fontSize: 13 }}>K</Avatar>
+          <Box sx={{ border: `1px solid ${tokens.border}`, borderRadius: 2, px: 1.5, py: 1 }}>
+            <Typography variant="caption" sx={{ color: tokens.muted, display: "block" }}>Kemi (affiliate) shared</Typography>
+            <Typography variant="body2" fontWeight={600}>commission.ng/r/kemi-a4f2</Typography>
+          </Box>
+        </Stack>
+
+        <Box sx={{ minHeight: 32, textAlign: "center" }}>
+          {step >= 2 && (
+            <Chip
+              label="Customer clicked through"
+              size="small"
+              sx={{ bgcolor: tokens.canvas, fontWeight: 700, fontSize: 11, animation: "stagePop 220ms ease-out", "@keyframes stagePop": { from: { opacity: 0, transform: "scale(0.9)" }, to: { opacity: 1, transform: "scale(1)" } } }}
+            />
+          )}
+        </Box>
+      </Stack>
+    </StageCard>
+  );
+}
+
+export function MessagesYouStage() {
+  // 0 idle, 1 message sent, 2 arrives in Inbox
+  const step = useLoop([300, 1500], 4000);
+
+  return (
+    <StageCard>
+      <Stack spacing={2.5} alignItems="center">
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ opacity: step >= 1 ? 1 : 0, transform: step >= 1 ? "translateY(0)" : "translateY(-6px)", transition: "all 250ms" }}
+        >
+          <WhatsAppIcon sx={{ color: tokens.success, fontSize: 20 }} />
+          <Box sx={{ border: `1px solid ${tokens.border}`, borderRadius: 2, px: 1.5, py: 1, bgcolor: tokens.canvas }}>
+            <Typography variant="body2" fontWeight={600}>&quot;Hi, is this still available?&quot;</Typography>
+          </Box>
+        </Stack>
+
+        <Box
+          sx={{
+            width: "100%", border: `2px solid ${step >= 2 ? tokens.brand : "transparent"}`, borderRadius: 2, px: 1.5, py: 1,
+            bgcolor: step >= 2 ? "#FFF9E5" : "transparent",
+            opacity: step >= 2 ? 1 : 0, transform: step >= 2 ? "scale(1)" : "scale(0.95)",
+            transition: "all 300ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+            textAlign: "center",
+          }}
+        >
+          <Typography variant="body2" fontWeight={700} sx={{ color: tokens.brandInk }}>Arrived in Inbox</Typography>
+          <Typography variant="caption" sx={{ color: tokens.muted }}>Visible to your whole team</Typography>
+        </Box>
+      </Stack>
+    </StageCard>
+  );
 }
 
 export function NewLeadStage() {
